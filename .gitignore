@@ -1,0 +1,10 @@
+.venv/
+.idea/
+dist/
+**pyc
+
+alembic/
+alembic.ini
+demo/
+
+**/__pycache__/
