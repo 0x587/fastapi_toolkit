@@ -42,7 +42,7 @@ def init():
 @app.command('g')
 @app.command('generate')
 def generate(metadata_path: Path = 'metadata', root_path: Path = 'inner_code',
-             table: bool = True, router: bool = True, mock: bool = True):
+             table: bool = True, router: bool = True, mock: bool = True, auth: bool = True):
     if not root_path.is_dir():
         typer.confirm(f'root_path: {root_path} is not a dir, do you want to create it?', abort=True)
         root_path.mkdir(parents=True)
@@ -56,6 +56,8 @@ def generate(metadata_path: Path = 'metadata', root_path: Path = 'inner_code',
         generator.generate_routers()
     if mock:
         generator.generate_mock()
+    if auth:
+        generator.generate_auth()
 
 
 @app.command('mock')

@@ -23,6 +23,7 @@ class CodeGenerator:
         self.dev_path = os.path.join(root_path, 'dev')
         self.crud_path = os.path.join(root_path, 'crud')
         self.routers_path = os.path.join(root_path, 'routers')
+        self.auth_path = os.path.join(root_path, 'auth')
 
         if not os.path.exists(self.root_path):
             os.mkdir(self.root_path)
@@ -32,6 +33,8 @@ class CodeGenerator:
             os.mkdir(self.crud_path)
         if not os.path.exists(self.routers_path):
             os.mkdir(self.routers_path)
+        if not os.path.exists(self.auth_path):
+            os.mkdir(self.auth_path)
         self.env = Environment(loader=PackageLoader('fastapi_toolkit', 'templates'))
         self.model_metadata: Dict[str, ModelMetadata] = {}
         self.link_table_metadata: List[LinkTableMetadata] = []
@@ -181,3 +184,9 @@ class CodeGenerator:
 
     def generate_mock(self):
         self._generate_file(os.path.join(self.root_path, 'mock.py'), self._define2mock)
+
+    def _define2auth(self):
+        return self.env.get_template('auth.py.jinja2').render(models=self.model_metadata.values())
+
+    def generate_auth(self):
+        self._generate_file(os.path.join(self.auth_path, '__init__.py'), self._define2auth)
