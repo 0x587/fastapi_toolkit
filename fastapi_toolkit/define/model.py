@@ -1,7 +1,7 @@
 import uuid
 import datetime
 import inspect
-from typing import Type, TypeVar, Tuple, List, Optional, Dict
+from typing import Type, TypeVar, Tuple, List, Optional, Dict, Union
 
 from sqlalchemy.sql import sqltypes
 
@@ -12,6 +12,11 @@ from fastapi_toolkit.define.link import Link
 class BaseModel:
     def __init_subclass__(cls, **kwargs):
         register_model(cls)
+
+
+class UserModel:
+    def __init_subclass__(cls, **kwargs):
+        register_model(cls, is_user=True)
 
 
 def get_type_str(type) -> str:
@@ -80,11 +85,11 @@ class Field:
             self.default_factory_str = get_type_str(default_factory)
 
 
-T = TypeVar('T', bound=BaseModel)
+T = TypeVar('T', bound=Union[BaseModel, UserModel])
 
 
-def register_model(model: Type[T]):
-    info = ModelInfo()
+def register_model(model: Type[T], is_user=False):
+    info = ModelInfo(is_user)
     info.model = model
     for name, field in model.__dict__.items():
         if isinstance(field, Field):
@@ -104,10 +109,12 @@ class ModelInfo:
     fields: List[Dict[str, Field]]
     title: str = ''
     links: List[Link]
+    is_user: bool
 
-    def __init__(self):
+    def __init__(self, is_user: bool = False):
         self.fields = []
         self.links = []
+        self.is_user = is_user
 
 
 class ModelManager:

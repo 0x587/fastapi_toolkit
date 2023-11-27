@@ -87,6 +87,7 @@ def db_init(root_path: Path = 'inner_code'):
 def db_migrate(root_path: Path = 'inner_code', msg: str = None):
     migrate = get_dev_db(root_path).migrate
     migrate(msg)
+    print('must add "import fastapi_users_db_sqlalchemy" to migrate script')
 
 
 @db_app.command('upgrade')

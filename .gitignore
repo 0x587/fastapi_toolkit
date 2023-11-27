@@ -8,3 +8,5 @@ alembic.ini
 demo/
 
 **/__pycache__/
+
+config.yaml

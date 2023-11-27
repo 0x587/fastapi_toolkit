@@ -1,10 +1,37 @@
 from typing import List
 
 from pydantic import BaseModel, Field
+from fastapi_users import schemas
 import uuid
 import datetime
 
 {% for model in models %}
+{% if model.is_user %}
+class UserRead(schemas.BaseUser[uuid.UUID]):
+    """fields"""
+    {% for field_name, field in model.fields.items() %}{{field_name}}: {{field.python_type_str}} = Field(
+        {%- if field.default_str %}default={{field.default_str}},{%- endif -%}
+        {%- if field.default_factory_str %}default_factory={{field.default_factory_str}},{%- endif -%}
+    )
+    {% endfor %}
+
+class UserCreate(schemas.BaseUserCreate):
+    """fields"""
+    {% for field_name, field in model.fields.items() %}{{field_name}}: {{field.python_type_str}} = Field(
+        {%- if field.default_str %}default={{field.default_str}},{%- endif -%}
+        {%- if field.default_factory_str %}default_factory={{field.default_factory_str}},{%- endif -%}
+    )
+    {% endfor %}
+
+class UserUpdate(schemas.BaseUserUpdate):
+    """fields"""
+    {% for field_name, field in model.fields.items() %}{{field_name}}: {{field.python_type_str}} = Field(
+        {%- if field.default_str %}default={{field.default_str}},{%- endif -%}
+        {%- if field.default_factory_str %}default_factory={{field.default_factory_str}},{%- endif -%}
+    )
+    {% endfor %}
+
+{% else %}
 class {{ model.base_schema_name }}(BaseModel):
     """pk"""
     {% for field_name, field in model.pk.items() %}{{field_name}}: {{field.python_type_str}} = Field(
@@ -31,6 +58,7 @@ class {{ model.base_schema_name }}With{{ combination.name }}({{ model.base_schem
     {%- endif -%}
     {% endfor %}
 {% endfor -%}
+{% endif %}
 {%- endfor -%}
 
 {%- for model in models -%}

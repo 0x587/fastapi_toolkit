@@ -7,7 +7,7 @@ from .utils import name_convert_to_snake, plural, get_combinations
 from .mock import MockType
 from fastapi_toolkit.define import OneManyLink, ManyManyLink
 from fastapi_toolkit.define import ModelManager
-from typing import Callable, Any, Sequence, Dict, List
+from typing import Callable, Any, Sequence, Dict, List, Optional
 import hashlib
 from jinja2 import Environment, PackageLoader
 import typer
@@ -37,6 +37,7 @@ class CodeGenerator:
             os.mkdir(self.auth_path)
         self.env = Environment(loader=PackageLoader('fastapi_toolkit', 'templates'))
         self.model_metadata: Dict[str, ModelMetadata] = {}
+        self.user_model: Optional[ModelMetadata] = None
         self.link_table_metadata: List[LinkTableMetadata] = []
         self.router_metadata: List[RouterMetadata] = []
         self.mock_model_count: Dict[str, int] = {}
@@ -98,7 +99,7 @@ class CodeGenerator:
     def parse_models(self):
         mm = ModelManager
         for name, info in mm.models.items():
-            self.model_metadata[name] = ModelMetadata(name, {f['name']: f['field'] for f in info.fields})
+            self.model_metadata[name] = ModelMetadata(name, {f['name']: f['field'] for f in info.fields}, info.is_user)
         for left_name, info in mm.models.items():
             if not info.links:
                 continue
@@ -133,7 +134,9 @@ class CodeGenerator:
                 'snake_name': '_and_'.join(map(lambda r: name_convert_to_snake(r.target.name), cb))
             } for cb in cbs]
             md.relationship_combinations = cbs
-        self.router_metadata = [RouterMetadata(md) for md in self.model_metadata.values()]
+
+        self.router_metadata = [RouterMetadata(md) for md in self.model_metadata.values() if not md.is_user]
+
         self._parse_mock()
 
     def _define2table(self) -> str:
@@ -186,7 +189,7 @@ class CodeGenerator:
         self._generate_file(os.path.join(self.root_path, 'mock.py'), self._define2mock)
 
     def _define2auth(self):
-        return self.env.get_template('auth.py.jinja2').render(models=self.model_metadata.values())
+        return self.env.get_template('auth.py.jinja2').render(user_model=self.user_model)
 
     def generate_auth(self):
         self._generate_file(os.path.join(self.auth_path, '__init__.py'), self._define2auth)

@@ -11,7 +11,9 @@ class ModelMetadata:
     def __init__(self,
                  name: str,
                  fields: Dict[str, Field],
+                 is_user: bool = False,
                  ):
+        self.is_user: bool = is_user
         self.name: str = name
         self.plural_name: str = plural(name)
         self.snake_name: str = name_convert_to_snake(name)
@@ -66,4 +68,3 @@ class FKMetadata:
     def __init__(self, field: Field, other_model: ModelMetadata):
         self.field = field
         self.other_model = other_model
-

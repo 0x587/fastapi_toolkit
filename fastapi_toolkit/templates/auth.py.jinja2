@@ -2,38 +2,23 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi import Depends, Request, APIRouter
-from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin, schemas
-from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
+from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
+from fastapi_users.db import SQLAlchemyUserDatabase
 from fastapi_users.authentication import (
     AuthenticationBackend,
     BearerTransport,
     JWTStrategy,
 )
 from ..db import get_async_session
-from ..models import Base
+from ..models import User
+from ..schemas import UserRead, UserCreate, UserUpdate
 
 import uuid
 
 
-# TODO
-class UserRead(schemas.BaseUser[uuid.UUID]):
-    pass
-
-
-class UserCreate(schemas.BaseUserCreate):
-    pass
-
-
-class UserUpdate(schemas.BaseUserUpdate):
-    pass
-
-
-class User(SQLAlchemyBaseUserTableUUID, Base):
-    pass
-
-
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
     yield SQLAlchemyUserDatabase(session, User)
+
 
 # TODO
 SECRET = "SECRET"

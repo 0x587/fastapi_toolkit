@@ -4,6 +4,7 @@ from typing import List
 import sqlalchemy
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
+from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
 import datetime
 import enum
 
@@ -24,7 +25,11 @@ class Base(DeclarativeBase):
 
 
 {% for name, metadata in models.items() %}
+{% if metadata.is_user %}
+class User(SQLAlchemyBaseUserTableUUID, Base):
+{% else %}
 class {{ name }}(Base):
+{% endif %}
     __tablename__ = "{{ metadata.table_name }}"
     """pk"""
     {%- for field_name, field in metadata.pk.items() %}
