@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Tuple, Type
 
 
 class Link(ABC):
@@ -28,9 +28,10 @@ class ManyManyLink(Link):
     Just could set in one side.
     """
 
-    def __init__(self, left, right):
+    def __init__(self, left, right, data_model):
         self.left = left
         self.right = right
+        self.data_model = data_model
 
     def two_sides(self) -> Tuple[str, str]:
         return self.left, self.right

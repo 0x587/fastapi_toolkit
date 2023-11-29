@@ -83,7 +83,13 @@ def {{ route.name }}(ident: {{ pk_type }}, db=Depends(get_db)):
 {% for route in metadata.relation_routes() %}
 {%- set target = route.relation.target -%}
 {%- set target_pk_type = (target.pk.values()|list)[0].python_type_str -%}
-def {{ route.name }}(ident: {{ pk_type }}, {{ target.snake_name }}_ident: {{ target_pk_type }}, db=Depends(get_db)) -> {{ base_schema }}:
+def {{ route.name }}(ident: {{ pk_type }}, {{ target.snake_name }}_ident: {{ target_pk_type }},
+    {%- if not route.is_delete -%}
+    {%- for field_name, field in route.relation.link_fields.items() %}
+    {{ field_name }}: {{ field.python_type_str }},
+    {%- endfor -%}
+    {%- endif -%}
+    db=Depends(get_db)) -> {{ base_schema }}:
     self: {{ name }} = db.get({{ name }}, ident)
     target: {{ target.name }} = db.get({{ target.name }}, {{ target.snake_name }}_ident)
     if target is None:
@@ -97,8 +103,16 @@ def {{ route.name }}(ident: {{ pk_type }}, {{ target.snake_name }}_ident: {{ tar
 {% else %}
     {%- if route.relation.side == 'one' %}
     self.relation_one_{{ target.snake_name }} = target
-    {% else %}
+    {% elif route.relation.side == 'many' %}
     self.relation_many_{{ target.snake_name }}.append(target)
+    {% elif route.relation.side == 'both' %}
+    self.{{ target.snake_name }}_associations.append(
+        {{ route.relation.link_table.name }}(
+        {{ target.snake_name }} = target,
+        {%- for field_name, field in route.relation.link_fields.items() %}
+        {{ field_name }} = {{ field_name }},
+        {%- endfor -%}
+        ))
     {% endif -%}
 {%- endif %}
     db.commit()

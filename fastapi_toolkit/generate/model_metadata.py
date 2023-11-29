@@ -35,13 +35,16 @@ class ModelMetadata:
 
 
 class LinkTableMetadata:
-    def __init__(self, left: ModelMetadata, right: ModelMetadata, link: ManyManyLink):
+    def __init__(self, left: ModelMetadata, right: ModelMetadata,
+                 link: ManyManyLink, data_model: Optional[ModelMetadata] = None):
+        self.name = f'Association{left.name}With{right.name}'
         self.left = left
         self.right = right
         self.link = link
-        self.table_name = f'link_table__{left.snake_name}__and__{right.snake_name}'
+        self.table_name = f'association__{left.snake_name}__and__{right.snake_name}'
         self.left_pk_name, self.left_pk = left.require_one_pk()
         self.right_pk_name, self.right_pk = right.require_one_pk()
+        self.data_model = data_model
 
 
 class RelationshipSide(StrEnum):
@@ -62,6 +65,10 @@ class RelationshipMetadata:
         self.target: ModelMetadata = target
         self.side: RelationshipSide = side
         self.link_table: Optional[LinkTableMetadata] = link_table
+        self.link_fields: Dict[str, Field] = {}
+        if side == RelationshipSide.both:
+            if link_table.data_model is not None:
+                self.link_fields.update(link_table.data_model.fields)
 
 
 class FKMetadata:

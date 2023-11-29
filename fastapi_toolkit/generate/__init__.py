@@ -37,6 +37,7 @@ class CodeGenerator:
             os.mkdir(self.auth_path)
         self.env = Environment(loader=PackageLoader('fastapi_toolkit', 'templates'))
         self.model_metadata: Dict[str, ModelMetadata] = {}
+        self.data_model_metadata: Dict[str, ModelMetadata] = {}
         self.user_model: Optional[ModelMetadata] = None
         self.link_table_metadata: List[LinkTableMetadata] = []
         self.router_metadata: List[RouterMetadata] = []
@@ -99,6 +100,10 @@ class CodeGenerator:
     def parse_models(self):
         mm = ModelManager
         for name, info in mm.models.items():
+            if info.just_data:
+                self.data_model_metadata[name] = ModelMetadata(
+                    name, {f['name']: f['field'] for f in info.fields}, info.is_user)
+                continue
             self.model_metadata[name] = ModelMetadata(name, {f['name']: f['field'] for f in info.fields}, info.is_user)
         for left_name, info in mm.models.items():
             if not info.links:
@@ -117,8 +122,10 @@ class CodeGenerator:
                         RelationshipMetadata(self.model_metadata[left_name], RelationshipSide.one))
 
                 elif isinstance(link, ManyManyLink):
+                    data_model = self.data_model_metadata[
+                        link.data_model] if link.data_model in self.data_model_metadata else None
                     link_table = LinkTableMetadata(
-                        self.model_metadata[left_name], self.model_metadata[link.right], link)
+                        self.model_metadata[left_name], self.model_metadata[link.right], link, data_model)
                     self.link_table_metadata.append(link_table)
                     self.model_metadata[left_name].relationship.append(
                         RelationshipMetadata(self.model_metadata[link.right], RelationshipSide.both, link_table))
@@ -145,7 +152,7 @@ class CodeGenerator:
 
     def _define2schema(self) -> str:
         template = self.env.get_template('schemas.py.jinja2')
-        return template.render(models=self.model_metadata.values())
+        return template.render(models=self.model_metadata.values(), link_tables=self.link_table_metadata)
 
     def _generate_db_connect(self):
         return self.env.get_template('db.py.jinja2').render()

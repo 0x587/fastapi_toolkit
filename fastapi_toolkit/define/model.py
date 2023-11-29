@@ -19,6 +19,15 @@ class UserModel:
         register_model(cls, is_user=True)
 
 
+class DataModel:
+    """
+    Define only the data model without generating the corresponding tables and their routes
+    """
+
+    def __init_subclass__(cls, **kwargs):
+        register_model(cls, just_data=True)
+
+
 def get_type_str(type) -> str:
     mod = inspect.getmodule(type)
     if mod is None:
@@ -85,11 +94,11 @@ class Field:
             self.default_factory_str = get_type_str(default_factory)
 
 
-T = TypeVar('T', bound=Union[BaseModel, UserModel])
+T = TypeVar('T', bound=Union[BaseModel, UserModel, DataModel])
 
 
-def register_model(model: Type[T], is_user=False):
-    info = ModelInfo(is_user)
+def register_model(model: Type[T], is_user=False, just_data=False):
+    info = ModelInfo(is_user, just_data)
     info.model = model
     for name, field in model.__dict__.items():
         if isinstance(field, Field):
@@ -110,11 +119,13 @@ class ModelInfo:
     title: str = ''
     links: List[Link]
     is_user: bool
+    just_data: bool
 
-    def __init__(self, is_user: bool = False):
+    def __init__(self, is_user: bool = False, just_data: bool = False):
         self.fields = []
         self.links = []
         self.is_user = is_user
+        self.just_data = just_data
 
 
 class ModelManager:

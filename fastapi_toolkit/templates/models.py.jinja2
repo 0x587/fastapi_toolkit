@@ -13,14 +13,28 @@ class Base(DeclarativeBase):
     pass
 
 {% for link_table in link_tables %}
-{{ link_table.table_name }} = sqlalchemy.Table(
-    "{{ link_table.table_name }}",
-    Base.metadata,
-    sqlalchemy.Column("{{ link_table.left.snake_name }}_{{ link_table.left_pk_name }}",
-                      ForeignKey("{{ link_table.left.table_name }}.{{ link_table.left_pk_name }}")),
-    sqlalchemy.Column("{{ link_table.right.snake_name }}_{{ link_table.right_pk_name }}",
-                      ForeignKey("{{ link_table.right.table_name }}.{{ link_table.right_pk_name }}")),
-)
+class {{ link_table.name }}(Base):
+    __tablename__ = "{{ link_table.table_name }}"
+    _id: Mapped[int] = mapped_column(sqlalchemy.sql.sqltypes.INT, primary_key=True, autoincrement=True)
+    {%- for field_name, field in link_table.left.pk.items() %}
+    {{ link_table.left.snake_name }}_{{ field_name }}: Mapped[{{ field.python_type_str }}] = mapped_column(
+        ForeignKey("{{ link_table.left.table_name }}.{{ field_name }}"))
+    {% endfor -%}
+    {{ link_table.left.snake_name }}: Mapped["{{ link_table.left.name }}"] = relationship(
+        back_populates="{{ link_table.right.snake_name }}_associations"
+    )
+    {%- for field_name, field in link_table.right.pk.items() %}
+    {{ link_table.right.snake_name }}_{{ field_name }}: Mapped[{{ field.python_type_str }}] = mapped_column(
+        ForeignKey("{{ link_table.right.table_name }}.{{ field_name }}"))
+    {% endfor -%}
+    {{ link_table.right.snake_name }}: Mapped["{{ link_table.right.name }}"] = relationship(
+        back_populates="{{ link_table.left.snake_name }}_associations"
+    )
+
+    {%- set  metadata=link_table.data_model -%}
+    {%- for field_name, field in metadata.fields.items() %}
+    {{ field_name }}: Mapped[{{ field.python_type_str }}] = mapped_column({{ field.sql_type_str }}, nullable=True)
+    {% endfor -%}
 {% endfor %}
 
 
@@ -39,7 +53,7 @@ class {{ name }}(Base):
 
     """fields"""
     {%- for field_name, field in metadata.fields.items() %}
-    {{ field_name }}: Mapped[{{ field.python_type_str }}] = mapped_column({{ field.sql_type_str }})
+    {{ field_name }}: Mapped[{{ field.python_type_str }}] = mapped_column({{ field.sql_type_str }}, nullable=True)
     {% endfor -%}
     """"""
 
@@ -58,7 +72,10 @@ class {{ name }}(Base):
     relation_many_{{ relation.target.snake_name }}: Mapped[List["{{ relation.target.name }}"]] = relationship("{{ relation.target.name }}", back_populates="relation_one_{{metadata.snake_name}}")
     {%- endif -%}
     {%- if relation.side == 'both' -%}
-    relation_many_{{ relation.target.snake_name }}: Mapped[List["{{ relation.target.name }}"]] = relationship(secondary={{ relation.link_table.table_name }}, back_populates="relation_many_{{metadata.snake_name}}")
+    relation_many_{{ relation.target.snake_name }}: Mapped[List["{{ relation.target.name }}"]] = relationship(
+        secondary="{{ relation.link_table.table_name }}", back_populates="relation_many_{{metadata.snake_name}}")
+    {{ relation.target.snake_name }}_associations: Mapped[List["{{ relation.link_table.name }}"]] = relationship(
+        back_populates="{{metadata.snake_name}}")
     {%- endif %}
     {% endfor -%}
     """"""
