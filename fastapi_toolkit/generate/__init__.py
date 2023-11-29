@@ -144,6 +144,11 @@ class CodeGenerator:
 
         self.router_metadata = [RouterMetadata(md) for md in self.model_metadata.values()]
 
+        # add user route
+        for metadata in self.router_metadata:
+            if any([r.target.is_user for r in metadata.model.relationship]):
+                metadata.add_user_routes()
+
         self._parse_mock()
 
     def _define2table(self) -> str:

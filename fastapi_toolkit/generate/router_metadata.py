@@ -82,6 +82,13 @@ class RelationRoute(BaseRoute):
         self.url += relation.target.snake_name
 
 
+class UserQueryRoute(QueryRoute):
+    def __init__(self, with_relation: Sequence[RelationshipMetadata] = None):
+        super().__init__(True, with_relation)
+        self.name += '_for_me'
+        self.url += '_for_me'
+
+
 class RouterMetadata:
     model: ModelMetadata
     routes: List[BaseRoute]
@@ -121,8 +128,16 @@ class RouterMetadata:
             self.routes.append(QueryRoute(with_relation=cbs))
             self.routes.append(QueryRoute(is_all=True, with_relation=cbs))
 
+    def add_user_routes(self):
+        self.routes.append(UserQueryRoute())
+        for cbs in get_combinations(self.model.relationship):
+            self.routes.append(UserQueryRoute(with_relation=cbs))
+
     def query_routes(self):
         return [r for r in self.routes if isinstance(r, QueryRoute) and r.need_crud]
+
+    def user_query_routes(self):
+        return [r for r in self.routes if isinstance(r, UserQueryRoute) and r.need_crud]
 
     def create_routes(self):
         return [r for r in self.routes if isinstance(r, CreateRoute) and r.need_crud]

@@ -28,6 +28,13 @@ def {{ route.name }}(ident: {{ pk_type }}, db=Depends(get_db)) -> {{ schema }}:
     return db.get({{ name }}, ident)
 {% endif %}
 {% endfor %}
+# ---------------------User Query Routes----------------------
+from ..auth import current_user
+{% for route in metadata.user_query_routes() %}
+{% set schema = base_schema + route.schema_suffix %}
+def {{ route.name }}(user=Depends(current_user), db=Depends(get_db)) -> Page[{{ schema }}]:
+    return paginate(db.query({{ name }}).where({{ name }}.relation_many_user.contains(user)))
+{% endfor %}
 # -----------------------Create Routes------------------------
 {% for route in metadata.create_routes() %}
 def {{ route.name }}(
