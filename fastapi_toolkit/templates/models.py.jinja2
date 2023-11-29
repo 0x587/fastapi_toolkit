@@ -46,9 +46,11 @@ class {{ name }}(Base):
 {% endif %}
     __tablename__ = "{{ metadata.table_name }}"
     """pk"""
+    {% if not metadata.is_user %}
     {%- for field_name, field in metadata.pk.items() %}
     {{ field_name }}: Mapped[{{ field.python_type_str }}] = mapped_column({{ field.sql_type_str }}, primary_key=True)
     {% endfor -%}
+    {% endif %}
     """"""
 
     """fields"""

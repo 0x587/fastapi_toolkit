@@ -103,6 +103,9 @@ def register_model(model: Type[T], is_user=False, just_data=False):
     for name, field in model.__dict__.items():
         if isinstance(field, Field):
             info.fields.append({'name': name, 'field': field})
+    if is_user:
+        import sqlalchemy
+        info.fields.append({'name': 'id', 'field': Field(uuid.UUID, sqlalchemy.UUID, primary_key=True)})
     if hasattr(model, 'TKConfig'):
         config = model.TKConfig
         if hasattr(config, 'title'):

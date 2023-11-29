@@ -28,6 +28,7 @@ class ManyManyLink(Link):
     Just could set in one side.
     """
 
+    # TODO: data_model should be a optional param
     def __init__(self, left, right, data_model):
         self.left = left
         self.right = right
@@ -35,3 +36,8 @@ class ManyManyLink(Link):
 
     def two_sides(self) -> Tuple[str, str]:
         return self.left, self.right
+
+
+class UserManyLink(ManyManyLink):
+    def __init__(self, right, data_model):
+        super().__init__('User', right, data_model)

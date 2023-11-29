@@ -4,10 +4,13 @@ import uuid
 from faker import Faker
 
 from .models import *
-from .db import get_db
+from .db import get_db, get_async_session
+from .auth import get_user_db, get_user_manager
+from .schemas import UserCreate
 
 faker = Faker(locale='zh-CN')
 db = next(get_db())
+
 
 def mock_str(length=10) -> str:
     az = 'abcdefghijklmnopqrstuvwxyz'
@@ -37,11 +40,29 @@ def mock_uuid() -> uuid.UUID:
 def mock_phone_number() -> str:
     return faker.phone_number()
 
+
 def mock_datetime() -> datetime.datetime:
     return faker.date_time()
 
+
 def main():
     # -------------------mock model-------------------
+    # TODO: mock user
+    user_list = []
+    from .crud import user_crud
+    import asyncio
+    async def func():
+        await user_crud.create_user('super@admin.com', 'admin', True)
+        for i in range(10):
+            user_list.append(
+                await user_crud.create_user(
+                    email=f'user{i}@user.com',
+                    password=f'user{i}',
+                    is_superuser=False
+                )
+            )
+    asyncio.run(func())
+    print('mock user done')
 
     {% for model in models.values() %}
     {% if not model.is_user %}
@@ -74,6 +95,10 @@ def main():
                     {{ crud }}.link_to_{{ relation.target.snake_name }}(
                         left_side_model.{{ model.require_one_pk()[0] }},
                         right_side_model.{{ relation.target.require_one_pk()[0] }},
+                        {% for field_name, field in relation.link_fields.items() %}
+                        {%- set mock_fun, mock_args = field.mock -%}
+                        {{ field_name }}={{ mock_fun }}({{ mock_args }}),
+                        {% endfor %}
                         db=db)
         if '{{ relation.side }}' == 'many':
             visited.add('{{ model_name }} - {{ relation.target.name }}')

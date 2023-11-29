@@ -142,7 +142,7 @@ class CodeGenerator:
             } for cb in cbs]
             md.relationship_combinations = cbs
 
-        self.router_metadata = [RouterMetadata(md) for md in self.model_metadata.values() if not md.is_user]
+        self.router_metadata = [RouterMetadata(md) for md in self.model_metadata.values()]
 
         self._parse_mock()
 

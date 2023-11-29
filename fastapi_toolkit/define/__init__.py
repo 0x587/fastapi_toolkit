@@ -1,5 +1,5 @@
 from .model import ModelManager, BaseModel, UserModel, DataModel, Field
-from .link import OneManyLink, ManyManyLink
+from .link import OneManyLink, ManyManyLink, UserManyLink
 
 __all__ = [
     'ModelManager',
@@ -9,4 +9,5 @@ __all__ = [
     'Field',
     'OneManyLink',
     'ManyManyLink',
+    'UserManyLink',
 ]

@@ -28,9 +28,9 @@ class LinkTable{{ link_table.right.name }}To{{ link_table.left.name }}(BaseModel
 
 {% for model in models %}
 {% if model.is_user %}
-class UserRead(schemas.BaseUser[uuid.UUID]):
+class UserSchema(schemas.BaseUser[uuid.UUID]):
     """fields"""
-    {% for field_name, field in model.fields.items() %}{{field_name}}: {{field.python_type_str}} = Field(
+    {% for field_name, field in model.fields.items() %}{{field_name}}: Optional[{{field.python_type_str}}] = Field(
         {%- if field.default_str %}default={{field.default_str}},{%- endif -%}
         {%- if field.default_factory_str %}default_factory={{field.default_factory_str}},{%- endif -%}
     )
@@ -38,7 +38,7 @@ class UserRead(schemas.BaseUser[uuid.UUID]):
 
 class UserCreate(schemas.BaseUserCreate):
     """fields"""
-    {% for field_name, field in model.fields.items() %}{{field_name}}: {{field.python_type_str}} = Field(
+    {% for field_name, field in model.fields.items() %}{{field_name}}: Optional[{{field.python_type_str}}] = Field(
         {%- if field.default_str %}default={{field.default_str}},{%- endif -%}
         {%- if field.default_factory_str %}default_factory={{field.default_factory_str}},{%- endif -%}
     )
@@ -46,7 +46,7 @@ class UserCreate(schemas.BaseUserCreate):
 
 class UserUpdate(schemas.BaseUserUpdate):
     """fields"""
-    {% for field_name, field in model.fields.items() %}{{field_name}}: {{field.python_type_str}} = Field(
+    {% for field_name, field in model.fields.items() %}{{field_name}}: Optional[{{field.python_type_str}}] = Field(
         {%- if field.default_str %}default={{field.default_str}},{%- endif -%}
         {%- if field.default_factory_str %}default_factory={{field.default_factory_str}},{%- endif -%}
     )
@@ -68,7 +68,7 @@ class {{ model.base_schema_name }}(BaseModel):
     {% endfor %}
     class Config:
         from_attributes = True
-
+{% endif %}
 {% for combination in model.relationship_combinations %}
 class {{ model.base_schema_name }}With{{ combination.name }}({{ model.base_schema_name }}):
     {%- for relation in combination.combination -%}
@@ -81,7 +81,6 @@ class {{ model.base_schema_name }}With{{ combination.name }}({{ model.base_schem
     {%- endif -%}
     {% endfor %}
 {% endfor -%}
-{% endif %}
 {%- endfor -%}
 
 {%- for model in models -%}
