@@ -23,6 +23,27 @@ def {{ link_create_route.name }}(
         {{ target.snake_name }}_{{ target_pk_name }}, db=db)
     return {{ s_name }}
 {% endfor %}
+from ..auth import current_user
+{% for route in metadata.user_create_routes() %}
+{%- set target = route.relation.target -%}
+{%- set target_pk_name = (target.pk.keys()|list)[0] -%}
+{%- set target_pk_type = (target.pk.values()|list)[0].python_type_str -%}
+def {{ route.name }}(
+    {%- for field_name, field in route.relation.link_fields.items() %}
+    {{ field_name }}: {{ field.python_type_str }},
+    {%- endfor -%}
+    user = Depends(current_user),
+    {{ s_name }}: {{ metadata.model.name }} = Depends(create_one),
+    db=Depends(get_db)) -> {{ metadata.model.base_schema_name }}:
+    {{ route.link_to_route.name }}(
+        {{ s_name }}.{{ (metadata.model.pk.keys()|list)[0] }},
+        user.id, db=db,
+        {%- for field_name, field in route.relation.link_fields.items() %}
+        {{ field_name }}={{ field_name }},
+        {%- endfor -%}
+    )
+    return {{ s_name }}
+{% endfor %}
 
 
 {% for route in metadata.routes %}

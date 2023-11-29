@@ -89,6 +89,14 @@ class UserQueryRoute(QueryRoute):
         self.url += '_for_me'
 
 
+class UserCreateRoute(CreateRoute):
+
+    def __init__(self, to_user_relation: RelationshipMetadata, link_to_user_route: RelationRoute):
+        super().__init__(to_user_relation, link_to_user_route)
+        self.name += '_for_me'
+        self.url += '_for_me'
+
+
 class RouterMetadata:
     model: ModelMetadata
     routes: List[BaseRoute]
@@ -132,24 +140,33 @@ class RouterMetadata:
         self.routes.append(UserQueryRoute())
         for cbs in get_combinations(self.model.relationship):
             self.routes.append(UserQueryRoute(with_relation=cbs))
+        for rea in self.model.relationship:
+            if rea.target.is_user:
+                for route in self.routes:
+                    if isinstance(route, RelationRoute) and route.relation == rea:
+                        self.routes.append(UserCreateRoute(rea, route))
+                        return
 
     def query_routes(self):
-        return [r for r in self.routes if isinstance(r, QueryRoute) and r.need_crud]
+        return [r for r in self.routes if type(r) == QueryRoute and r.need_crud]
 
     def user_query_routes(self):
-        return [r for r in self.routes if isinstance(r, UserQueryRoute) and r.need_crud]
+        return [r for r in self.routes if type(r) == UserQueryRoute and r.need_crud]
 
     def create_routes(self):
-        return [r for r in self.routes if isinstance(r, CreateRoute) and r.need_crud]
+        return [r for r in self.routes if type(r) == CreateRoute and r.need_crud]
+
+    def user_create_routes(self):
+        return [r for r in self.routes if type(r) == UserCreateRoute and not r.need_crud]
 
     def update_routes(self):
-        return [r for r in self.routes if isinstance(r, UpdateRoute) and r.need_crud]
+        return [r for r in self.routes if type(r) == UpdateRoute and r.need_crud]
 
     def delete_routes(self):
-        return [r for r in self.routes if isinstance(r, DeleteRoute) and r.need_crud]
+        return [r for r in self.routes if type(r) == DeleteRoute and r.need_crud]
 
     def relation_routes(self):
-        return [r for r in self.routes if isinstance(r, RelationRoute) and r.need_crud]
+        return [r for r in self.routes if type(r) == RelationRoute and r.need_crud]
 
     def link_create_routes(self):
-        return [r for r in self.routes if isinstance(r, CreateRoute) and not r.need_crud]
+        return [r for r in self.routes if type(r) == CreateRoute and not r.need_crud]
