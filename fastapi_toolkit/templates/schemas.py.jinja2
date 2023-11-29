@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 from fastapi_users import schemas
@@ -52,7 +52,7 @@ class {{ model.base_schema_name }}(BaseModel):
 class {{ model.base_schema_name }}With{{ combination.name }}({{ model.base_schema_name }}):
     {%- for relation in combination.combination -%}
     {% if relation.side == 'one' %}
-    {{ relation.target.snake_name }}: "{{ relation.target.base_schema_name }}" = Field(alias="relation_one_{{ relation.target.snake_name }}")
+    {{ relation.target.snake_name }}: Optional["{{ relation.target.base_schema_name }}"] = Field(alias="relation_one_{{ relation.target.snake_name }}")
     {% else %}
     {{ relation.target.snake_plural_name }}: List["{{ relation.target.base_schema_name }}"] = Field(alias="relation_many_{{ relation.target.snake_name }}")
     {%- endif -%}
