@@ -35,7 +35,9 @@ class CodeGenerator:
             os.mkdir(self.routers_path)
         if not os.path.exists(self.auth_path):
             os.mkdir(self.auth_path)
-        self.env = Environment(loader=PackageLoader('fastapi_toolkit', 'templates'))
+        self.env = Environment(
+            loader=PackageLoader('fastapi_toolkit', 'templates'),
+            trim_blocks=True, lstrip_blocks=True)
         self.model_metadata: Dict[str, ModelMetadata] = {}
         self.data_model_metadata: Dict[str, ModelMetadata] = {}
         self.user_model: Optional[ModelMetadata] = None
@@ -152,11 +154,11 @@ class CodeGenerator:
         self._parse_mock()
 
     def _define2table(self) -> str:
-        template = self.env.get_template('models.py.jinja2')
+        template = self.env.get_template('models/main.py.jinja2')
         return template.render(models=self.model_metadata, link_tables=self.link_table_metadata)
 
     def _define2schema(self) -> str:
-        template = self.env.get_template('schemas.py.jinja2')
+        template = self.env.get_template('schemas/main.py.jinja2')
         return template.render(models=self.model_metadata.values(), link_tables=self.link_table_metadata)
 
     def _generate_db_connect(self):
