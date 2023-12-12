@@ -2,14 +2,18 @@ import importlib
 import importlib.util as import_utils
 import os
 from pathlib import Path
+from typing import Optional
 
 import typer
 
 from fastapi_toolkit.generate import CodeGenerator
+from fastapi_toolkit.configer import Configer
 
 app = typer.Typer()
 
 tk_root = Path('.fastapi-toolkit')
+
+configer = Configer()
 
 
 def add_path_to_gitignore(path: Path):
@@ -41,8 +45,12 @@ def init():
 
 @app.command('g')
 @app.command('generate')
-def generate(metadata_path: Path = 'metadata', root_path: Path = 'inner_code',
+def generate(metadata_path: Optional[Path] = None, root_path: Optional[Path] = None,
              table: bool = True, router: bool = True, mock: bool = True, auth: bool = True):
+    if metadata_path is None:
+        metadata_path = Path(configer['metadata_path'] or 'metadata')
+    if root_path is None:
+        root_path = Path(configer['root_path'] or 'inner_code')
     if not root_path.is_dir():
         typer.confirm(f'root_path: {root_path} is not a dir, do you want to create it?', abort=True)
         root_path.mkdir(parents=True)
@@ -62,7 +70,9 @@ def generate(metadata_path: Path = 'metadata', root_path: Path = 'inner_code',
 
 @app.command('mock')
 @app.command('m')
-def mock(root_path: Path = 'inner_code'):
+def mock(root_path: Optional[Path] = None):
+    if root_path is None:
+        root_path = Path(configer['root_path'] or 'inner_code')
     main = importlib.import_module(str(root_path).replace('\\', '.') + '.mock').main
     main()
 
@@ -70,21 +80,27 @@ def mock(root_path: Path = 'inner_code'):
 db_app = typer.Typer()
 
 
-def get_dev_db(root_path: Path):
+def get_dev_db(root_path: Optional[Path] = None):
+    if root_path is None:
+        root_path = Path(configer['root_path'] or 'inner_code')
     module_path = root_path.joinpath('dev').joinpath(f'db.py')
     return import_module('db', module_path)
 
 
 @db_app.command('init')
 @db_app.command('i')
-def db_init(root_path: Path = 'inner_code'):
+def db_init(root_path: Optional[Path] = None):
+    if root_path is None:
+        root_path = Path(configer['root_path'] or 'inner_code')
     init = get_dev_db(root_path).init
     init(str(root_path).replace('\\', '.'))
 
 
 @db_app.command('migrate')
 @db_app.command('m')
-def db_migrate(root_path: Path = 'inner_code', msg: str = None):
+def db_migrate(root_path: Optional[Path] = None, msg: str = None):
+    if root_path is None:
+        root_path = Path(configer['root_path'] or 'inner_code')
     migrate = get_dev_db(root_path).migrate
     migrate(msg)
     print('must add "import fastapi_users_db_sqlalchemy" to migrate script')
@@ -92,7 +108,9 @@ def db_migrate(root_path: Path = 'inner_code', msg: str = None):
 
 @db_app.command('upgrade')
 @db_app.command('u')
-def db_upgrade(root_path: Path = 'inner_code'):
+def db_upgrade(root_path: Optional[Path] = None):
+    if root_path is None:
+        root_path = Path(configer['root_path'] or 'inner_code')
     upgrade = get_dev_db(root_path).upgrade
     upgrade()
 

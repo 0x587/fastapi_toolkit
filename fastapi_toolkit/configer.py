@@ -5,7 +5,7 @@ import yaml
 
 
 class Configer:
-    def __init__(self, config: Union[Path, str] = Path('fastapi-toolkit.yaml')):
+    def __init__(self, config: Union[Path, str] = Path('fastapi_toolkit.yaml')):
         if isinstance(config, str):
             path = Path(config)
         else:
