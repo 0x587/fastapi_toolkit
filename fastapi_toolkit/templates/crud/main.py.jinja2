@@ -1,0 +1,89 @@
+{% set name = metadata.model.name %}
+{% set s_name = metadata.model.snake_name %}
+{% set base_schema = metadata.model.base_schema_name %}
+{% set router = s_name + "_router" %}
+{% set just_one_pk = metadata.model.pk|length == 1 %}
+{% set pk_type = (metadata.model.pk.values()|list)[0].python_type_str %}
+
+from typing import List, Optional
+from fastapi import Depends, HTTPException, status
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
+import uuid
+import datetime
+from ..db import get_db, get_async_session
+from ..models import *
+from ..schemas import *
+from ..auth import get_user_db, get_user_manager
+
+{% if not metadata.model.is_user %}
+# ------------------------Query Routes------------------------
+{% for route in metadata.query_routes() %}
+{% include "crud/query.jinja2" %}
+
+{% endfor %}
+# ---------------------User Query Routes----------------------
+from ..auth import current_user
+{% for route in metadata.user_query_routes() %}
+{% set schema = base_schema + route.schema_suffix %}
+def {{ route.name }}(
+    {% for field_name, field in metadata.model.fields.items() %}
+    filter_{{field_name}}: Optional[{{field.python_type_str}}] = None,
+    {% endfor %}
+    sort_by: Optional[str] = None, is_desc: bool = False,
+    user=Depends(current_user), db=Depends(get_db)) -> Page[{{ schema }}]:
+    query = db.query({{ name }}).where({{ name }}.relation_many_user.contains(user))
+    {% for field_name, field in metadata.model.fields.items() %}
+    if filter_{{field_name}} is not None:
+        query = query.filter({{ name }}.{{field_name}} == filter_{{field_name}})
+    {% endfor %}
+    if sort_by is not None:
+        if is_desc:
+            query = query.order_by(getattr({{ name }}, sort_by).desc())
+        else:
+            query = query.order_by(getattr({{ name }}, sort_by))
+    return paginate(query)
+
+{% endfor %}
+# -----------------------Create Routes------------------------
+{% for route in metadata.create_routes() %}
+{% include "crud/create.jinja2" %}
+
+{% endfor %}
+# -----------------------Update Routes------------------------
+{% if just_one_pk %}
+{% for route in metadata.update_routes() %}
+{% include "crud/update.jinja2" %}
+
+{% endfor %}
+{% endif %}
+# -----------------------Delete Routes------------------------
+{% for route in metadata.delete_routes() %}
+{% include "crud/delete.jinja2" %}
+
+{% endfor %}
+{% else %}
+async def create_user(email: str, password: str, is_superuser: bool = False):
+    import contextlib
+    from fastapi_users.exceptions import UserAlreadyExists
+    get_async_session_context = contextlib.asynccontextmanager(get_async_session)
+    get_user_db_context = contextlib.asynccontextmanager(get_user_db)
+    get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
+    async with get_async_session_context() as session:
+        async with get_user_db_context(session) as user_db:
+            async with get_user_manager_context(user_db) as user_manager:
+                user = await user_manager.create(
+                    UserCreate(
+                        email=email, password=password, is_superuser=is_superuser
+                    )
+                )
+                return user
+
+{% endif %}
+# ----------------------Relation Routes-----------------------
+{% if just_one_pk %}
+{% for route in metadata.relation_routes() %}
+{% include "crud/relation.jinja2" %}
+
+{% endfor %}
+{% endif %}

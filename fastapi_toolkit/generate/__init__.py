@@ -179,7 +179,7 @@ class CodeGenerator:
         return self.env.get_template('router.py.jinja2').render(metadata=metadata)
 
     def _define2crud(self, metadata: RouterMetadata) -> str:
-        return self.env.get_template('crud.py.jinja2').render(metadata=metadata)
+        return self.env.get_template('crud/main.py.jinja2').render(metadata=metadata)
 
     def _router_init(self) -> str:
         return self.env.get_template('router_init.py.jinja2').render(models=self.model_metadata.values())
