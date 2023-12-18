@@ -114,14 +114,12 @@ class RouterMetadata:
         self.get_one = QueryRoute()
         self.get_all = QueryRoute(is_all=True)
         self.delete_one = DeleteRoute()
-        self.delete_all = DeleteRoute(is_all=True)
         self.routes = [
             self.create_one,
             self.update_one,
             self.get_one,
             self.get_all,
             self.delete_one,
-            self.delete_all,
         ]
         for relation in model.relationship:
             if len(relation.target.pk) > 1:

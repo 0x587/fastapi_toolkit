@@ -26,9 +26,9 @@ import datetime
 class {{ model.base_schema_name }}With{{ combination.name }}({{ model.base_schema_name }}):
     {% for relation in combination.combination %}
     {% if relation.side == 'one' %}
-    {{ relation.target.snake_name }}: Optional["{{ relation.target.base_schema_name }}"] = Field(alias="relation_one_{{ relation.target.snake_name }}")
+    {{ relation.target.snake_name }}: Optional["{{ relation.target.base_schema_name }}"] = Field(alias="{{ relation.target.snake_name }}")
     {% elif relation.side == 'many' %}
-    {{ relation.target.snake_plural_name }}: List["{{ relation.target.base_schema_name }}"] = Field(alias="relation_many_{{ relation.target.snake_name }}")
+    {{ relation.target.snake_plural_name }}: List["{{ relation.target.base_schema_name }}"] = Field(alias="{{ relation.target.snake_plural_name }}")
     {% elif relation.side == 'both' %}
     {{ relation.target.snake_plural_name }}: List["LinkTable{{ model.name }}To{{ relation.target.name }}"] = Field(alias="{{ relation.target.snake_name }}_associations")
     {% endif %}

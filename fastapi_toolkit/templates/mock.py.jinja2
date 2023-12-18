@@ -66,16 +66,17 @@ def main():
 
     {% for model in models.values() %}
     {% if not model.is_user %}
-    {%- set crud = model.snake_name + '_crud' -%}
+    {% set crud = model.snake_name + '_crud' %}
     from .crud import {{ crud }}
     {{ model.snake_name }}_list = []
     for _ in range({{ mock_model_count[model.name] }}):
         {{ model.snake_name }}_list.append(
             {{ model.snake_name }}_crud.create_one(
                     {% for field_name, field in model.fields.items() %}
-                    {%- set mock_fun, mock_args = field.mock -%}
+                    {% set mock_fun, mock_args = field.mock %}
                     {{ field_name }}={{ mock_fun }}({{ mock_args }}),
-                    {% endfor %}db=db))
+                    {% endfor %}
+                    db=db))
     print('mock {{ model.name }} done')
     {% endif %}
     {% endfor %}
@@ -84,7 +85,7 @@ def main():
 
     visited = set()
     {% for model_name ,model in models.items() %}
-    {%- set crud = model.snake_name + '_crud' -%}
+    {% set crud = model.snake_name + '_crud' %}
     {% for relation in model.relationship %}
     if '{{ model_name }} - {{ relation.target.name }}' not in visited:
         if '{{ relation.side }}' == 'both':
@@ -96,7 +97,7 @@ def main():
                         left_side_model.{{ model.require_one_pk()[0] }},
                         right_side_model.{{ relation.target.require_one_pk()[0] }},
                         {% for field_name, field in relation.link_fields.items() %}
-                        {%- set mock_fun, mock_args = field.mock -%}
+                        {% set mock_fun, mock_args = field.mock %}
                         {{ field_name }}={{ mock_fun }}({{ mock_args }}),
                         {% endfor %}
                         db=db)

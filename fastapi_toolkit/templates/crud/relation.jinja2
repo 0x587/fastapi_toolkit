@@ -13,15 +13,15 @@ def {{ route.name }}(ident: {{ pk_type }}, {{ target.snake_name }}_ident: {{ tar
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target {{ target.name }} not found")
 {% if route.is_delete %}
     {% if route.relation.side == 'one' %}
-    self.relation_one_{{ target.snake_name }} = None
+    self.{{ target.snake_name }} = None
     {% else %}
-    self.relation_many_{{ target.snake_name }}.remove(target)
+    self.{{ target.snake_plural_name }}.remove(target)
     {% endif %}
 {% else %}
     {% if route.relation.side == 'one' %}
-    self.relation_one_{{ target.snake_name }} = target
+    self.{{ target.snake_name }} = target
     {% elif route.relation.side == 'many' %}
-    self.relation_many_{{ target.snake_name }}.append(target)
+    self.{{ target.snake_plural_name }}.append(target)
     {% elif route.relation.side == 'both' %}
     self.{{ target.snake_name }}_associations.append(
         {{ route.relation.link_table.name }}(

@@ -27,14 +27,14 @@ class {{ name }}(Base):
     """relationship"""
     {% for relation in metadata.relationship %}
     {% if relation.side == 'one' %}
-    relation_one_{{ relation.target.snake_name }}: Mapped["{{ relation.target.name }}"] = relationship("{{ relation.target.name }}", back_populates="relation_many_{{metadata.snake_name}}")
+    {{ relation.target.snake_name }}: Mapped["{{ relation.target.name }}"] = relationship("{{ relation.target.name }}", back_populates="{{metadata.snake_plural_name}}")
     {% endif %}
     {% if relation.side == 'many' %}
-    relation_many_{{ relation.target.snake_name }}: Mapped[List["{{ relation.target.name }}"]] = relationship("{{ relation.target.name }}", back_populates="relation_one_{{metadata.snake_name}}")
+    {{ relation.target.snake_plural_name }}: Mapped[List["{{ relation.target.name }}"]] = relationship("{{ relation.target.name }}", back_populates="{{metadata.snake_name}}")
     {% endif %}
     {% if relation.side == 'both' %}
-    relation_many_{{ relation.target.snake_name }}: Mapped[List["{{ relation.target.name }}"]] = relationship(
-        secondary="{{ relation.link_table.table_name }}", back_populates="relation_many_{{metadata.snake_name}}")
+    {{ relation.target.snake_plural_name }}: Mapped[List["{{ relation.target.name }}"]] = relationship(
+        secondary="{{ relation.link_table.table_name }}", back_populates="{{metadata.snake_plural_name}}")
     {{ relation.target.snake_name }}_associations: Mapped[List["{{ relation.link_table.name }}"]] = relationship(
         back_populates="{{metadata.snake_name}}")
     {% endif %}
