@@ -86,20 +86,11 @@ class CodeGenerator:
                     f'"""\n')
             f.write(content)
 
-    def _parse_mock(self):
-        model_count: Dict[str, int] = {model_name: self.mock_base for model_name in self.model_metadata.keys()}
-        for model_name, model in self.model_metadata.items():
-            if not model.relationship:
-                continue
-            for relation in [r for r in model.relationship if r.side == RelationshipSide.many]:
-                model_count[relation.target.name] = model_count[model_name] * self.mock_relation_rate
+    def parse(self):
+        self._parse_models()
+        self._parse_mock()
 
-        if any([v > 500 for v in model_count.values()]):
-            raise ValueError('too many mock model, maybe has circle relationship')
-
-        self.mock_model_count = model_count
-
-    def parse_models(self):
+    def _parse_models(self):
         mm = ModelManager
         for name, info in mm.models.items():
             if info.just_data:
@@ -151,7 +142,18 @@ class CodeGenerator:
             if any([r.target.is_user for r in metadata.model.relationship]):
                 metadata.add_user_routes()
 
-        self._parse_mock()
+    def _parse_mock(self):
+        model_count: Dict[str, int] = {model_name: self.mock_base for model_name in self.model_metadata.keys()}
+        for model_name, model in self.model_metadata.items():
+            if not model.relationship:
+                continue
+            for relation in [r for r in model.relationship if r.side == RelationshipSide.many]:
+                model_count[relation.target.name] = model_count[model_name] * self.mock_relation_rate
+
+        if any([v > 500 for v in model_count.values()]):
+            raise ValueError('too many mock model, maybe has circle relationship')
+
+        self.mock_model_count = model_count
 
     def _define2table(self) -> str:
         template = self.env.get_template('models/main.py.jinja2')
@@ -167,14 +169,6 @@ class CodeGenerator:
     def _generate_db_script(self):
         return self.env.get_template('dev.db.py.jinja2').render()
 
-    def generate_tables(self):
-        self._generate_file(os.path.join(self.root_path, '__init__.py'), lambda: 'from .mock import main as mock\n')
-        self._generate_file(os.path.join(self.root_path, 'db.py'), self._generate_db_connect)
-        self._generate_file(self.models_path, self._define2table)
-        self._generate_file(self.schemas_path, self._define2schema)
-        self._generate_file(os.path.join(self.dev_path, 'db.py'), self._generate_db_script)
-        self._generate_file(os.path.join(self.dev_path, '__init__.py'), lambda: '')
-
     def _define2router(self, metadata: RouterMetadata) -> str:
         return self.env.get_template('router.py.jinja2').render(metadata=metadata)
 
@@ -188,6 +182,17 @@ class CodeGenerator:
         return self.env.get_template('mock.py.jinja2').render(
             mock_model_count=self.mock_model_count, models=self.model_metadata,
             mock_base=self.mock_base, mock_relation_rate=self.mock_relation_rate)
+
+    def _define2auth(self):
+        return self.env.get_template('auth.py.jinja2').render(user_model=self.user_model)
+
+    def generate_tables(self):
+        self._generate_file(os.path.join(self.root_path, '__init__.py'), lambda: 'from .mock import main as mock\n')
+        self._generate_file(os.path.join(self.root_path, 'db.py'), self._generate_db_connect)
+        self._generate_file(self.models_path, self._define2table)
+        self._generate_file(self.schemas_path, self._define2schema)
+        self._generate_file(os.path.join(self.dev_path, 'db.py'), self._generate_db_script)
+        self._generate_file(os.path.join(self.dev_path, '__init__.py'), lambda: '')
 
     def generate_routers(self):
         for metadata in self.router_metadata:
@@ -203,9 +208,6 @@ class CodeGenerator:
 
     def generate_mock(self):
         self._generate_file(os.path.join(self.root_path, 'mock.py'), self._define2mock)
-
-    def _define2auth(self):
-        return self.env.get_template('auth.py.jinja2').render(user_model=self.user_model)
 
     def generate_auth(self):
         self._generate_file(os.path.join(self.auth_path, '__init__.py'), self._define2auth)
