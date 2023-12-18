@@ -191,6 +191,8 @@ class CodeGenerator:
 
     def generate_routers(self):
         for metadata in self.router_metadata:
+            if metadata.model.is_user:
+                continue
             self._generate_file(os.path.join(self.crud_path, f'{metadata.model.snake_name}_crud.py'), self._define2crud,
                                 metadata=metadata)
             self._generate_file(os.path.join(self.routers_path, f'{metadata.model.snake_name}_router.py'),

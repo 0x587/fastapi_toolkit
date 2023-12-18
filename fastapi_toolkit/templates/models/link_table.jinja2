@@ -1,9 +1,11 @@
 {% for link_table in link_tables %}
 class {{ link_table.name }}(Base):
     __tablename__ = "{{ link_table.table_name }}"
-
+    """pk"""
     _id: Mapped[int] = mapped_column(sqlalchemy.sql.sqltypes.INT, primary_key=True, autoincrement=True)
+    """"""
 
+    """fk"""
     {% for field_name, field in link_table.left.pk.items() %}
     {{ link_table.left.snake_name }}_{{ field_name }}: Mapped[{{ field.python_type_str }}] = mapped_column(
         ForeignKey("{{ link_table.left.table_name }}.{{ field_name }}"))
@@ -18,9 +20,12 @@ class {{ link_table.name }}(Base):
     {{ link_table.right.snake_name }}: Mapped["{{ link_table.right.name }}"] = relationship(
         back_populates="{{ link_table.left.snake_name }}_associations"
     )
+    """"""
 
+    """fields"""
     {% set  metadata=link_table.data_model %}
     {% for field_name, field in metadata.fields.items() %}
     {{ field_name }}: Mapped[{{ field.python_type_str }}] = mapped_column({{ field.sql_type_str }}, nullable=True)
     {% endfor %}
+    """"""
 {% endfor %}
