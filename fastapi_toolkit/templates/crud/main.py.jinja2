@@ -1,74 +1,107 @@
-{% set name = metadata.model.name %}
-{% set s_name = metadata.model.snake_name %}
-{% set base_schema = metadata.model.base_schema_name %}
-{% set router = s_name + "_router" %}
-{% set just_one_pk = metadata.model.pk|length == 1 %}
-{% set pk_type = (metadata.model.pk.values()|list)[0].python_type_str %}
+{% set name = model.name.camel %}
+{% set s_name = model.name.snake %}
+{% set base_schema = 'SchemaBase'+name %}
+{#{% set router = s_name + "_router" %}#}
+{#{% set just_one_pk = metadata.model.pk|length == 1 %}#}
+{#{% set pk_type = (metadata.model.pk.values()|list)[0].python_type_str %}#}
 
 from typing import List, Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, Response, HTTPException, status
 from fastapi_pagination import Page
-from fastapi_pagination.ext.sqlalchemy import paginate
+from fastapi_pagination.ext.async_sqlalchemy import paginate
+from pydantic import UUID4
 import uuid
 import datetime
-from ..db import get_db, get_async_session
+from sqlalchemy import select
+from ..db import get_db
 from ..models import *
 from ..schemas import *
-from ..auth import get_user_db, get_user_manager
 
-{% if not metadata.model.is_user %}
+NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item Not found")
+
+
 # ------------------------Query Routes------------------------
-{% for route in metadata.query_routes() %}
-{% include "crud/query.jinja2" %}
+async def get_one(ident: UUID4, db=Depends(get_db)) -> {{ base_schema }}:
+    query = select({{ name }}).where({{ name }}.id == ident).limit(1)
+    res = (await db.execute(query)).scalars().one_or_none()
+    if res:
+        return res
+    raise NOT_FOUND
 
-{% endfor %}
-# ---------------------User Query Routes----------------------
-from ..auth import current_user
-{% for route in metadata.user_query_routes() %}
-{% set schema = base_schema + route.schema_suffix %}
-def {{ route.name }}(
-    {% for field_name, field in metadata.model.fields.items() %}
-    filter_{{field_name}}: Optional[{{field.python_type_str}}] = None,
-    {% endfor %}
-    sort_by: Optional[str] = None, is_desc: bool = False,
-    user=Depends(current_user), db=Depends(get_db)) -> Page[{{ schema }}]:
-    query = db.query({{ name }}).where({{ name }}.relation_many_user.contains(user))
-    {% for field_name, field in metadata.model.fields.items() %}
-    if filter_{{field_name}} is not None:
-        query = query.filter({{ name }}.{{field_name}} == filter_{{field_name}})
+
+async def get_all(
+        {% for field in model.fields %}
+        filter_{{field.name.snake}}: Optional[{{field.type}}] = None,
+        {% endfor %}
+        sort_by: Optional[str] = None, is_desc: bool = False,
+        db=Depends(get_db)
+) -> Page[{{ base_schema }}]:
+    query = select({{ name }})
+    {% for field in model.fields %}
+    if filter_{{field.name.snake}} is not None:
+        query = query.filter({{ name }}.{{field.name.snake}} == filter_{{field.name.snake}})
     {% endfor %}
     if sort_by is not None:
         if is_desc:
             query = query.order_by(getattr({{ name }}, sort_by).desc())
         else:
             query = query.order_by(getattr({{ name }}, sort_by))
-    return paginate(query)
+    return await paginate(db, query)
 
-{% endfor %}
+
+# ---------------------User Query Routes----------------------
+
+
 # -----------------------Create Routes------------------------
-{% for route in metadata.create_routes() %}
-{% include "crud/create.jinja2" %}
+async def create_one(
+        {% for field in model.fields %}
+        {{field.name.snake}}: {{field.type}},
+        {% endfor %}
+        response: Response, db=Depends(get_db)
+) -> {{ base_schema }}:
+    {{ s_name }} = {{ base_schema }}(
+        {% for field in model.fields %}
+        {{field.name.snake}}={{field.name.snake}},
+        {% endfor %}
+    )
+    {{ s_name }} = {{ name }}(**{{ s_name }}.model_dump())
+    db.add({{ s_name }})
+    await db.commit()
+    await db.refresh({{ s_name }})
+    response.status_code = status.HTTP_201_CREATED
+    return {{ base_schema }}.model_validate({{ s_name }})
 
-{% endfor %}
+
 # -----------------------Update Routes------------------------
-{% if just_one_pk %}
-{% for route in metadata.update_routes() %}
-{% include "crud/update.jinja2" %}
+async def update_one(
+        ident: UUID4,
+        {% for field in model.fields %}
+        {{field.name.snake}}: Optional[{{field.type}}] = None,
+        {% endfor %}
+        db=Depends(get_db)) -> {{ base_schema }}:
+    query = select({{ name }}).where({{ name }}.id == ident).limit(1)
+    res = (await db.execute(query)).scalars().one_or_none()
+    if not res:
+        raise NOT_FOUND
+    {% for field in model.fields %}
+    if {{field.name.snake}} is not None:
+        res.{{field.name.snake}} = {{field.name.snake}}
+    {% endfor %}
+    await db.commit()
+    await db.refresh(res)
+    return {{ base_schema }}.model_validate(res)
 
-{% endfor %}
-{% endif %}
+
 # -----------------------Delete Routes------------------------
-{% for route in metadata.delete_routes() %}
-{% include "crud/delete.jinja2" %}
+async def delete_one(ident: UUID4, db=Depends(get_db)):
+    query = select({{ name }}).where({{ name }}.id == ident).limit(1)
+    res = (await db.execute(query)).scalars().one_or_none()
+    if not res:
+        raise NOT_FOUND
+    await db.delete(res)
+    await db.commit()
+    return {'message': 'Deleted', 'id': ident}
 
-{% endfor %}
-{% else %}
 
-{% endif %}
 # ----------------------Relation Routes-----------------------
-{% if just_one_pk %}
-{% for route in metadata.relation_routes() %}
-{% include "crud/relation.jinja2" %}
 
-{% endfor %}
-{% endif %}

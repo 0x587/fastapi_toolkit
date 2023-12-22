@@ -1,45 +1,14 @@
-from typing import List, Optional
-
-from pydantic import BaseModel, Field
-from fastapi_users import schemas
 import uuid
 import datetime
+from typing import List, Optional
 
-{% for link_table in link_tables %}
+from fastapi_toolkit.define import BaseModel
+from pydantic import Field, UUID4
 
-{% include 'schemas/link_table.jinja2' %}
-
-{% endfor %}
 
 {% for model in models %}
-{% if model.is_user %}
-
-{% include 'schemas/user.jinja2' %}
-
-{% else %}
 
 {% include 'schemas/base_schema.jinja2' %}
 
-{% endif %}
-
-{% for combination in model.relationship_combinations %}
-class {{ model.base_schema_name }}With{{ combination.name }}({{ model.base_schema_name }}):
-    {% for relation in combination.combination %}
-    {% if relation.side == 'one' %}
-    {{ relation.target.snake_name }}: Optional["{{ relation.target.base_schema_name }}"] = Field(alias="{{ relation.target.snake_name }}")
-    {% elif relation.side == 'many' %}
-    {{ relation.target.snake_plural_name }}: List["{{ relation.target.base_schema_name }}"] = Field(alias="{{ relation.target.snake_plural_name }}")
-    {% elif relation.side == 'both' %}
-    {{ relation.target.snake_plural_name }}: List["LinkTable{{ model.name }}To{{ relation.target.name }}"] = Field(alias="{{ relation.target.snake_name }}_associations")
-    {% endif %}
-    {% endfor %}
-
-
-{% endfor %}
-{% endfor %}
-{% for model in models %}
-{% for combination in model.relationship_combinations %}
-{{ model.base_schema_name }}With{{ combination.name }}.model_rebuild()
-{% endfor %}
 {% endfor %}
 

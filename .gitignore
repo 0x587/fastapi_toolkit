@@ -3,10 +3,13 @@
 dist/
 **pyc
 
-alembic/
+.alembic/
 alembic.ini
 demo/
 
 **/__pycache__/
 
 config.yaml
+.fastapi-toolkit
+
+.env

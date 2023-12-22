@@ -46,6 +46,7 @@ def init():
 @app.command('g')
 @app.command('generate')
 def generate(metadata_path: Optional[Path] = None, root_path: Optional[Path] = None,
+             force: bool = False,
              table: bool = True, router: bool = True, mock: bool = True, auth: bool = True):
     if metadata_path is None:
         metadata_path = Path(configer['metadata_path'] or 'metadata')
@@ -57,6 +58,7 @@ def generate(metadata_path: Optional[Path] = None, root_path: Optional[Path] = N
     module_name = "models"
     import_module(module_name, metadata_path.joinpath(f'{module_name}.py'))
     generator = CodeGenerator(root_path)
+    generator.force_rewrite = force
     generator.parse()
     if table:
         generator.generate_tables()
@@ -93,7 +95,7 @@ def db_init(root_path: Optional[Path] = None):
     if root_path is None:
         root_path = Path(configer['root_path'] or 'inner_code')
     init = get_dev_db(root_path).init
-    init(str(root_path).replace('\\', '.'))
+    init()
 
 
 @db_app.command('migrate')
@@ -103,7 +105,6 @@ def db_migrate(root_path: Optional[Path] = None, msg: str = None):
         root_path = Path(configer['root_path'] or 'inner_code')
     migrate = get_dev_db(root_path).migrate
     migrate(msg)
-    print('must add "import fastapi_users_db_sqlalchemy" to migrate script')
 
 
 @db_app.command('upgrade')

@@ -1,42 +1,24 @@
-{% if metadata.is_user %}
-class User(SQLAlchemyBaseUserTableUUID, Base):
-{% else %}
-class {{ name }}(Base):
-{% endif %}
-    __tablename__ = "{{ metadata.table_name }}"
-    """pk"""
-    {% if not metadata.is_user %}
-    {% for field_name, field in metadata.pk.items() %}
-    {{ field_name }}: Mapped[{{ field.python_type_str }}] = mapped_column({{ field.sql_type_str }}, primary_key=True)
-    {% endfor %}
-    {% endif %}
-    """"""
+{% import 'utils.j2' as utils %}
 
-    """fields"""
-    {% for field_name, field in metadata.fields.items() %}
-    {{ field_name }}: Mapped[{{ field.python_type_str }}] = mapped_column({{ field.sql_type_str }}, nullable=True)
-    {% endfor %}
-    """"""
+class {{ model.name.camel }}(Base):
+    __tablename__ = "{{ model.name.snake }}"
 
-    """fk"""
-    {% for fk_name, fk in metadata.fk.items() %}
-    {{ fk_name }}: Mapped[{{ fk.field.python_type_str }}] = mapped_column(ForeignKey("{{fk.other_model.table_name}}.{{ fk.other_model.require_one_pk()[0] }}"), nullable=True)
-    {% endfor %}
-    """"""
+    id: Mapped[uuid.UUID] = mapped_column(sqltypes.UUID, primary_key=True)
 
-    """relationship"""
-    {% for relation in metadata.relationship %}
-    {% if relation.side == 'one' %}
-    {{ relation.target.snake_name }}: Mapped["{{ relation.target.name }}"] = relationship("{{ relation.target.name }}", back_populates="{{metadata.snake_plural_name}}")
-    {% endif %}
-    {% if relation.side == 'many' %}
-    {{ relation.target.snake_plural_name }}: Mapped[List["{{ relation.target.name }}"]] = relationship("{{ relation.target.name }}", back_populates="{{metadata.snake_name}}")
-    {% endif %}
-    {% if relation.side == 'both' %}
-    {{ relation.target.snake_plural_name }}: Mapped[List["{{ relation.target.name }}"]] = relationship(
-        secondary="{{ relation.link_table.table_name }}", back_populates="{{metadata.snake_plural_name}}")
-    {{ relation.target.snake_name }}_associations: Mapped[List["{{ relation.link_table.name }}"]] = relationship(
-        back_populates="{{metadata.snake_name}}")
-    {% endif %}
+    {% for field in model.fields %}
+    {{ utils.render_table_field(field) }}
     {% endfor %}
-    """"""
+
+    {%- for link in model.links %}
+    {% set t = link.t1 %}
+    {% set rt = link.t2 %}
+    {% set l = link.m1 %}
+    {% set r = link.m2 %}
+    {% set r_name = r.name.snake_plural if t == 'many' else r.name.snake %}
+    {% set l_name = l.name.snake_plural if rt == 'many' else l.name.snake %}
+    {{ r_name }}: Mapped['{{ r.name.camel }}'] = relationship(back_populates="{{ l_name }}")
+    {% if t != 'many' %}
+    fk_{{ r_name }}: Mapped[uuid.UUID] = mapped_column(ForeignKey("{{ r.name.snake }}.id"), nullable={{ link.nullable }})
+    {% endif %}
+
+    {% endfor %}

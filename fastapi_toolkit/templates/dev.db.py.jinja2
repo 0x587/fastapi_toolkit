@@ -1,3 +1,5 @@
+from {{ root_path }}.setting import get_settings
+
 """
 Database migration tool
 db.py init init alembic
@@ -16,25 +18,23 @@ import argparse
 
 alembic_ini_path = "./alembic.ini"
 
+
 def get_app_config():
     with open("config.yaml", "r") as f:
         config_data = yaml.safe_load(f)
     return config_data
 
 
-def init(root_path):
-    if not os.path.isdir("alembic"):
-        os.mkdir("alembic")
-
+def init():
     alembic_cfg = Config(alembic_ini_path)
 
-    command.init(alembic_cfg, "./alembic")
+    command.init(alembic_cfg, "./.alembic")
 
-    app_data = get_app_config()
-    user = app_data['database']['user']
-    password = app_data['database']['password']
-    db_name = app_data['database']['db_name']
-    host = app_data['database']['host']
+    setting = get_settings()
+    user = setting.user
+    password = setting.password
+    host = setting.host
+    db_name = setting.database
 
     config = configparser.ConfigParser()
     config.read(alembic_ini_path)
@@ -42,18 +42,19 @@ def init(root_path):
     with open(alembic_ini_path, "w") as f:
         config.write(f)
 
-    with open("alembic/env.py", "r") as f:
+    with open(".alembic/env.py", "r") as f:
         env_content = f.read()
         env_content = ("from sqlalchemy.orm import DeclarativeBase\n"
-                       f"from {root_path}.models import *\n") + env_content
+                       f"from {{ root_path }}.models import *\n"
+                       f"from {{ root_path }}.auth.models import *\n") + env_content
         env_content = env_content.replace("target_metadata = None",
                                           "target_metadata = Base.metadata")
-    with open("alembic/env.py", "w") as f:
+    with open(".alembic/env.py", "w") as f:
         f.write(env_content)
 
 
 def migrate(msg: str = None):
-    if not os.path.isdir("alembic"):
+    if not os.path.isdir(".alembic"):
         raise Exception("alembic not init")
 
     alembic_cfg = Config(alembic_ini_path)
@@ -61,7 +62,7 @@ def migrate(msg: str = None):
 
 
 def upgrade():
-    if not os.path.isdir("alembic"):
+    if not os.path.isdir(".alembic"):
         raise Exception("alembic not init")
 
     alembic_cfg = Config(alembic_ini_path)

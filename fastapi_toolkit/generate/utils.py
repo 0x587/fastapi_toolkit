@@ -3,7 +3,7 @@ from itertools import combinations
 from typing import Sequence, TypeVar
 
 
-def name_convert_to_snake(name: str) -> str:
+def to_snake(name: str) -> str:
     return re.sub(r'([a-z])([A-Z])', r'\1_\2', name).lower()
 
 

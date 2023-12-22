@@ -1,23 +1,17 @@
 import uuid
-from typing import List
-
-import sqlalchemy
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey
-from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
 import datetime
 import enum
+from typing import List
+
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey
+from sqlalchemy.sql import sqltypes
+
+from .db import Base
 
 
-class Base(DeclarativeBase):
-    pass
-
-
-{% include "models/link_table.jinja2" %}
-
-{% for name, metadata in models.items() %}
+{% for model in models %}
 
 {% include 'models/table.jinja2' %}
-
 
 {% endfor %}

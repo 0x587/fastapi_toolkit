@@ -9,23 +9,32 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-packages = [{include = "fastapi_toolkit"}]
+packages = [{ include = "fastapi_toolkit" }]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 fastapi = "^0.104.1"
 fastapi-pagination = "^0.12.12"
 sqlalchemy = "^2.0.23"
-jinja2 = "^3.1.2"
-typer = {extras = ["all"], version = "^0.9.0"}
+typer = { extras = ["all"], version = "^0.9.0" }
 faker = "^20.0.3"
 psycopg2-binary = "^2.9.9"
 asyncpg = "^0.29.0"
-alembic = "^1.12.1"
 pydantic = "^2.5.1"
 pyyaml = "^6.0.1"
-fastapi-users = {extras = ["sqlalchemy"], version = "^12.1.2"}
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.6"
+bcrypt = "4.0.1"
+pydantic-settings = "^2.1.0"
+
+[tool.poetry.group.dev.dependencies]
+jinja2 = "^3.1.2"
+alembic = "^1.12.1"
 uvicorn = "^0.24.0.post1"
+streamlit = "^1.29.0"
+munch = "^4.0.0"
+streamlit-antd-components = "^0.2.4"
 
 [build-system]
 requires = ["poetry-core"]
