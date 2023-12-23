@@ -1,9 +1,0 @@
-{% import 'utils.j2' as utils %}
-class SchemaBase{{ model.name.camel }}(BaseModel):
-    """pk"""
-    id: UUID4 = Field(default_factory=uuid.uuid4)
-
-    """fields"""
-    {% for field in model.fields %}
-    {{ utils.render_schema_field(field) }}
-    {% endfor %}
