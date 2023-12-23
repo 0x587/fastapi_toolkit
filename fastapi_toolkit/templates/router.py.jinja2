@@ -28,6 +28,15 @@ from ..crud.{{ s_name }}_crud import *
 )
 
 {{ router }}.add_api_route(
+    path="/get_link_all",
+    endpoint=get_link_all,
+    methods=["POST"],
+    summary="Get all {{ model.name.snake_plural }} with link",
+    description="Get all {{ model.name.snake_plural }} with link",
+    response_description="All {{ model.name.snake_plural }} with link",
+)
+
+{{ router }}.add_api_route(
     path="/create_one",
     endpoint=create_one,
     methods=["POST"],

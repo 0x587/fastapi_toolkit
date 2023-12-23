@@ -1,4 +1,4 @@
-{% set name = model.name.camel %}
+{% set name = model.name.db %}
 {% set s_name = model.name.snake %}
 {% set base_schema = model.name.base_schema %}
 {#{% set router = s_name + "_router" %}#}
@@ -12,7 +12,7 @@ from fastapi_pagination.ext.async_sqlalchemy import paginate
 from pydantic import UUID4
 import uuid
 import datetime
-from sqlalchemy import select
+from sqlalchemy import select, Select
 from ..db import get_db
 from ..models import *
 from ..schemas import *
@@ -28,13 +28,12 @@ async def get_one(ident: UUID4, db=Depends(get_db)) -> {{ base_schema }}:
     raise NOT_FOUND
 
 
-async def get_all(
+async def __get_all_query(
         {% for field in model.fields %}
         filter_{{field.name.snake}}: Optional[{{field.type}}] = None,
         {% endfor %}
         sort_by: Optional[str] = None, is_desc: bool = False,
-        db=Depends(get_db)
-) -> Page[{{ base_schema }}]:
+) -> Select:
     query = select({{ name }})
     {% for field in model.fields %}
     if filter_{{field.name.snake}} is not None:
@@ -45,9 +44,21 @@ async def get_all(
             query = query.order_by(getattr({{ name }}, sort_by).desc())
         else:
             query = query.order_by(getattr({{ name }}, sort_by))
+    return query
+
+
+async def get_all(
+        query=Depends(__get_all_query),
+        db=Depends(get_db)
+) -> Page[{{ base_schema }}]:
     return await paginate(db, query)
 
 
+async def get_link_all(
+        query=Depends(__get_all_query),
+        db=Depends(get_db)
+) -> Page[{{ model.name.schema }}]:
+    return await paginate(db, query)
 # ---------------------User Query Routes----------------------
 
 
@@ -76,6 +87,11 @@ async def create_one(
     {% for link in model.links %}
     {% if link.t1 == 'one' %}
     if {{ link.m2.name.snake }}_ident is not None:
+        {{ link.m2.name.snake }} = await db.get({{ name }}, {{ link.m2.name.snake }}_ident)
+        if not {{ link.m2.name.snake }}:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="{{ link.m2.name.camel }} Not found id:" + str({{ link.m2.name.snake }}_ident))
         {{ s_name }}.{{ link.m2.name.fk }} = {{ link.m2.name.snake }}_ident
     {% endif %}
     {% endfor %}

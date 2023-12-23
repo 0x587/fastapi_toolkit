@@ -32,3 +32,7 @@ class {{ model.name.schema }}({{ model.name.base_schema }}):
 
 {% endfor %}
 
+{% for model in models %}
+{{ model.name.base_schema }}.model_rebuild()
+{{ model.name.schema }}.model_rebuild()
+{% endfor %}
