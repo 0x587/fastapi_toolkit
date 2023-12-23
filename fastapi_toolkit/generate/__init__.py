@@ -19,6 +19,11 @@ class NameInfo(PydanticBaseModel):
     snake_plural: str
     camel: str
     camel_plural: str
+    table: str
+    db: str
+    schema: str
+    base_schema: str
+    fk: str
 
 
 class Link(PydanticBaseModel):
@@ -138,6 +143,11 @@ class CodeGenerator:
             snake_plural=plural(to_snake(name)),
             camel=name,
             camel_plural=plural(name),
+            table=to_snake(name),
+            db=f'DB{name}',
+            schema=f'Schema{name}',
+            base_schema=f'SchemaBase{name}',
+            fk=f'fk_{to_snake(name)}_id',
         )
 
     def _make_render_data(self, model_name: str, m: Type[BaseModel]) -> ModelRenderData:

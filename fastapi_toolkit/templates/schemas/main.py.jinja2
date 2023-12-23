@@ -8,7 +8,7 @@ from pydantic import Field, UUID4
 
 
 {% for model in models %}
-class SchemaBase{{ model.name.camel }}(BaseModel):
+class {{ model.name.base_schema }}(BaseModel):
     """pk"""
     id: UUID4 = Field(default_factory=uuid.uuid4)
 
@@ -17,15 +17,15 @@ class SchemaBase{{ model.name.camel }}(BaseModel):
     {{ utils.render_schema_field(field) }}
     {% endfor %}
 
-class Schema{{ model.name.camel }}(SchemaBase{{ model.name.camel }}):
+class {{ model.name.schema }}({{ model.name.base_schema }}):
     """relationships"""
     {% for link in model.links %}
     {% set t = link.t1 %}
     {% set r = link.m2 %}
     {% if t == 'many' %}
-    {{ r.name.snake_plural  }}: List["SchemaBase{{ r.name.camel }}"]
+    {{ r.name.snake_plural }}: List["{{ r.name.base_schema }}"]
     {% else %}
-    {{ r.name.snake  }}: "SchemaBase{{ r.name.camel }}"
+    {{ r.name.snake }}: "{{ r.name.base_schema }}"
     {% endif %}
     {% endfor %}
 

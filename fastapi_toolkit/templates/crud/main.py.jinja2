@@ -1,6 +1,6 @@
 {% set name = model.name.camel %}
 {% set s_name = model.name.snake %}
-{% set base_schema = 'SchemaBase'+name %}
+{% set base_schema = model.name.base_schema %}
 {#{% set router = s_name + "_router" %}#}
 {#{% set just_one_pk = metadata.model.pk|length == 1 %}#}
 {#{% set pk_type = (metadata.model.pk.values()|list)[0].python_type_str %}#}
@@ -22,8 +22,7 @@ NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item No
 
 # ------------------------Query Routes------------------------
 async def get_one(ident: UUID4, db=Depends(get_db)) -> {{ base_schema }}:
-    query = select({{ name }}).where({{ name }}.id == ident).limit(1)
-    res = (await db.execute(query)).scalars().one_or_none()
+    res = await db.get({{ name }}, ident)
     if res:
         return res
     raise NOT_FOUND
@@ -57,6 +56,15 @@ async def create_one(
         {% for field in model.fields %}
         {{field.name.snake}}: {{field.type}},
         {% endfor %}
+        {% for link in model.links %}
+        {% if link.t1 == 'one' %}
+        {% if link.nullable %}
+        {{ link.m2.name.snake }}_ident: Optional[UUID4] = None,
+        {% else %}
+        {{ link.m2.name.snake }}_ident: UUID4,
+        {% endif %}
+        {% endif %}
+        {% endfor %}
         response: Response, db=Depends(get_db)
 ) -> {{ base_schema }}:
     {{ s_name }} = {{ base_schema }}(
@@ -65,6 +73,12 @@ async def create_one(
         {% endfor %}
     )
     {{ s_name }} = {{ name }}(**{{ s_name }}.model_dump())
+    {% for link in model.links %}
+    {% if link.t1 == 'one' %}
+    if {{ link.m2.name.snake }}_ident is not None:
+        {{ s_name }}.{{ link.m2.name.fk }} = {{ link.m2.name.snake }}_ident
+    {% endif %}
+    {% endfor %}
     db.add({{ s_name }})
     await db.commit()
     await db.refresh({{ s_name }})
@@ -79,8 +93,7 @@ async def update_one(
         {{field.name.snake}}: Optional[{{field.type}}] = None,
         {% endfor %}
         db=Depends(get_db)) -> {{ base_schema }}:
-    query = select({{ name }}).where({{ name }}.id == ident).limit(1)
-    res = (await db.execute(query)).scalars().one_or_none()
+    res = await db.get({{ name }}, ident)
     if not res:
         raise NOT_FOUND
     {% for field in model.fields %}
@@ -94,8 +107,7 @@ async def update_one(
 
 # -----------------------Delete Routes------------------------
 async def delete_one(ident: UUID4, db=Depends(get_db)):
-    query = select({{ name }}).where({{ name }}.id == ident).limit(1)
-    res = (await db.execute(query)).scalars().one_or_none()
+    res = await db.get({{ name }}, ident)
     if not res:
         raise NOT_FOUND
     await db.delete(res)

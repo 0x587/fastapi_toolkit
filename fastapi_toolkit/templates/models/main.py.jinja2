@@ -13,7 +13,7 @@ from .db import Base
 
 {% for model in models %}
 class {{ model.name.camel }}(Base):
-    __tablename__ = "{{ model.name.snake }}"
+    __tablename__ = "{{ model.name.table }}"
 
     id: Mapped[uuid.UUID] = mapped_column(sqltypes.UUID, primary_key=True)
 
@@ -31,7 +31,7 @@ class {{ model.name.camel }}(Base):
     {% set r_type = 'List["'+r.name.camel+'"]' if t == 'many' else r.name.camel %}
     {{ r_name }}: Mapped[{{ r_type }}] = relationship(back_populates="{{ l_name }}")
     {% if t != 'many' %}
-    fk_{{ r_name }}: Mapped[uuid.UUID] = mapped_column(ForeignKey("{{ r.name.snake }}.id"), nullable={{ link.nullable }})
+    {{ r.name.fk }}: Mapped[uuid.UUID] = mapped_column(ForeignKey("{{ r.name.table }}.id"), nullable={{ link.nullable }})
     {% endif %}
 
     {% endfor %}
