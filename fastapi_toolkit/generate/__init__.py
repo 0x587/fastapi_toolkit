@@ -5,8 +5,8 @@ import typer
 from typing import Callable, Any, Sequence, Dict, List, Optional, Tuple, Literal, Type
 from jinja2 import Environment, PackageLoader
 
-from pydantic import BaseModel as PydanticBaseModel
-from fastapi_toolkit.define import BaseModel
+from pydantic import BaseModel
+from fastapi_toolkit.define import Schema
 
 from .sql_mapping import mapping
 from .utils import to_snake, plural
@@ -14,7 +14,7 @@ from .utils import to_snake, plural
 GENERATE_FUNC = Callable[[Any, ...], str]
 
 
-class NameInfo(PydanticBaseModel):
+class NameInfo(BaseModel):
     snake: str
     snake_plural: str
     camel: str
@@ -26,7 +26,7 @@ class NameInfo(PydanticBaseModel):
     fk: str
 
 
-class Link(PydanticBaseModel):
+class Link(BaseModel):
     t1: Literal["one", "many"]
     t2: Optional[Literal["one", "many"]]
     m1: 'ModelRenderData'
@@ -34,8 +34,9 @@ class Link(PydanticBaseModel):
     nullable: bool
 
 
-class ModelRenderData(PydanticBaseModel):
+class ModelRenderData(BaseModel):
     name: NameInfo
+    model: Type[Schema] = None
     fields: List[Dict[str, Any]] = []
     links: List[Link] = []
 
@@ -66,8 +67,8 @@ class CodeGenerator:
             loader=PackageLoader('fastapi_toolkit', 'templates'),
             trim_blocks=True, lstrip_blocks=True)
 
-        self.models: Dict[str, Type[BaseModel]] = {}
-        self.links: List[Tuple[Literal["one"] | Literal["many"], Type[BaseModel], Type[BaseModel]]] = []
+        self.define_schemas: Dict[str, Type[Schema]] = {}
+        self.links: List[Tuple[Literal["one"] | Literal["many"], Type[Schema], Type[Schema]]] = []
 
     @staticmethod
     def _check_file_valid(path):
@@ -111,18 +112,18 @@ class CodeGenerator:
         self._parse_models()
         self._parse_mock()
 
-    def _get_pydantic_models(self, root=BaseModel):
+    def _get_pydantic_models(self, root=Schema):
         for model_ in root.__subclasses__():
             yield model_
             yield from self._get_pydantic_models(model_)
 
     def _parse_models(self):
-        self.models = {m.__name__: m for m in self._get_pydantic_models()}
+        self.define_schemas = {m.__name__: m for m in self._get_pydantic_models()}
         self.model_render_data = {}
-        for n, m in self.models.items():
-            self.model_render_data[n] = ModelRenderData(name=self._name_info(n))
-        for n, m in self.models.items():
-            self._make_render_data(n, m)
+        for n, m in self.define_schemas.items():
+            self.model_render_data[n] = ModelRenderData(name=self._name_info(n), model=m)
+        for n, m in self.define_schemas.items():
+            self._make_render_data(n, m, self.model_render_data)
         for a in self.model_render_data.values():
             if not a.links:
                 continue
@@ -150,22 +151,22 @@ class CodeGenerator:
             fk=f'fk_{to_snake(name)}_id',
         )
 
-    def _make_render_data(self, model_name: str, m: Type[BaseModel]) -> ModelRenderData:
+    def _make_render_data(self, model_name: str, model_: Type[Schema], d: dict) -> ModelRenderData:
         def is_model(t: Type) -> bool:
-            return isinstance(t, type) and BaseModel.__subclasscheck__(t)
+            return isinstance(t, type) and Schema.__subclasscheck__(t)
 
-        model = self.model_render_data[model_name]
-        for name, field in m.model_fields.items():
+        model = d[model_name]
+        for name, field in model_.model_fields.items():
             if name in ['id']:
                 raise ValueError(f'{model_name}.{name} is reserved')
 
-            field_type: Type[BaseModel] | None = field.annotation
+            field_type: Type[Schema] | None = field.annotation
             if field_type is None:
                 raise ValueError(f'{model_name}.{name} missing type hint')
 
             if is_model(field.annotation):
                 model.links.append(Link(
-                    t1='one', t2=None, m1=model, m2=self.model_render_data[field_type.__name__],
+                    t1='one', t2=None, m1=model, m2=d[field_type.__name__],
                     nullable=not field.is_required()))
                 continue
 
@@ -173,10 +174,10 @@ class CodeGenerator:
             if hasattr(field.annotation, '__origin__') and Sequence.__subclasscheck__(
                     getattr(field.annotation, '__origin__')):
                 # is a model sequence
-                seq_member: Type[BaseModel] = getattr(field.annotation, '__args__')[0]
+                seq_member: Type[Schema] = getattr(field.annotation, '__args__')[0]
                 if is_model(seq_member):
                     model.links.append(Link(
-                        t1="many", t2=None, m1=model, m2=self.model_render_data[seq_member.__name__],
+                        t1="many", t2=None, m1=model, m2=d[seq_member.__name__],
                         nullable=not field.is_required()))
                     continue
 
@@ -241,7 +242,7 @@ class CodeGenerator:
         raise NotImplementedError()
 
     def generate_auth(self):
-        user_model = self._make_render_data('User', self.models['User'])
+        user_model = self._make_render_data('User', self.define_schemas['User'], self.model_render_data)
         self._generate_file(os.path.join(self.auth_path, '__init__.py'), self._from_template('auth/__init__.py.j2'))
         self._generate_file(os.path.join(self.auth_path, 'models.py'),
                             self._from_template('auth/models.py.j2', model=user_model))

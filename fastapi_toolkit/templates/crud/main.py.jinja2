@@ -126,6 +126,17 @@ async def delete_one(ident: UUID4, db=Depends(get_db)):
     res = await db.get({{ name }}, ident)
     if not res:
         raise NOT_FOUND
+    {% if model.links %}
+    {% for link in model.links %}
+    {% if link.t1 == 'one' %}
+    res.{{ link.m2.name.snake }} = None
+    {% else %}
+    for i in await res.awaitable_attrs.{{ link.m2.name.snake_plural }}:
+        await db.delete(i)
+    {% endif %}
+    {% endfor %}
+    await db.commit()
+    {% endif %}
     await db.delete(res)
     await db.commit()
     return {'message': 'Deleted', 'id': ident}

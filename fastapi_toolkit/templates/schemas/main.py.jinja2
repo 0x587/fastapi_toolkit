@@ -3,12 +3,12 @@ import uuid
 import datetime
 from typing import List, Optional
 
-from fastapi_toolkit.define import BaseModel
+from fastapi_toolkit.define import Schema
 from pydantic import Field, UUID4
 
 
 {% for model in models %}
-class {{ model.name.base_schema }}(BaseModel):
+class{{ model.name.base_schema }}(Schema):
     """pk"""
     id: UUID4 = Field(default_factory=uuid.uuid4)
 

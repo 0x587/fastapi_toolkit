@@ -4,7 +4,7 @@ import datetime
 
 from typing import Union, List, Optional
 from pydantic import computed_field, Field
-from fastapi_toolkit.define import BaseModel
+from fastapi_toolkit.define import Schema
 
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import sqltypes
@@ -29,16 +29,16 @@ class DBUser(Base):
 
     {{ utils.render_table_fields(model.fields) }}
 
-class Token(BaseModel):
+class Token(Schema):
     access_token: str
     token_type: str
 
 
-class TokenData(BaseModel):
+class TokenData(Schema):
     username: Union[str, None] = None
 
 
-class SchemaUser(BaseModel):
+class SchemaUser(Schema):
     id: uuid.UUID
     username: str
     scopes_: Optional[str] = Field(exclude=True, alias='scopes')
@@ -62,7 +62,7 @@ class SchemaUserFull(SchemaUser):
     accessed_at: Optional[datetime.datetime]
 
 
-class SchemaUserCreate(BaseModel):
+class SchemaUserCreate(Schema):
     username: str
     password: str
     {{ utils.render_schema_fields(model.fields) }}

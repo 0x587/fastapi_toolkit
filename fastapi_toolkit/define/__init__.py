@@ -1,6 +1,6 @@
-from .model import Field, BaseModel
+from .model import Field, Schema
 
 __all__ = [
     'Field',
-    'BaseModel',
+    'Schema',
 ]
