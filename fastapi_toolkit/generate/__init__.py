@@ -119,9 +119,10 @@ class CodeGenerator:
 
     def _parse_models(self):
         self.define_schemas = {m.__name__: m for m in self._get_pydantic_models()}
-        self.model_render_data = {}
-        for n, m in self.define_schemas.items():
-            self.model_render_data[n] = ModelRenderData(name=self._name_info(n), model=m)
+        self.model_render_data: Dict[str, ModelRenderData] = {
+            n: ModelRenderData(name=self._name_info(n), model=m)
+            for n, m in self.define_schemas.items()
+        }
         for n, m in self.define_schemas.items():
             self._make_render_data(n, m, self.model_render_data)
         for a in self.model_render_data.values():
@@ -129,10 +130,11 @@ class CodeGenerator:
                 continue
             for l1 in a.links:
                 for l2 in self.model_render_data[l1.m2.name.camel].links:
-                    if l2.m2.name.camel == a.name.camel:
-                        l1.t2 = l2.t1
-                        l2.t2 = l1.t1
-                        break
+                    if l2.m2.name.camel != a.name.camel:
+                        continue
+                    l1.t2 = l2.t1
+                    l2.t2 = l1.t1
+                    break
 
     def _parse_mock(self):
         pass
@@ -155,6 +157,13 @@ class CodeGenerator:
         def is_model(t: Type) -> bool:
             return isinstance(t, type) and Schema.__subclasscheck__(t)
 
+        def is_batch_model(t: Type) -> bool:
+            if hasattr(t, '__origin__') and Sequence.__subclasscheck__(
+                    getattr(t, '__origin__')):
+                seq_member: Type[Schema] = getattr(t, '__args__')[0]
+                return is_model(seq_member)
+            return False
+
         model = d[model_name]
         for name, field in model_.model_fields.items():
             if name in ['id']:
@@ -164,22 +173,17 @@ class CodeGenerator:
             if field_type is None:
                 raise ValueError(f'{model_name}.{name} missing type hint')
 
-            if is_model(field.annotation):
+            if is_model(field_type):
                 model.links.append(Link(
                     t1='one', t2=None, m1=model, m2=d[field_type.__name__],
                     nullable=not field.is_required()))
                 continue
 
-            # is a sequence
-            if hasattr(field.annotation, '__origin__') and Sequence.__subclasscheck__(
-                    getattr(field.annotation, '__origin__')):
-                # is a model sequence
-                seq_member: Type[Schema] = getattr(field.annotation, '__args__')[0]
-                if is_model(seq_member):
-                    model.links.append(Link(
-                        t1="many", t2=None, m1=model, m2=d[seq_member.__name__],
-                        nullable=not field.is_required()))
-                    continue
+            if is_batch_model(field_type):
+                model.links.append(Link(
+                    t1="many", t2=None, m1=model, m2=d[getattr(field_type, '__args__')[0].__name__],
+                    nullable=not field.is_required()))
+                continue
 
             model.fields.append(
                 {
