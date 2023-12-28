@@ -3,63 +3,74 @@
 {% set router = s_name + "_router" %}
 
 from fastapi import APIRouter
+
+from ..config import ModelConfig
 from ..crud.{{ s_name }}_crud import *
 
-{{ router }} = APIRouter(
-    prefix="/{{ s_name }}",
-    tags=["{{ name }}"])
 
-{{ router }}.add_api_route(
-    path="/get_one",
-    endpoint=get_one,
-    methods=["POST"],
-    summary="Get one {{ s_name }}",
-    description="Get one {{ s_name }}",
-    response_description="A {{ s_name }}",
-)
+class {{ name }}Router(APIRouter):
+    def __init__(self, config: ModelConfig):
+        super().__init__()
+        self.prefix = "/{{ s_name }}"
+        self.tags = ["{{ name }}"]
 
-{{ router }}.add_api_route(
-    path="/get_all",
-    endpoint=get_all,
-    methods=["POST"],
-    summary="Get all {{ model.name.snake_plural }}",
-    description="Get all {{ model.name.snake_plural }}",
-    response_description="All {{ model.name.snake_plural }}",
-)
+        if config.get_one:
+            self.add_api_route(
+                path="/get_one",
+                endpoint=get_one,
+                methods=["POST"],
+                summary="Get one {{ s_name }}",
+                description="Get one {{ s_name }}",
+                response_description="A {{ s_name }}",
+            )
 
-{{ router }}.add_api_route(
-    path="/get_link_all",
-    endpoint=get_link_all,
-    methods=["POST"],
-    summary="Get all {{ model.name.snake_plural }} with link",
-    description="Get all {{ model.name.snake_plural }} with link",
-    response_description="All {{ model.name.snake_plural }} with link",
-)
+        if config.get_all:
+            self.add_api_route(
+                path="/get_all",
+                endpoint=get_all,
+                methods=["POST"],
+                summary="Get all {{ model.name.snake_plural }}",
+                description="Get all {{ model.name.snake_plural }}",
+                response_description="All {{ model.name.snake_plural }}",
+            )
 
-{{ router }}.add_api_route(
-    path="/create_one",
-    endpoint=create_one,
-    methods=["POST"],
-    summary="Create one {{ s_name }}",
-    description="Create one {{ s_name }}",
-    response_description="Created {{ s_name }}",
-)
+        if config.get_link_all:
+            self.add_api_route(
+                path="/get_link_all",
+                endpoint=get_link_all,
+                methods=["POST"],
+                summary="Get all {{ model.name.snake_plural }} with link",
+                description="Get all {{ model.name.snake_plural }} with link",
+                response_description="All {{ model.name.snake_plural }} with link",
+            )
 
-{{ router }}.add_api_route(
-    path="/update_one",
-    endpoint=update_one,
-    methods=["POST"],
-    summary="Update one {{ s_name }}",
-    description="Update one {{ s_name }}",
-    response_description="Updated {{ s_name }}",
-)
+        if config.create_one:
+            self.add_api_route(
+                path="/create_one",
+                endpoint=create_one,
+                methods=["POST"],
+                summary="Create one {{ s_name }}",
+                description="Create one {{ s_name }}",
+                response_description="Created {{ s_name }}",
+            )
 
-{{ router }}.add_api_route(
-    path="/delete_one",
-    endpoint=delete_one,
-    methods=["POST"],
-    summary="Delete one {{ s_name }}",
-    description="Delete one {{ s_name }}",
-    response_description="Deleted {{ s_name }}",
-)
+        if config.update_one:
+            self.add_api_route(
+                path="/update_one",
+                endpoint=update_one,
+                methods=["POST"],
+                summary="Update one {{ s_name }}",
+                description="Update one {{ s_name }}",
+                response_description="Updated {{ s_name }}",
+            )
+
+        if config.delete_one:
+            self.add_api_route(
+                path="/delete_one",
+                endpoint=delete_one,
+                methods=["POST"],
+                summary="Delete one {{ s_name }}",
+                description="Delete one {{ s_name }}",
+                response_description="Deleted {{ s_name }}",
+            )
 

@@ -274,6 +274,10 @@ class CodeGenerator:
         self._generate_file(os.path.join(self.auth_path, 'routes.py'), self._from_template('auth/routes.py.j2'))
         self._generate_file(os.path.join(self.auth_path, 'utils.py'), self._from_template('auth/utils.py.j2'))
 
+    def _generate_config(self):
+        self._generate_file(os.path.join(self.root_path, 'config.py'), self._from_template(
+            'config.py.j2', models=self.model_render_data.values()))
+
     def generate(self, table: bool = True, router: bool = True, mock: bool = True, auth: bool = True):
         self.parse()
         if table:
@@ -284,3 +288,4 @@ class CodeGenerator:
             self._generate_mock()
         if auth:
             self._generate_auth()
+        self._generate_config()

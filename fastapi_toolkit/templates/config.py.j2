@@ -1,0 +1,18 @@
+from typing import Union
+from pydantic import BaseModel
+
+
+class ModelConfig(BaseModel):
+    get_one: bool = True
+    get_link_one: bool = True
+    get_all: bool = True
+    get_link_all: bool = True
+    create_one: bool = True
+    update_one: bool = True
+    delete_one: bool = True
+
+
+class Config(BaseModel):
+    {% for model in models %}
+    {{ model.name.snake }}: Union[ModelConfig, bool] = ModelConfig()
+    {% endfor %}

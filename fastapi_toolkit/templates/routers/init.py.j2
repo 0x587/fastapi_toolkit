@@ -2,16 +2,19 @@ from fastapi import APIRouter
 
 from ..auth.routes import auth_router
 {% for model in models %}
-from .{{ model.name.snake }}_router import {{ model.name.snake }}_router
+from .{{ model.name.snake }}_router import {{ model.name.camel }}Router
 {% endfor %}
 
 
 class InnerRouter(APIRouter):
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
+        if not config:
+            return
         self.include_router(auth_router)
         {% for model in models %}
-        self.include_router({{ model.name.snake }}_router)
+        if config.{{ model.name.snake }}:
+            self.include_router({{ model.name.camel }}Router(config.{{ model.name.snake }}))
         {% endfor %}
 
 
