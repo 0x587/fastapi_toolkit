@@ -1,0 +1,21 @@
+from fastapi import APIRouter
+
+from ..auth.routes import auth_router
+{% for model in models %}
+from .{{ model.name.snake }}_router import {{ model.name.snake }}_router
+{% endfor %}
+
+
+class InnerRouter(APIRouter):
+    def __init__(self):
+        super().__init__()
+        self.include_router(auth_router)
+        {% for model in models %}
+        self.include_router({{ model.name.snake }}_router)
+        {% endfor %}
+
+
+__all__ = [
+    'InnerRouter',
+]
+

@@ -128,8 +128,6 @@ class CodeGenerator:
         for n, m in self.define_schemas.items():
             self._make_render_data(n, m, self.model_render_data)
         for a in self.model_render_data.values():
-            if not a.links:
-                continue
             for l1 in a.links:
                 for l2 in self.model_render_data[l1.m2.name.camel].links:
                     if l2.m2.name.camel != a.name.camel:
@@ -225,10 +223,6 @@ class CodeGenerator:
         template = self.env.get_template('schemas/main.py.jinja2')
         return template.render(models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values())))
 
-    def _router_init(self) -> str:
-        return self.env.get_template('router_init.py.jinja2').render(
-            models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values())))
-
     def _define2mock(self) -> str:
         raise NotImplementedError()
 
@@ -257,8 +251,11 @@ class CodeGenerator:
             self._generate_file(os.path.join(self.crud_path, f'{model.name.snake}_crud.py'),
                                 self._from_template('crud/main.py.jinja2', model=model))
             self._generate_file(os.path.join(self.routers_path, f'{model.name.snake}_router.py'),
-                                self._from_template('router.py.jinja2', model=model))
-        self._generate_file(os.path.join(self.routers_path, '__init__.py'), self._router_init)
+                                self._from_template('routers/main.py.j2', model=model))
+        self._generate_file(os.path.join(self.routers_path, '__init__.py'), self._from_template(
+            'routers/init.py.j2',
+            models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values()))
+        ))
         self._generate_file(os.path.join(self.crud_path, '__init__.py'), lambda: '')
 
     def _generate_mock(self):
