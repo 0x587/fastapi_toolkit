@@ -8,7 +8,7 @@ from pydantic import Field, UUID4
 
 
 {% for model in models %}
-class{{ model.name.base_schema }}(Schema):
+class {{ model.name.base_schema }}(Schema):
     """pk"""
     id: UUID4 = Field(default_factory=uuid.uuid4)
 

@@ -4,6 +4,7 @@ import hashlib
 import typer
 from typing import Callable, Any, Sequence, Dict, List, Optional, Tuple, Literal, Type
 from jinja2 import Environment, PackageLoader
+import networkx as nx
 
 from pydantic import BaseModel
 from fastapi_toolkit.define import Schema
@@ -69,6 +70,7 @@ class CodeGenerator:
 
         self.define_schemas: Dict[str, Type[Schema]] = {}
         self.links: List[Tuple[Literal["one"] | Literal["many"], Type[Schema], Type[Schema]]] = []
+        self.model_network = nx.Graph()
 
     @staticmethod
     def _check_file_valid(path):
@@ -136,8 +138,23 @@ class CodeGenerator:
                     l2.t2 = l1.t1
                     break
 
-    def _parse_mock(self):
-        pass
+    def _parse_mock(self, export=False):
+        self.model_network.add_nodes_from(self.model_render_data.keys())
+        self.mock_dependency = {}
+        self.mock_root = []
+        for component_nodes in nx.connected_components(self.model_network):
+            subgraph = self.model_network.subgraph(component_nodes)
+            mst = nx.minimum_spanning_tree(subgraph)
+            max_degree_node = max(subgraph.degree, key=lambda x: x[1])[0]
+            rooted_tree = nx.dfs_tree(mst, source=max_degree_node)
+            if export:
+                import matplotlib.pyplot as plt
+                pos = nx.planar_layout(self.model_network)
+                nx.draw(rooted_tree.to_directed(), pos, with_labels=True)
+                plt.show()
+            self.mock_root.append(max_degree_node)
+            for node in rooted_tree.nodes():
+                self.mock_dependency[node] = list(rooted_tree.successors(node))
 
     @staticmethod
     def _name_info(name) -> NameInfo:
@@ -153,7 +170,8 @@ class CodeGenerator:
             fk=f'fk_{to_snake(name)}_id',
         )
 
-    def _make_render_data(self, model_name: str, model_: Type[Schema], d: dict) -> ModelRenderData:
+    def _make_render_data(self, model_name: str, model_: Type[Schema],
+                          d: Dict[str, ModelRenderData]) -> ModelRenderData:
         def is_model(t: Type) -> bool:
             return isinstance(t, type) and Schema.__subclasscheck__(t)
 
@@ -177,6 +195,7 @@ class CodeGenerator:
                 model.links.append(Link(
                     t1='one', t2=None, m1=model, m2=d[field_type.__name__],
                     nullable=not field.is_required()))
+                self.model_network.add_edge(model.name.camel, d[field_type.__name__].name.camel)
                 continue
 
             if is_batch_model(field_type):
@@ -243,7 +262,12 @@ class CodeGenerator:
         self._generate_file(os.path.join(self.crud_path, '__init__.py'), lambda: '')
 
     def generate_mock(self):
-        raise NotImplementedError()
+        self._generate_file(
+            os.path.join(self.root_path, 'mock.py'), self._from_template(
+                'mock.py.j2',
+                deps=self.mock_dependency,
+                mock_root=self.mock_root,
+                models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values()))))
 
     def generate_auth(self):
         user_model = self._make_render_data('User', self.define_schemas['User'], self.model_render_data)
