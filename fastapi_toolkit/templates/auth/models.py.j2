@@ -27,7 +27,9 @@ class DBUser(Base):
     last_login_at: Mapped[Optional[datetime.datetime]] = mapped_column(sqltypes.DateTime, nullable=True)
     accessed_at: Mapped[Optional[datetime.datetime]] = mapped_column(sqltypes.DateTime, nullable=True)
 
-    {{ utils.render_table_fields(model.fields) }}
+    {% for field in model.fields %}
+    {{ utils.render_table_field(field) }}
+    {% endfor %}
 
 class Token(Schema):
     access_token: str

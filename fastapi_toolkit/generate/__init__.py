@@ -267,10 +267,10 @@ class CodeGenerator:
                 'mock.py.j2',
                 deps=self.mock_dependency,
                 mock_root=self.mock_root,
-                models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values()))))
+                models=self.model_render_data.values()))
 
     def generate_auth(self):
-        user_model = self._make_render_data('User', self.define_schemas['User'], self.model_render_data)
+        user_model = self.model_render_data['User']
         self._generate_file(os.path.join(self.auth_path, '__init__.py'), self._from_template('auth/__init__.py.j2'))
         self._generate_file(os.path.join(self.auth_path, 'models.py'),
                             self._from_template('auth/models.py.j2', model=user_model))

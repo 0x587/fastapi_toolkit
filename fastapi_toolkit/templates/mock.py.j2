@@ -1,13 +1,8 @@
-import asyncio
-
-from .models import *
-from .db import sessionmanager
-from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
-
-
-{% for model in models %}
+{% macro render_factory(model) %}
 {% set dep = deps[model.name.camel] %}
-{% set links = model.links if dep else [] %}
+{% set links = model.links if dep else [] %}import random
+
+
 class {{ model.name.camel }}Factory(SQLAlchemyFactory[{{ model.name.db }}]):
     __sync_persistence__ = True
     {% if dep %}
@@ -31,9 +26,99 @@ class {{ model.name.camel }}Factory(SQLAlchemyFactory[{{ model.name.db }}]):
     def {{ name }}(cls):
         return {{ res }}
     {% endif %}
-
     {% endfor %}
+{% endmacro %}
 
+{% macro render_user_factory(model) %}
+class UserFactory(SQLAlchemyFactory[DBUser]):
+    __sync_persistence__ = True
+
+    scopes = ''
+
+    @staticmethod
+    def _username() -> Callable[..., str]:
+        flag = -1
+
+        def f(*args, **kwargs):
+            nonlocal flag
+            flag += 1
+            return 'admin' if flag == 0 else f'user{flag}'
+
+        return f
+
+    username = PostGenerated(_username())
+
+    @staticmethod
+    def _hashed_password() -> Callable[..., str]:
+        flag = -1
+
+        def f(*args, **kwargs):
+            nonlocal flag
+            flag += 1
+            return get_password_hash('admin' if flag == 0 else f'user{flag}')
+
+        return f
+
+    hashed_password = PostGenerated(_hashed_password())
+
+    @staticmethod
+    def _is_superuser() -> Callable[..., bool]:
+        flag = -1
+
+        def f(*args, **kwargs):
+            nonlocal flag
+            flag += 1
+            return flag == 0
+
+        return f
+
+    is_superuser = PostGenerated(_is_superuser())
+
+    @staticmethod
+    def _is_active() -> Callable[..., bool]:
+        flag = -1
+
+        def f(*args, **kwargs):
+            nonlocal flag
+            flag += 1
+            return True if flag == 0 else random.choice([True, False])
+
+        return f
+
+    is_active = PostGenerated(_is_active())
+
+    @classmethod
+    def registered_at(cls):
+        return datetime.datetime.utcnow()
+
+    @staticmethod
+    def _activated_at(name: str, values: dict, *args, **kwargs) -> datetime:
+        if values['is_active']:
+            return datetime.datetime.utcnow()
+        return None
+
+    activated_at = PostGenerated(_activated_at)
+    last_login_at = None
+    accessed_at = None
+
+{% endmacro %}
+import asyncio
+from typing import Callable
+
+from .auth.models import DBUser
+from .auth.utils import get_password_hash
+from .models import *
+from .db import sessionmanager
+from polyfactory import PostGenerated
+from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
+
+
+{% for model in models %}
+{% if model.name.camel == 'User' %}
+{{ render_user_factory(model) }}
+{% else %}
+{{ render_factory(model) }}
+{% endif %}
 {% endfor %}
 def main():
     async def f():
