@@ -238,7 +238,7 @@ class CodeGenerator:
 
         return func
 
-    def generate_tables(self):
+    def _generate_tables(self):
         self._generate_file(os.path.join(self.root_path, 'db.py'), self._from_template('db.py.jinja2'))
         self._generate_file(os.path.join(self.root_path, 'setting.py'), self._from_template('setting.py.jinja2'))
         self._generate_file(self.models_path, self._define2table)
@@ -250,7 +250,7 @@ class CodeGenerator:
                 root_path=str(self.root_path).replace('/', '.').replace('\\', '.')))
         self._generate_file(os.path.join(self.dev_path, '__init__.py'), lambda: '')
 
-    def generate_routers(self):
+    def _generate_routers(self):
         for model in self.model_render_data.values():
             if model.name.camel == 'User':
                 continue
@@ -261,7 +261,7 @@ class CodeGenerator:
         self._generate_file(os.path.join(self.routers_path, '__init__.py'), self._router_init)
         self._generate_file(os.path.join(self.crud_path, '__init__.py'), lambda: '')
 
-    def generate_mock(self):
+    def _generate_mock(self):
         self._generate_file(
             os.path.join(self.root_path, 'mock.py'), self._from_template(
                 'mock.py.j2',
@@ -269,10 +269,21 @@ class CodeGenerator:
                 mock_root=self.mock_root,
                 models=self.model_render_data.values()))
 
-    def generate_auth(self):
+    def _generate_auth(self):
         user_model = self.model_render_data['User']
         self._generate_file(os.path.join(self.auth_path, '__init__.py'), self._from_template('auth/__init__.py.j2'))
         self._generate_file(os.path.join(self.auth_path, 'models.py'),
                             self._from_template('auth/models.py.j2', model=user_model))
         self._generate_file(os.path.join(self.auth_path, 'routes.py'), self._from_template('auth/routes.py.j2'))
         self._generate_file(os.path.join(self.auth_path, 'utils.py'), self._from_template('auth/utils.py.j2'))
+
+    def generate(self, table: bool = True, router: bool = True, mock: bool = True, auth: bool = True):
+        self.parse()
+        if table:
+            self._generate_tables()
+        if router:
+            self._generate_routers()
+        if mock:
+            self._generate_mock()
+        if auth:
+            self._generate_auth()

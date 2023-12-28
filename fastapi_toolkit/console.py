@@ -59,15 +59,7 @@ def generate(metadata_path: Optional[Path] = None, root_path: Optional[Path] = N
     import_module(module_name, metadata_path.joinpath(f'{module_name}.py'))
     generator = CodeGenerator(root_path)
     generator.force_rewrite = force
-    generator.parse()
-    if table:
-        generator.generate_tables()
-    if router:
-        generator.generate_routers()
-    if mock:
-        generator.generate_mock()
-    if auth:
-        generator.generate_auth()
+    generator.generate(table, router, mock, auth)
 
 
 @app.command('mock')
