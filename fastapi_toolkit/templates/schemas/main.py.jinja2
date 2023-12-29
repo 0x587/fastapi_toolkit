@@ -5,6 +5,11 @@ from typing import List, Optional
 
 from fastapi_toolkit.define import Schema
 from pydantic import Field, UUID4
+from .custom_types import  (
+    {% for dep in deps %}
+    {{ dep.name }}
+    {% endfor %}
+)
 
 
 {% for model in models %}

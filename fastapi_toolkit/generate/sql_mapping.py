@@ -1,13 +1,13 @@
 import datetime
+import enum
 import uuid
-from types import NoneType
-from typing import Type
+from typing import Type, Tuple, Optional
 
 import pydantic
 from sqlalchemy.sql import sqltypes
 
 
-def build_in_mapping(t):
+def mapping(t) -> Tuple[bool, Optional[str]]:
     type_map = {
         int: sqltypes.Integer,
         float: sqltypes.Float,
@@ -15,12 +15,7 @@ def build_in_mapping(t):
         bool: sqltypes.Boolean,
         bytes: sqltypes.LargeBinary,
         bytearray: sqltypes.LargeBinary,
-    }
-    return type_map.get(t, None)
 
-
-def mapping(t):
-    type_map = {
         uuid.UUID: sqltypes.UUID,
         pydantic.UUID1: sqltypes.UUID,
         pydantic.UUID3: sqltypes.UUID,
@@ -30,4 +25,9 @@ def mapping(t):
         datetime.date: sqltypes.Date,
         datetime.timedelta: sqltypes.Interval,
     }
-    return build_in_mapping(t) or type_map.get(t, NoneType)
+    if t in type_map:
+        return False, 'sqltypes.' + type_map[t].__name__
+    if issubclass(t, enum.Enum):
+        # TODO: check database is postgresql
+        return True, f'dialects.postgresql.ENUM({t.__name__})'
+    return True, None

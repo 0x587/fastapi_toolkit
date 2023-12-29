@@ -1,7 +1,10 @@
 import datetime
 import os
 import hashlib
+import inspect
+import importlib
 import typer
+from types import NoneType
 from typing import Callable, Any, Sequence, Dict, List, Optional, Tuple, Literal, Type
 from jinja2 import Environment, PackageLoader
 import networkx as nx
@@ -70,6 +73,7 @@ class CodeGenerator:
 
         self.define_schemas: Dict[str, Type[Schema]] = {}
         self.links: List[Tuple[Literal["one"] | Literal["many"], Type[Schema], Type[Schema]]] = []
+        self.custom_types: List[Dict[str, Any]] = []
         self.model_network = nx.Graph()
 
     @staticmethod
@@ -168,6 +172,33 @@ class CodeGenerator:
             fk=f'fk_{to_snake(name)}_id',
         )
 
+    def _make_field(self, name, field_info):
+        type_ = field_info.annotation
+        is_custom, sql_type_ = mapping(type_)
+        res = {
+            'name': self._name_info(name),
+            'type': type_.__name__,
+            'sql_type': sql_type_,
+            'default': field_info.default,
+            'default_factory': field_info.default_factory,
+            'nullable': not field_info.is_required(),
+            'alias': field_info.alias,
+        }
+
+        # custom type
+        if is_custom:
+            cls = getattr(importlib.import_module('demo.metadata.models'), type_.__name__)
+            module_path = os.path.abspath(inspect.getfile(cls))
+            current_directory = os.getcwd()
+            import_path, _ = os.path.splitext(os.path.relpath(module_path, current_directory))
+            self.custom_types.append({
+                'name': type_.__name__,
+                'source': inspect.getsource(cls),
+                'import_path': import_path.replace(os.path.sep, '.')
+            })
+
+        return res
+
     def _make_render_data(self, model_name: str, model_: Type[Schema],
                           d: Dict[str, ModelRenderData]) -> ModelRenderData:
         def is_model(t: Type) -> bool:
@@ -202,26 +233,22 @@ class CodeGenerator:
                     nullable=not field.is_required()))
                 continue
 
-            model.fields.append(
-                {
-                    'name': self._name_info(name),
-                    'type': field.annotation.__name__,
-                    'sql_type': 'sqltypes.' + mapping(field.annotation).__name__,
-                    'default': field.default,
-                    'default_factory': field.default_factory,
-                    'nullable': not field.is_required(),
-                    'alias': field.alias,
-                }
-            )
+            model.fields.append(self._make_field(name, field))
         return model
 
     def _define2table(self) -> str:
         template = self.env.get_template('models/main.py.jinja2')
-        return template.render(models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values())))
+        return template.render(
+            deps=self.custom_types,
+            models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values())),
+        )
 
     def _define2schema(self) -> str:
         template = self.env.get_template('schemas/main.py.jinja2')
-        return template.render(models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values())))
+        return template.render(
+            deps=self.custom_types,
+            models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values())),
+        )
 
     def _define2mock(self) -> str:
         raise NotImplementedError()
@@ -278,8 +305,13 @@ class CodeGenerator:
         self._generate_file(os.path.join(self.root_path, 'config.py'), self._from_template(
             'config.py.j2', models=self.model_render_data.values()))
 
+    def _generate_custom_types(self):
+        self._generate_file(os.path.join(self.root_path, 'custom_types.py'), self._from_template(
+            'custom_types.py.j2', custom_types=self.custom_types))
+
     def generate(self, table: bool = True, router: bool = True, mock: bool = True, auth: bool = True):
         self.parse()
+        self._generate_custom_types()
         if table:
             self._generate_tables()
         if router:
