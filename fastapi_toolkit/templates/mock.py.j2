@@ -1,6 +1,6 @@
 {% macro render_factory(model) %}
 {% set dep = deps[model.name.camel] %}
-{% set links = model.links if dep else [] %}import random
+{% set links = model.links if dep else [] %}
 
 
 class {{ model.name.camel }}Factory(SQLAlchemyFactory[{{ model.name.db }}]):
@@ -20,11 +20,13 @@ class {{ model.name.camel }}Factory(SQLAlchemyFactory[{{ model.name.db }}]):
         {% else %}
         return {{ link.m2.name.camel }}Factory.build()
         {% endif %}
+
     {% else %}
     {% set res = '[]' if is_batch else 'None' %}
     @classmethod
     def {{ name }}(cls):
         return {{ res }}
+
     {% endif %}
     {% endfor %}
 {% endmacro %}
@@ -55,7 +57,7 @@ class UserFactory(SQLAlchemyFactory[DBUser]):
         def f(*args, **kwargs):
             nonlocal flag
             flag += 1
-            return get_password_hash('admin' if flag == 0 else f'user{flag}')
+            return auth.get_password_hash('admin' if flag == 0 else f'user{flag}')
 
         return f
 
@@ -100,26 +102,34 @@ class UserFactory(SQLAlchemyFactory[DBUser]):
     activated_at = PostGenerated(_activated_at)
     last_login_at = None
     accessed_at = None
-
 {% endmacro %}
 import asyncio
+import random
 from typing import Callable
 
 from .auth.models import DBUser
-from .auth.utils import get_password_hash
+from .auth import AuthFactory
 from .models import *
 from .db import sessionmanager
 from polyfactory import PostGenerated
 from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
 
+from .setting import get_settings
+setting = get_settings()
+SECRET_KEY = setting.secret_key
+ALGORITHM = setting.algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = setting.access_token_expire_minutes
+auth = AuthFactory.create(SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES)
 
 {% for model in models %}
 {% if model.name.camel == 'User' %}
 {{ render_user_factory(model) }}
-{% else %}
+{%- else %}
 {{ render_factory(model) }}
-{% endif %}
+{%- endif %}
 {% endfor %}
+
+
 def main():
     async def f():
         async with sessionmanager.session() as session:

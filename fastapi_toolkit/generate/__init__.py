@@ -299,7 +299,6 @@ class CodeGenerator:
         self._generate_file(os.path.join(self.auth_path, 'models.py'),
                             self._from_template('auth/models.py.j2', model=user_model))
         self._generate_file(os.path.join(self.auth_path, 'routes.py'), self._from_template('auth/routes.py.j2'))
-        self._generate_file(os.path.join(self.auth_path, 'utils.py'), self._from_template('auth/utils.py.j2'))
 
     def _generate_config(self):
         self._generate_file(os.path.join(self.root_path, 'config.py'), self._from_template(
