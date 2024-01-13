@@ -62,7 +62,7 @@ class AuthRouter(APIRouter):
         return get_token
 
     def _get_me(self):
-        async def get_me(current_user=Depends(self.auth.get_user_factory())) -> SchemaUser:
+        async def get_me(current_user=Depends(self.auth.require_user())) -> SchemaUser:
             return current_user
 
         return get_me

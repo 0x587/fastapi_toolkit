@@ -4,7 +4,7 @@ from datetime import timedelta, datetime
 from typing import Union, Optional, List, Protocol
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 
 from jose import jwt, JWTError
 from passlib.context import CryptContext
@@ -25,6 +25,7 @@ class UserCreateProtocol(Protocol):
 class UserFullProtocol(UserProtocol):
     is_superuser: bool
     is_active: bool
+    hashed_password: str
 
     registered_at: datetime
     activated_at: Optional[datetime]
@@ -66,14 +67,14 @@ class TokenData(BaseModel):
 class Auth:
 
     def __init__(self, secret_key, algorithm, access_token_expire_minutes, db_backend: AuthDBBackend,
-                 SchemaUser, SchemaUserFull):
+                 schema_user, schema_user_full):
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         self.oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
         self.SECRET_KEY, self.ALGORITHM = secret_key, algorithm
         self.ACCESS_TOKEN_EXPIRE_MINUTES = access_token_expire_minutes
         self.backend = db_backend
-        self.SchemaUser = SchemaUser
-        self.SchemaUserFull = SchemaUserFull
+        self.SchemaUser = schema_user
+        self.SchemaUserFull = schema_user_full
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         return self.pwd_context.verify(plain_password, hashed_password)
@@ -96,8 +97,7 @@ class Auth:
             return False
         return user
 
-    def get_user_factory(self, is_activate: bool = False, is_superuser: bool = False,
-                         scopes: Optional[List[str]] = None):
+    def require_user(self, is_activate: bool = False, is_superuser: bool = False):
         SchemaUserFull = self.SchemaUserFull
         SchemaUser = self.SchemaUser
 
@@ -114,17 +114,17 @@ class Auth:
             await self.backend.access(token_data.username)
             return SchemaUserFull.model_validate(user)
 
-        async def func(user=Depends(_get_current_user)) -> SchemaUser:
+        async def func(security_scopes: SecurityScopes, user=Depends(_get_current_user)) -> SchemaUser:
             if is_activate and not user.is_active:
                 raise credentials_exception
 
             if is_superuser and not user.is_superuser:
                 raise credentials_exception
 
-            if scopes:
+            if security_scopes.scopes:
                 if not user.scopes:
                     raise credentials_exception
-                if not all(scope in user.scopes for scope in scopes):
+                if not all(scope in user.scopes for scope in security_scopes.scopes):
                     raise credentials_exception
 
             return SchemaUser.model_validate(user)
