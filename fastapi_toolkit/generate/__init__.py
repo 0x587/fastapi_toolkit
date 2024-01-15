@@ -118,23 +118,23 @@ class CodeGenerator:
         self._parse_models()
         self._parse_mock()
 
-    def _get_pydantic_models(self, root=Schema):
+    def _get_schemas(self, root=Schema):
         for model_ in root.__subclasses__():
             yield model_
-            yield from self._get_pydantic_models(model_)
+            yield from self._get_schemas(model_)
 
     def _parse_models(self):
-        self.define_schemas = {m.__name__: m for m in self._get_pydantic_models()}
+        self.define_schemas = {schema.__name__: schema for schema in self._get_schemas()}
         self.model_render_data: Dict[str, ModelRenderData] = {
-            n: ModelRenderData(name=self._name_info(n), model=m)
-            for n, m in self.define_schemas.items()
+            schema_name: ModelRenderData(name=self._name_info(schema_name), model=schema)
+            for schema_name, schema in self.define_schemas.items()
         }
-        for n, m in self.define_schemas.items():
-            self._make_render_data(n, m, self.model_render_data)
-        for a in self.model_render_data.values():
-            for l1 in a.links:
+        for schema_name, schema in self.define_schemas.items():
+            self._make_render_data(schema_name, schema, self.model_render_data)
+        for render_data in self.model_render_data.values():
+            for l1 in render_data.links:
                 for l2 in self.model_render_data[l1.m2.name.camel].links:
-                    if l2.m2.name.camel != a.name.camel:
+                    if l2.m2.name.camel != render_data.name.camel:
                         continue
                     l1.t2 = l2.t1
                     l2.t2 = l1.t1
@@ -249,9 +249,6 @@ class CodeGenerator:
             deps=self.custom_types,
             models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values())),
         )
-
-    def _define2mock(self) -> str:
-        raise NotImplementedError()
 
     def _from_template(self, template_name: str, **kwargs):
         def func():
