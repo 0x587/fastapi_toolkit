@@ -1,0 +1,91 @@
+models:
+  User:
+    type: UserModel
+    fields:
+      name:
+        python_type: str
+        sql_type: String(255)
+        default_factory: str
+    links:
+      - type: UserManyLink
+        right: VideoStudy
+        data_model: VideoRecord
+  VideoStudy:
+    type: BaseModel
+    title: '视频学习项目'
+    links:
+      - type: OneManyLink
+        one: VideoStudy
+        many: Video
+    fields:
+      id:
+        python_type: UUID
+        sql_type: UUID
+        primary_key: true
+        default_factory: uuid4
+      name:
+        python_type: str
+        sql_type: String(255)
+        default: ''
+  Video:
+    type: BaseModel
+    title: '视频'
+    fields:
+      id:
+        python_type: UUID
+        sql_type: UUID
+        primary_key: true
+        default_factory: uuid4
+      name:
+        python_type: str
+        sql_type: String(255)
+        default: ''
+      type:
+        python_type: int
+        sql_type: Integer
+        default: 0
+    links:
+      - type: OneManyLink
+        one: Video
+        many: Sentence
+  Sentence:
+    type: BaseModel
+    title: '句子'
+    fields:
+      id:
+        python_type: UUID
+        sql_type: UUID
+        primary_key: true
+        default_factory: uuid4
+      name:
+        python_type: str
+        sql_type: String(255)
+        default: ''
+      type:
+        python_type: int
+        sql_type: Integer
+        default: 0
+        mock:
+          func: mock_int
+          args: [ 0, 1 ]
+    links: [ ]
+  VideoRecord:
+    type: DataModel
+    title: '视频记录'
+    fields:
+      id:
+        python_type: UUID
+        sql_type: UUID
+        primary_key: true
+        default_factory: uuid4
+      index:
+        python_type: int
+        sql_type: Integer
+        default: 0
+      sound_id:
+        python_type: UUID
+        sql_type: UUID
+      created_at:
+        python_type: datetime
+        sql_type: DateTime
+        default_factory: datetime.now

@@ -5,7 +5,6 @@ dist/
 
 .alembic/
 alembic.ini
-demo/
 
 **/__pycache__/
 
