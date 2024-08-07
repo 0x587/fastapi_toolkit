@@ -3,7 +3,7 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy import select
 
-from fastapi_toolkit.base.auth import AuthDBBackend as AuthDBBackendBase, Auth
+from fastapi_toolkit.base.jwt import AuthDBBackend as AuthDBBackendBase, Auth
 
 from .models import DBUser, SchemaUserCreate, SchemaUser, SchemaUserFull
 from ..db import sessionmanager
