@@ -37,6 +37,7 @@ streamlit-antd-components = "^0.2.4"
 networkx = "^3.2.1"
 matplotlib = "^3.8.2"
 
+httpx = "^0.27.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
