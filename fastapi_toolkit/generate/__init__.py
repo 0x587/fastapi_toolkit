@@ -2,9 +2,8 @@ import datetime
 import os
 import hashlib
 import inspect
-import importlib
+
 import typer
-from types import NoneType
 from typing import Callable, Any, Sequence, Dict, List, Optional, Tuple, Literal, Type
 from jinja2 import Environment, PackageLoader
 import networkx as nx
@@ -187,7 +186,13 @@ class CodeGenerator:
 
         # custom type
         if is_custom:
-            cls = getattr(importlib.import_module('demo.metadata.models'), type_.__name__)
+            import importlib.util
+            import sys
+            spec = importlib.util.spec_from_file_location("metadata.models", os.getcwd() + '/metadata/models.py')
+            models = importlib.util.module_from_spec(spec)
+            sys.modules["metadata.models"] = models
+            spec.loader.exec_module(models)
+            cls = getattr(models, type_.__name__)
             module_path = os.path.abspath(inspect.getfile(cls))
             current_directory = os.getcwd()
             import_path, _ = os.path.splitext(os.path.relpath(module_path, current_directory))

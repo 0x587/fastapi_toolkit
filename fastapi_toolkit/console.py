@@ -36,6 +36,11 @@ def import_module(module_name, module_path):
     return module
 
 
+@app.command('a')
+def aaa():
+    print(123)
+
+
 @app.command('i')
 @app.command('init')
 def init():

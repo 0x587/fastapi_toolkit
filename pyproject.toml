@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastapi_toolkit_shawn587"
-version = "0.2.2.0"
+version = "0.2.2.1"
 authors = ["0x587 <shawnsiu@outlook.com>"]
 description = "This toolkit can generate database CRUD operations based on defined metadata in one click, basic fastapi routing and mock data scripts."
 readme = "README.md"
@@ -28,8 +28,6 @@ python-multipart = "^0.0.6"
 bcrypt = "4.0.1"
 pydantic-settings = "^2.1.0"
 polyfactory = "^2.13.0"
-
-[tool.poetry.group.dev.dependencies]
 jinja2 = "^3.1.2"
 alembic = "^1.12.1"
 uvicorn = "^0.24.0.post1"
@@ -42,3 +40,6 @@ matplotlib = "^3.8.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+ftk = "fastapi_toolkit.__main__:app"
