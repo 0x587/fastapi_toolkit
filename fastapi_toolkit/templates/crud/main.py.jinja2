@@ -8,7 +8,7 @@
 from typing import List, Optional
 from fastapi import Depends, Response, HTTPException, status
 from fastapi_pagination import Page
-from fastapi_pagination.ext.async_sqlalchemy import paginate
+from fastapi_pagination.ext.sqlalchemy import paginate
 from pydantic import UUID4
 import uuid
 import datetime
