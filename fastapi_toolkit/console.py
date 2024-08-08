@@ -52,7 +52,7 @@ def init():
 @app.command('generate')
 def generate(metadata_path: Optional[Path] = None, root_path: Optional[Path] = None,
              force: bool = False,
-             table: bool = True, router: bool = True, mock: bool = True, auth: bool = True):
+             table: bool = True, router: bool = True, mock: bool = True, auth: str = ""):
     if metadata_path is None:
         metadata_path = Path(configer['metadata_path'] or 'metadata')
     if root_path is None:

@@ -261,9 +261,9 @@ class CodeGenerator:
 
         return func
 
-    def _generate_tables(self):
+    def _generate_tables(self, auth_type):
         self._generate_file(os.path.join(self.root_path, 'db.py'), self._from_template('db.py.jinja2'))
-        self._generate_file(os.path.join(self.root_path, 'setting.py'), self._from_template('setting.py.jinja2'))
+        self._generate_file(os.path.join(self.root_path, 'setting.py'), self._from_template('setting.py.jinja2', auth_type=auth_type))
         self._generate_file(self.models_path, self._define2table)
         self._generate_file(self.schemas_path, self._define2schema)
         self._generate_file(
@@ -310,15 +310,15 @@ class CodeGenerator:
         self._generate_file(os.path.join(self.root_path, 'custom_types.py'), self._from_template(
             'custom_types.py.j2', custom_types=self.custom_types))
 
-    def generate(self, table: bool = True, router: bool = True, mock: bool = True, auth: bool = True):
+    def generate(self, table: bool = True, router: bool = True, mock: bool = True, auth: str = ""):
         self.parse()
         self._generate_custom_types()
         if table:
-            self._generate_tables()
+            self._generate_tables(auth_type=auth)
         if router:
             self._generate_routers()
         if mock:
             self._generate_mock()
-        if auth:
-            self._generate_auth(mode='jwt')
+        if auth != "":
+            self._generate_auth(mode=auth)
         self._generate_config()
