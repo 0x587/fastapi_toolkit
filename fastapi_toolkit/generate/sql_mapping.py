@@ -11,16 +11,11 @@ def mapping(t) -> Tuple[bool, Optional[str]]:
     type_map = {
         int: sqltypes.Integer,
         float: sqltypes.Float,
-        str: sqltypes.String,
+        str: sqltypes.Text,
         bool: sqltypes.Boolean,
         bytes: sqltypes.LargeBinary,
         bytearray: sqltypes.LargeBinary,
 
-        uuid.UUID: sqltypes.UUID,
-        pydantic.UUID1: sqltypes.UUID,
-        pydantic.UUID3: sqltypes.UUID,
-        pydantic.UUID4: sqltypes.UUID,
-        pydantic.UUID5: sqltypes.UUID,
         datetime.datetime: sqltypes.DateTime,
         datetime.date: sqltypes.Date,
         datetime.timedelta: sqltypes.Interval,
