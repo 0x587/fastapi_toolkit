@@ -30,6 +30,7 @@ class NameInfo(BaseModel):
 
 
 class Link(BaseModel):
+    link_name: str
     t1: Literal["one", "many"]
     t2: Optional[Literal["one", "many"]]
     m1: 'ModelRenderData'
@@ -174,9 +175,13 @@ class CodeGenerator:
     def _make_field(self, name, field_info):
         type_ = field_info.annotation
         is_custom, sql_type_ = mapping(type_)
+        if type_.__module__ != 'builtins':
+            type_str = f'{type_.__module__}.{type_.__name__}'
+        else:
+            type_str = type_.__name__
         res = {
             'name': self._name_info(name),
-            'type': type_.__name__,
+            'type': type_str,
             'sql_type': sql_type_,
             'default': field_info.default,
             'default_factory': field_info.default_factory,
@@ -227,6 +232,7 @@ class CodeGenerator:
 
             if is_model(field_type):
                 model.links.append(Link(
+                    link_name=name,
                     t1='one', t2=None, m1=model, m2=d[field_type.__name__],
                     nullable=not field.is_required()))
                 self.model_network.add_edge(model.name.camel, d[field_type.__name__].name.camel)
@@ -234,6 +240,7 @@ class CodeGenerator:
 
             if is_batch_model(field_type):
                 model.links.append(Link(
+                    link_name=name,
                     t1="many", t2=None, m1=model, m2=d[getattr(field_type, '__args__')[0].__name__],
                     nullable=not field.is_required()))
                 continue
