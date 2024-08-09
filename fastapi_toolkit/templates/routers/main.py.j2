@@ -2,7 +2,7 @@
 {% set s_name = model.name.snake %}
 {% set router = s_name + "_router" %}
 
-from fastapi_toolkit.base.jwt.router import BaseRouter
+from fastapi_toolkit.base.router import BaseRouter
 
 from ..config import ModelConfig
 from ..crud.{{ s_name }}_crud import *

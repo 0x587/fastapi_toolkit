@@ -2,7 +2,7 @@ import datetime
 from typing import Optional
 from sqlalchemy import select
 
-from fastapi_toolkit.base.key import AuthDBBackend as AuthDBBackendBase, Auth
+from fastapi_toolkit.base.auth.key import AuthDBBackend as AuthDBBackendBase, Auth
 
 from .models import DBUser, SchemaUserCreate, SchemaUser, SchemaUserFull
 from ..db import sessionmanager
