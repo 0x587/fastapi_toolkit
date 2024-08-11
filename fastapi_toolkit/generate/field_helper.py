@@ -14,7 +14,7 @@ class Link(BaseModel):
     type: LinkType
 
 
-class Field(BaseModel):
+class FieldType(BaseModel):
     python_type: str
     sql_type: str = PField(default="")
     nullable: bool = PField(default=False)
@@ -41,7 +41,7 @@ class FieldHelper:
             datetime.datetime: "sqltypes.DateTime",
             datetime.date: "sqltypes.Date",
         }
-        f = Field(python_type=str(t.__name__), sql_type=sql_map[t])
+        f = FieldType(python_type=str(t.__name__), sql_type=sql_map[t])
         if t.__module__ != "builtins":
             f.python_type = f"{t.__module__}.{f.python_type}"
             f.depends.add(t.__module__)
@@ -55,7 +55,7 @@ class FieldHelper:
     def parse_model(self, t: Type):
         if not self.is_model(t):
             return
-        return Field(python_type=t.__name__, link=Link(model=t.__name__, type="one"))
+        return FieldType(python_type=t.__name__, link=Link(model=t.__name__, type="one"))
 
     def is_optional(self, t: Type):
         if self.is_builtin(t):

@@ -8,13 +8,14 @@ from typing import Callable, Any, Sequence, Dict, List, Optional, Tuple, Literal
 from jinja2 import Environment, PackageLoader
 import networkx as nx
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field as PField
 from fastapi_toolkit.define import Schema
+from .field_helper import FieldHelper, FieldType
 
 from .sql_mapping import mapping
 from .utils import to_snake, plural
 
-GENERATE_FUNC = Callable[[Any, ...], str]
+GENERATE_FUNC = Callable[[], str]
 
 
 class NameInfo(BaseModel):
@@ -29,8 +30,19 @@ class NameInfo(BaseModel):
     fk: str
 
 
+class FK(BaseModel):
+    name: str
+
+
+class AssociationTable(BaseModel):
+    name: str
+
+
 class Link(BaseModel):
     link_name: str
+    target: "ModelRenderData"
+    fk: Optional[FK] = None
+    table: Optional[AssociationTable] = None
     t1: Literal["one", "many"]
     t2: Optional[Literal["one", "many"]]
     m1: 'ModelRenderData'
@@ -38,10 +50,15 @@ class Link(BaseModel):
     nullable: bool
 
 
+class Field(BaseModel):
+    name: NameInfo
+    type: FieldType
+
+
 class ModelRenderData(BaseModel):
     name: NameInfo
     model: Type[Schema] = None
-    fields: List[Dict[str, Any]] = []
+    fields: List[Field] = []
     links: List[Link] = []
 
 
@@ -72,6 +89,7 @@ class CodeGenerator:
             trim_blocks=True, lstrip_blocks=True)
 
         self.define_schemas: Dict[str, Type[Schema]] = {}
+        self.pydantic_schemas: Dict[str, Type[Schema]] = {}
         self.links: List[Tuple[Literal["one"] | Literal["many"], Type[Schema], Type[Schema]]] = []
         self.custom_types: List[Dict[str, Any]] = []
         self.model_network = nx.Graph()
@@ -89,8 +107,8 @@ class CodeGenerator:
             content = f.read()
             return hashlib.md5(content.encode('utf8')).hexdigest() == content_hash
 
-    def _generate_file(self, path, func: GENERATE_FUNC, **kwargs):
-        content = func(**kwargs)
+    def _generate_file(self, path, func: GENERATE_FUNC):
+        content = func()
         generate_hash = hashlib.md5(content.encode('utf8')).hexdigest()
         if os.path.exists(path):
             with open(path, 'r') as f:
@@ -125,20 +143,28 @@ class CodeGenerator:
 
     def _parse_models(self):
         self.define_schemas = {schema.__name__: schema for schema in self._get_schemas()}
-        self.model_render_data: Dict[str, ModelRenderData] = {
-            schema_name: ModelRenderData(name=self._name_info(schema_name), model=schema)
+        self.model_render_data = {
+            schema_name: self._make_render_data_field(schema)
             for schema_name, schema in self.define_schemas.items()
         }
-        for schema_name, schema in self.define_schemas.items():
-            self._make_render_data(schema_name, schema, self.model_render_data)
-        for render_data in self.model_render_data.values():
-            for l1 in render_data.links:
-                for l2 in self.model_render_data[l1.m2.name.camel].links:
-                    if l2.m2.name.camel != render_data.name.camel:
-                        continue
-                    l1.t2 = l2.t1
-                    l2.t2 = l1.t1
-                    break
+        # TODO: build link
+        # for render_data in self.model_render_data.values():
+        #     for l1 in render_data.links:
+        #         for l2 in self.model_render_data[l1.m2.name.camel].links:
+        #             if l2.m2.name.camel != render_data.name.camel:
+        #                 continue
+        #             l1.t2 = l2.t1
+        #             l2.t2 = l1.t1
+        #             break
+
+    def _make_render_data_field(self, schema: Type[Schema]):
+        fh = FieldHelper()
+
+        return ModelRenderData(
+            name=self._name_info(schema.__name__),
+            fields=[Field(name=self._name_info(name), type=fh.parse(field.annotation)) for name, field in
+                    schema.model_fields.items()]
+        )
 
     def _parse_mock(self, export=False):
         self.model_network.add_nodes_from(self.model_render_data.keys())
@@ -172,81 +198,81 @@ class CodeGenerator:
             fk=f'fk_{to_snake(name)}_id',
         )
 
-    def _make_field(self, name, field_info):
-        type_ = field_info.annotation
-        is_custom, sql_type_ = mapping(type_)
-        if type_.__module__ != 'builtins':
-            type_str = f'{type_.__module__}.{type_.__name__}'
-        else:
-            type_str = type_.__name__
-        res = {
-            'name': self._name_info(name),
-            'type': type_str,
-            'sql_type': sql_type_,
-            'default': field_info.default,
-            'default_factory': field_info.default_factory,
-            'nullable': not field_info.is_required(),
-            'alias': field_info.alias,
-        }
+    # def _make_field(self, name, field_info):
+    #     type_ = field_info.annotation
+    #     is_custom, sql_type_ = mapping(type_)
+    #     if type_.__module__ != 'builtins':
+    #         type_str = f'{type_.__module__}.{type_.__name__}'
+    #     else:
+    #         type_str = type_.__name__
+    #     res = {
+    #         'name': self._name_info(name),
+    #         'type': type_str,
+    #         'sql_type': sql_type_,
+    #         'default': field_info.default,
+    #         'default_factory': field_info.default_factory,
+    #         'nullable': not field_info.is_required(),
+    #         'alias': field_info.alias,
+    #     }
+    #
+    #     # custom type
+    #     if is_custom:
+    #         import importlib.util
+    #         import sys
+    #         spec = importlib.util.spec_from_file_location("metadata.models", os.getcwd() + '/metadata/models.py')
+    #         models = importlib.util.module_from_spec(spec)
+    #         sys.modules["metadata.models"] = models
+    #         spec.loader.exec_module(models)
+    #         cls = getattr(models, type_.__name__)
+    #         module_path = os.path.abspath(inspect.getfile(cls))
+    #         current_directory = os.getcwd()
+    #         import_path, _ = os.path.splitext(os.path.relpath(module_path, current_directory))
+    #         self.custom_types.append({
+    #             'name': type_.__name__,
+    #             'source': inspect.getsource(cls),
+    #             'import_path': import_path.replace(os.path.sep, '.')
+    #         })
+    #
+    #     return res
 
-        # custom type
-        if is_custom:
-            import importlib.util
-            import sys
-            spec = importlib.util.spec_from_file_location("metadata.models", os.getcwd() + '/metadata/models.py')
-            models = importlib.util.module_from_spec(spec)
-            sys.modules["metadata.models"] = models
-            spec.loader.exec_module(models)
-            cls = getattr(models, type_.__name__)
-            module_path = os.path.abspath(inspect.getfile(cls))
-            current_directory = os.getcwd()
-            import_path, _ = os.path.splitext(os.path.relpath(module_path, current_directory))
-            self.custom_types.append({
-                'name': type_.__name__,
-                'source': inspect.getsource(cls),
-                'import_path': import_path.replace(os.path.sep, '.')
-            })
-
-        return res
-
-    def _make_render_data(self, model_name: str, model_: Type[Schema],
-                          d: Dict[str, ModelRenderData]) -> ModelRenderData:
-        def is_model(t: Type) -> bool:
-            return isinstance(t, type) and Schema.__subclasscheck__(t)
-
-        def is_batch_model(t: Type) -> bool:
-            if hasattr(t, '__origin__') and Sequence.__subclasscheck__(
-                    getattr(t, '__origin__')):
-                seq_member: Type[Schema] = getattr(t, '__args__')[0]
-                return is_model(seq_member)
-            return False
-
-        model = d[model_name]
-        for name, field in model_.model_fields.items():
-            if name in ['id']:
-                raise ValueError(f'{model_name}.{name} is reserved')
-
-            field_type: Type[Schema] | None = field.annotation
-            if field_type is None:
-                raise ValueError(f'{model_name}.{name} missing type hint')
-
-            if is_model(field_type):
-                model.links.append(Link(
-                    link_name=name,
-                    t1='one', t2=None, m1=model, m2=d[field_type.__name__],
-                    nullable=not field.is_required()))
-                self.model_network.add_edge(model.name.camel, d[field_type.__name__].name.camel)
-                continue
-
-            if is_batch_model(field_type):
-                model.links.append(Link(
-                    link_name=name,
-                    t1="many", t2=None, m1=model, m2=d[getattr(field_type, '__args__')[0].__name__],
-                    nullable=not field.is_required()))
-                continue
-
-            model.fields.append(self._make_field(name, field))
-        return model
+    # def _make_render_data(self, model_name: str, model_: Type[Schema],
+    #                       d: Dict[str, ModelRenderData]) -> ModelRenderData:
+    #     def is_model(t: Type) -> bool:
+    #         return isinstance(t, type) and Schema.__subclasscheck__(t)
+    #
+    #     def is_batch_model(t: Type) -> bool:
+    #         if hasattr(t, '__origin__') and Sequence.__subclasscheck__(
+    #                 getattr(t, '__origin__')):
+    #             seq_member: Type[Schema] = getattr(t, '__args__')[0]
+    #             return is_model(seq_member)
+    #         return False
+    #
+    #     model = d[model_name]
+    #     for name, field in model_.model_fields.items():
+    #         if name in ['id']:
+    #             raise ValueError(f'{model_name}.{name} is reserved')
+    #
+    #         field_type: Type[Schema] | None = field.annotation
+    #         if field_type is None:
+    #             raise ValueError(f'{model_name}.{name} missing type hint')
+    #
+    #         if is_model(field_type):
+    #             model.links.append(Link(
+    #                 link_name=name,
+    #                 t1='one', t2=None, m1=model, m2=d[field_type.__name__],
+    #                 nullable=not field.is_required()))
+    #             self.model_network.add_edge(model.name.camel, d[field_type.__name__].name.camel)
+    #             continue
+    #
+    #         if is_batch_model(field_type):
+    #             model.links.append(Link(
+    #                 link_name=name,
+    #                 t1="many", t2=None, m1=model, m2=d[getattr(field_type, '__args__')[0].__name__],
+    #                 nullable=not field.is_required()))
+    #             continue
+    #
+    #         model.fields.append(self._make_field(name, field))
+    #     return model
 
     def _define2table(self) -> str:
         template = self.env.get_template('models/main.py.jinja2')
@@ -270,7 +296,8 @@ class CodeGenerator:
 
     def _generate_tables(self, auth_type):
         self._generate_file(os.path.join(self.root_path, 'db.py'), self._from_template('db.py.jinja2'))
-        self._generate_file(os.path.join(self.root_path, 'setting.py'), self._from_template('setting.py.jinja2', auth_type=auth_type))
+        self._generate_file(os.path.join(self.root_path, 'setting.py'),
+                            self._from_template('setting.py.jinja2', auth_type=auth_type))
         self._generate_file(self.models_path, self._define2table)
         self._generate_file(self.schemas_path, self._define2schema)
         self._generate_file(
@@ -304,7 +331,8 @@ class CodeGenerator:
 
     def _generate_auth(self, mode: str):
         user_model = self.model_render_data['User']
-        self._generate_file(os.path.join(self.auth_path, '__init__.py'), self._from_template(f'auth/{mode}/__init__.py.j2'))
+        self._generate_file(os.path.join(self.auth_path, '__init__.py'),
+                            self._from_template(f'auth/{mode}/__init__.py.j2'))
         self._generate_file(os.path.join(self.auth_path, 'models.py'),
                             self._from_template(f'auth/{mode}/models.py.j2', model=user_model))
         self._generate_file(os.path.join(self.auth_path, 'routes.py'), self._from_template(f'auth/{mode}/routes.py.j2'))
@@ -322,10 +350,10 @@ class CodeGenerator:
         self._generate_custom_types()
         if table:
             self._generate_tables(auth_type=auth)
-        if router:
-            self._generate_routers()
-        if mock:
-            self._generate_mock()
-        if auth != "":
-            self._generate_auth(mode=auth)
-        self._generate_config()
+        # if router:
+        #     self._generate_routers()
+        # if mock:
+        #     self._generate_mock()
+        # if auth != "":
+        #     self._generate_auth(mode=auth)
+        # self._generate_config()

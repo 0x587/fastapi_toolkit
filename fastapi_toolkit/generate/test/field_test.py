@@ -4,7 +4,7 @@ import datetime
 from typing import Optional, List
 from pydantic import BaseModel
 
-from fastapi_toolkit.generate.field_helper import FieldHelper, Field, Link
+from fastapi_toolkit.generate.field_helper import FieldHelper, FieldType, Link
 
 
 class A(BaseModel):
@@ -49,21 +49,21 @@ class TesterFieldHelper(unittest.TestCase):
 
     def test_explicit_parse(self):
         tests = [
-            (Field(python_type='str', sql_type='sqltypes.Text'), self.fh.parse_builtin(str)),
-            (Field(python_type='int', sql_type='sqltypes.Integer'), self.fh.parse_builtin(int)),
-            (Field(python_type='float', sql_type='sqltypes.Float'), self.fh.parse_builtin(float)),
-            (Field(python_type='bool', sql_type='sqltypes.Boolean'), self.fh.parse_builtin(bool)),
-            (Field(python_type='bytes', sql_type='sqltypes.LargeBinary'), self.fh.parse_builtin(bytes)),
+            (FieldType(python_type='str', sql_type='sqltypes.Text'), self.fh.parse_builtin(str)),
+            (FieldType(python_type='int', sql_type='sqltypes.Integer'), self.fh.parse_builtin(int)),
+            (FieldType(python_type='float', sql_type='sqltypes.Float'), self.fh.parse_builtin(float)),
+            (FieldType(python_type='bool', sql_type='sqltypes.Boolean'), self.fh.parse_builtin(bool)),
+            (FieldType(python_type='bytes', sql_type='sqltypes.LargeBinary'), self.fh.parse_builtin(bytes)),
 
-            (Field(python_type='A', link=Link(model="A", type="one")), self.fh.parse_model(A)),
+            (FieldType(python_type='A', link=Link(model="A", type="one")), self.fh.parse_model(A)),
             (None, self.fh.parse_model(int)),
             (None, self.fh.parse_model(B)),
 
-            (Field(python_type='Optional[A]', link=Link(model="A", type="one"), nullable=True),
+            (FieldType(python_type='Optional[A]', link=Link(model="A", type="one"), nullable=True),
              self.fh.parse_optional(Optional[A])),
             (None, self.fh.parse_optional(Optional[B])),
 
-            (Field(python_type='List[A]', link=Link(model="A"), type="many"), self.fh.parse_batch(List[A])),
+            (FieldType(python_type='List[A]', link=Link(model="A"), type="many"), self.fh.parse_batch(List[A])),
             (None, self.fh.parse_batch(List[B])),
             (None, self.fh.parse_batch(List[int])),
         ]
@@ -72,24 +72,24 @@ class TesterFieldHelper(unittest.TestCase):
 
     def test_parse(self):
         tests = [
-            (Field(python_type='str', sql_type='sqltypes.Text'), str),
-            (Field(python_type='int', sql_type='sqltypes.Integer'), int),
-            (Field(python_type='float', sql_type='sqltypes.Float'), float),
-            (Field(python_type='bool', sql_type='sqltypes.Boolean'), bool),
-            (Field(python_type='bytes', sql_type='sqltypes.LargeBinary'), bytes),
+            (FieldType(python_type='str', sql_type='sqltypes.Text'), str),
+            (FieldType(python_type='int', sql_type='sqltypes.Integer'), int),
+            (FieldType(python_type='float', sql_type='sqltypes.Float'), float),
+            (FieldType(python_type='bool', sql_type='sqltypes.Boolean'), bool),
+            (FieldType(python_type='bytes', sql_type='sqltypes.LargeBinary'), bytes),
 
-            (Field(python_type='datetime.datetime', sql_type='sqltypes.DateTime', depends=['datetime']),
+            (FieldType(python_type='datetime.datetime', sql_type='sqltypes.DateTime', depends=['datetime']),
              datetime.datetime),
-            (Field(python_type='datetime.date', sql_type='sqltypes.Date', depends=['datetime']),
+            (FieldType(python_type='datetime.date', sql_type='sqltypes.Date', depends=['datetime']),
              datetime.date),
 
-            (Field(python_type='A', link=Link(model="A", type="one")), A),
+            (FieldType(python_type='A', link=Link(model="A", type="one")), A),
             (None, B),
 
-            (Field(python_type='Optional[A]', link=Link(model="A", type="one"), nullable=True), Optional[A]),
+            (FieldType(python_type='Optional[A]', link=Link(model="A", type="one"), nullable=True), Optional[A]),
             (None, Optional[B]),
 
-            (Field(python_type='List[A]', link=Link(model="A", type="many"), nullable=True), List[A]),
+            (FieldType(python_type='List[A]', link=Link(model="A", type="many"), nullable=True), List[A]),
             (None, List[B]),
         ]
 

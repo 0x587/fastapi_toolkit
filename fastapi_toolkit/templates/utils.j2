@@ -1,19 +1,7 @@
 {% macro render_table_field(field) %}
-{{ field.name.snake }}: Mapped[{{ field.type }}] = mapped_column({{ field.sql_type }}, nullable={{ field.nullable }})
-{% endmacro %}
-
-{% macro render_table_fields(fields) %}
-{% for field in fields %}
-{{ render_table_field(field) }}
-{% endfor %}
+{{ field.name.snake }}: Mapped[{{ field.type.python_type }}] = mapped_column({{ field.type.sql_type }}, nullable={{ field.type.nullable }})
 {% endmacro %}
 
 {% macro render_schema_field(field) %}
-{{ field.name.snake }}: {{ field.type }} = Field(nullable={{ field.nullable }})
-{% endmacro %}
-
-{% macro render_schema_fields(fields) %}
-{% for field in fields %}
-{{ render_schema_field(field) }}
-{% endfor %}
+{{ field.name.snake }}: {{ field.type.python_type }} = Field(nullable={{ field.type.nullable }})
 {% endmacro %}
