@@ -1,7 +1,7 @@
 import datetime
 import os
 import hashlib
-import inspect
+from collections import defaultdict
 
 import typer
 from typing import Callable, Any, Sequence, Dict, List, Optional, Tuple, Literal, Type
@@ -10,7 +10,7 @@ import networkx as nx
 
 from pydantic import BaseModel, Field as PField
 from fastapi_toolkit.define import Schema
-from .field_helper import FieldHelper, FieldType
+from .field_helper import FieldHelper, FieldType, LinkType
 
 from .sql_mapping import mapping
 from .utils import to_snake, plural
@@ -19,6 +19,7 @@ GENERATE_FUNC = Callable[[], str]
 
 
 class NameInfo(BaseModel):
+    origin: str
     snake: str
     snake_plural: str
     camel: str
@@ -43,11 +44,22 @@ class Link(BaseModel):
     target: "ModelRenderData"
     fk: Optional[FK] = None
     table: Optional[AssociationTable] = None
-    t1: Literal["one", "many"]
-    t2: Optional[Literal["one", "many"]]
-    m1: 'ModelRenderData'
-    m2: 'ModelRenderData'
-    nullable: bool
+    type: LinkType
+
+    # t1: Literal["one", "many"]
+    # t2: Optional[Literal["one", "many"]]
+    # m1: 'ModelRenderData'
+    # m2: 'ModelRenderData'
+    # nullable: bool
+
+    def link_prefix(self):
+        if self.type == "one":
+            target_name = self.target.name.snake
+        else:
+            target_name = self.target.name.snake_plural
+        if self.link_name[-len(target_name):] != target_name:
+            raise ValueError(f"link name {self.link_name} not match target {self.target.name.origin}")
+        return self.link_name[:-len(target_name)]
 
 
 class Field(BaseModel):
@@ -148,6 +160,7 @@ class CodeGenerator:
             for schema_name, schema in self.define_schemas.items()
         }
         # TODO: build link
+        self.build_links()
         # for render_data in self.model_render_data.values():
         #     for l1 in render_data.links:
         #         for l2 in self.model_render_data[l1.m2.name.camel].links:
@@ -156,6 +169,44 @@ class CodeGenerator:
         #             l1.t2 = l2.t1
         #             l2.t2 = l1.t1
         #             break
+
+    def build_links(self):
+        links: Dict[str, List[Link]] = defaultdict(list)
+        for model in self.model_render_data.values():
+            for field in filter(lambda x: x.type.link is not None, model.fields):
+                link = Link(link_name=field.name.origin, target=self.model_render_data[field.type.link.model],
+                            type=field.type.link.type)
+                links[model.name.origin].append(link)
+            model.fields = filter(lambda x: x.type.link is None, model.fields)
+
+        link_groups: List[Tuple[Link, Link]] = []
+        visited_link = set()
+        for model_name, ls in links.items():
+            for link in ls:
+                a = link.link_prefix()
+                if id(link) in visited_link:
+                    continue
+                visited_link.add(id(link))
+                for target_link in links[link.target.name.origin]:
+                    if link.link_prefix() == target_link.link_prefix():
+                        visited_link.add(id(target_link))
+                        link_groups.append((link, target_link))
+                        break
+                else:
+                    raise ValueError(f"unable to pair link {link.link_name} to target {link.target.name.origin}")
+        for l1, l2 in link_groups:
+            t1, t2 = l1.type, l2.type
+            match (t1, t2):
+                case (LinkType.one, LinkType.one):
+                    print(t1, t2)
+                    # TODO one-one
+                case (LinkType.one, LinkType.many) | (LinkType.many, LinkType.one):
+                    print(t1, t2)
+                    # TODO one-many
+                case (LinkType.many, LinkType.many):
+                    print(t1, t2)
+                    # TODO many-many
+        print()
 
     def _make_render_data_field(self, schema: Type[Schema]):
         fh = FieldHelper()
@@ -187,6 +238,7 @@ class CodeGenerator:
     @staticmethod
     def _name_info(name) -> NameInfo:
         return NameInfo(
+            origin=name,
             snake=to_snake(name),
             snake_plural=plural(to_snake(name)),
             camel=name,

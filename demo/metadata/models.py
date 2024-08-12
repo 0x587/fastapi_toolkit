@@ -14,6 +14,7 @@ class User(Schema):
     avatar: str
 
     info_blocks: List['InfoBlock']
+    certified_info_blocks: List['InfoBlock']
 
 
 class InfoBlock(Schema):
@@ -26,9 +27,8 @@ class InfoBlock(Schema):
     time_start: datetime.date
     time_end: datetime.date
 
-    certified_records: List['CertifiedRecord']
+    certified_users: List['User']
 
-
-class CertifiedRecord(Schema):
-    user: User
-    info_block: InfoBlock
+# class CertifiedRecord(Schema):
+#     user: User
+#     info_block: InfoBlock
