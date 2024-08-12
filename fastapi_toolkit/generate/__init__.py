@@ -183,16 +183,7 @@ class CodeGenerator:
             schema_name: self._make_render_data_field(schema)
             for schema_name, schema in self.define_schemas.items()
         }
-        # TODO: build link
         self.build_links()
-        # for render_data in self.model_render_data.values():
-        #     for l1 in render_data.links:
-        #         for l2 in self.model_render_data[l1.m2.name.camel].links:
-        #             if l2.m2.name.camel != render_data.name.camel:
-        #                 continue
-        #             l1.t2 = l2.t1
-        #             l2.t2 = l1.t1
-        #             break
 
     def build_links(self):
         links: Dict[str, List[Link]] = defaultdict(list)
@@ -457,10 +448,10 @@ class CodeGenerator:
         self._generate_custom_types()
         if table:
             self._generate_tables(auth_type=auth)
-        # if router:
-        #     self._generate_routers()
+        if router:
+            self._generate_routers()
         # if mock:
         #     self._generate_mock()
         # if auth != "":
         #     self._generate_auth(mode=auth)
-        # self._generate_config()
+        self._generate_config()

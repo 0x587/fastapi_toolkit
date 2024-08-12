@@ -30,7 +30,7 @@ async def get_one(ident: UUID4, db=Depends(get_db)) -> {{ base_schema }}:
 
 async def __get_all_query(
         {% for field in model.fields %}
-        filter_{{field.name.snake}}: Optional[{{field.type}}] = None,
+        filter_{{field.name.snake}}: Optional[{{field.type.python_type}}] = None,
         {% endfor %}
         sort_by: Optional[str] = None, is_desc: bool = False,
 ) -> Select:
@@ -65,18 +65,9 @@ async def get_link_all(
 # -----------------------Create Routes------------------------
 async def create_one(
         {% for field in model.fields %}
-        {{field.name.snake}}: {{field.type}},
+        {{field.name.snake}}: {{field.type.python_type}},
         {% endfor %}
-        {% for link in model.links %}
-        {% if link.t1 == 'one' %}
-        {% if link.nullable %}
-        {{ link.m2.name.snake }}_ident: Optional[UUID4] = None,
-        {% else %}
-        {{ link.m2.name.snake }}_ident: UUID4,
-        {% endif %}
-        {% endif %}
-        {% endfor %}
-        response: Response, db=Depends(get_db)
+        db=Depends(get_db)
 ) -> {{ base_schema }}:
     {{ s_name }} = {{ base_schema }}(
         {% for field in model.fields %}
@@ -84,21 +75,9 @@ async def create_one(
         {% endfor %}
     )
     {{ s_name }} = {{ name }}(**{{ s_name }}.model_dump())
-    {% for link in model.links %}
-    {% if link.t1 == 'one' %}
-    if {{ link.m2.name.snake }}_ident is not None:
-        {{ link.m2.name.snake }} = await db.get({{ name }}, {{ link.m2.name.snake }}_ident)
-        if not {{ link.m2.name.snake }}:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="{{ link.m2.name.camel }} Not found id:" + str({{ link.m2.name.snake }}_ident))
-        {{ s_name }}.{{ link.m2.name.fk }} = {{ link.m2.name.snake }}_ident
-    {% endif %}
-    {% endfor %}
     db.add({{ s_name }})
     await db.commit()
     await db.refresh({{ s_name }})
-    response.status_code = status.HTTP_201_CREATED
     return {{ base_schema }}.model_validate({{ s_name }})
 
 
@@ -106,7 +85,7 @@ async def create_one(
 async def update_one(
         ident: UUID4,
         {% for field in model.fields %}
-        {{field.name.snake}}: Optional[{{field.type}}] = None,
+        {{field.name.snake}}: Optional[{{field.type.python_type}}] = None,
         {% endfor %}
         db=Depends(get_db)) -> {{ base_schema }}:
     res = await db.get({{ name }}, ident)
@@ -126,17 +105,18 @@ async def delete_one(ident: UUID4, db=Depends(get_db)):
     res = await db.get({{ name }}, ident)
     if not res:
         raise NOT_FOUND
-    {% if model.links %}
-    {% for link in model.links %}
-    {% if link.t1 == 'one' %}
-    res.{{ link.m2.name.snake }} = None
-    {% else %}
-    for i in await res.awaitable_attrs.{{ link.m2.name.snake_plural }}:
-        await db.delete(i)
-    {% endif %}
-    {% endfor %}
-    await db.commit()
-    {% endif %}
+# TODO
+{#    {% if model.links %}#}
+{#    {% for link in model.links %}#}
+{#    {% if link.t1 == 'one' %}#}
+{#    res.{{ link.m2.name.snake }} = None#}
+{#    {% else %}#}
+{#    for i in await res.awaitable_attrs.{{ link.m2.name.snake_plural }}:#}
+{#        await db.delete(i)#}
+{#    {% endif %}#}
+{#    {% endfor %}#}
+{#    await db.commit()#}
+{#    {% endif %}#}
     await db.delete(res)
     await db.commit()
     return {'message': 'Deleted', 'id': ident}
