@@ -3,5 +3,5 @@
 {% endmacro %}
 
 {% macro render_schema_field(field) %}
-{{ field.name.snake }}: {{ field.type.python_type }} = Field(nullable={{ field.type.nullable }})
+{{ field.name.snake }}: {{ field.type.python_type }} = Field()
 {% endmacro %}

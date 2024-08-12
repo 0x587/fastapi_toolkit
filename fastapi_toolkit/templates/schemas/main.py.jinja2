@@ -13,11 +13,11 @@ from .custom_types import  (
 )
 {% endif %}
 
-
 {% for model in models %}
+
 class {{ model.name.base_schema }}(Schema):
     """pk"""
-    id: int = Field(default_factory=uuid.uuid4)
+    id: int = Field(default=0)
 
     """fields"""
     {% for field in model.fields %}
@@ -27,15 +27,9 @@ class {{ model.name.base_schema }}(Schema):
 class {{ model.name.schema }}({{ model.name.base_schema }}):
     """relationships"""
     {% for link in model.links %}
-    {% set t = link.t1 %}
-    {% set r = link.m2 %}
-    {% if t == 'many' %}
-    {{ r.name.snake_plural }}: List["{{ r.name.base_schema }}"]
-    {% else %}
-    {{ r.name.snake }}: "{{ r.name.base_schema }}"
-    {% endif %}
+    {% set l = link.render_data %}
+    {{ l.schema_link_name }}: "{{ l.schema_target_type }}"
     {% endfor %}
-
 
 {% endfor %}
 

@@ -1,10 +1,8 @@
 {% import 'utils.j2' as utils %}
-import datetime
-import enum
 from typing import List
 
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, dialects
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey, Table, Column
 from sqlalchemy.sql import sqltypes
 
 from .db import Base
@@ -16,6 +14,15 @@ from .custom_types import  (
 )
 {% endif %}
 
+{% for association_table in association_tables %}
+{{ association_table.name }} = Table(
+    "{{ association_table.name }}",
+    Base.metadata,
+    Column("{{ association_table.left.name.table }}_id", ForeignKey("{{ association_table.left.name.table }}.id"), primary_key=True),
+    Column("{{ association_table.right.name.table }}_id", ForeignKey("{{ association_table.right.name.table }}.id"), primary_key=True),
+)
+
+{% endfor %}
 
 {% for model in models %}
 class {{ model.name.db }}(Base):
@@ -27,7 +34,20 @@ class {{ model.name.db }}(Base):
     {{ utils.render_table_field(field) }}
     {% endfor %}
 
-{#    {%- for link in model.links %}#}
+    {%- for link in model.links %}
+    {% set l = link.render_data %}
+    {% set fk = link.fk %}
+    {% set table = link.table %}
+    {% if fk %}
+    {{ fk.name }}: Mapped[{{ fk.key_type }}] = mapped_column(ForeignKey("{{ fk.column }}"))
+
+    {% endif %}
+    {{ l.link_name }}: Mapped["{{ l.target_type }}"] = relationship(
+        back_populates="{{ l.back_populates }}",
+    {% if table %}
+        secondary={{ table.name }}
+    {% endif %}
+    )
 {#    {% set t = link.t1 %}#}
 {#    {% set rt = link.t2 %}#}
 {#    {% set l = link.m1 %}#}
@@ -40,6 +60,6 @@ class {{ model.name.db }}(Base):
 {#    {{ r.name.fk }}: Mapped[int] = mapped_column(ForeignKey("{{ r.name.table }}.id"), nullable={{ link.nullable }})#}
 {#    {% endif %}#}
 
-{#    {% endfor %}#}
+    {% endfor %}
 
 {% endfor %}

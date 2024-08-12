@@ -33,18 +33,41 @@ class NameInfo(BaseModel):
 
 class FK(BaseModel):
     name: str
+    key_type: str = "int"
+    column: str
 
 
 class AssociationTable(BaseModel):
     name: str
+    left: 'ModelRenderData'
+    right: 'ModelRenderData'
+
+
+class LinkRenderData(BaseModel):
+    link_name: str
+    target_type: str
+    back_populates: str
+
+    schema_link_name: str
+    schema_target_type: str
 
 
 class Link(BaseModel):
     link_name: str
+    origin: "ModelRenderData"
     target: "ModelRenderData"
     fk: Optional[FK] = None
     table: Optional[AssociationTable] = None
     type: LinkType
+
+    render_data: Optional[LinkRenderData] = None
+
+    def make_render(self, pair_link: "Link"):
+        self.render_data = LinkRenderData(link_name=self.link_name, target_type=self.target.name.db,
+                                          back_populates=pair_link.link_name,
+                                          schema_link_name=self.link_name,schema_target_type=self.target.name.base_schema)
+        if self.type == LinkType.many:
+            self.render_data.target_type = f'List[{self.render_data.target_type}]'
 
     # t1: Literal["one", "many"]
     # t2: Optional[Literal["one", "many"]]
@@ -105,6 +128,7 @@ class CodeGenerator:
         self.links: List[Tuple[Literal["one"] | Literal["many"], Type[Schema], Type[Schema]]] = []
         self.custom_types: List[Dict[str, Any]] = []
         self.model_network = nx.Graph()
+        self.association_tables: List[AssociationTable] = []
 
     @staticmethod
     def _check_file_valid(path):
@@ -174,39 +198,69 @@ class CodeGenerator:
         links: Dict[str, List[Link]] = defaultdict(list)
         for model in self.model_render_data.values():
             for field in filter(lambda x: x.type.link is not None, model.fields):
-                link = Link(link_name=field.name.origin, target=self.model_render_data[field.type.link.model],
-                            type=field.type.link.type)
+                link = Link(link_name=field.name.origin, origin=model,
+                            target=self.model_render_data[field.type.link.model], type=field.type.link.type)
                 links[model.name.origin].append(link)
-            model.fields = filter(lambda x: x.type.link is None, model.fields)
+            model.fields = list(filter(lambda x: x.type.link is None, model.fields))
 
         link_groups: List[Tuple[Link, Link]] = []
         visited_link = set()
-        for model_name, ls in links.items():
+        for ls in links.values():
             for link in ls:
-                a = link.link_prefix()
                 if id(link) in visited_link:
                     continue
-                visited_link.add(id(link))
-                for target_link in links[link.target.name.origin]:
-                    if link.link_prefix() == target_link.link_prefix():
+                target_links = links[link.target.name.origin]
+                for target_link in target_links:
+                    if id(target_link) in visited_link:
+                        continue
+                    if (link.link_prefix() == target_link.link_prefix()
+                            and link.target.name.origin == target_link.origin.name.origin
+                            and target_link.target.name.origin == link.origin.name.origin):
+                        visited_link.add(id(link))
                         visited_link.add(id(target_link))
                         link_groups.append((link, target_link))
                         break
                 else:
                     raise ValueError(f"unable to pair link {link.link_name} to target {link.target.name.origin}")
+
+        def make_one_many_link(l_one: Link, l_many: Link):
+            l_one.fk = FK(name=f'_fk_{l_one.link_name}_{l_one.target.name.table}_id',
+                          column=f"{l_one.target.name.table}.id")
+            l_one.origin.links.append(l_one)
+            l_many.origin.links.append(l_many)
+            l_one.make_render(l_many)
+            l_many.make_render(l_one)
+
         for l1, l2 in link_groups:
             t1, t2 = l1.type, l2.type
             match (t1, t2):
                 case (LinkType.one, LinkType.one):
-                    print(t1, t2)
-                    # TODO one-one
-                case (LinkType.one, LinkType.many) | (LinkType.many, LinkType.one):
-                    print(t1, t2)
-                    # TODO one-many
+                    l1.origin.links.append(l1)
+                    l2.origin.links.append(l2)
+                    l1.fk = FK(name=f'_fk_{l1.link_name}_{l1.target.name.table}_id',
+                               column=f'{l1.target.name.table}.id')
+                    l1.make_render(l2)
+                    l2.make_render(l1)
+                case (LinkType.one, LinkType.many):
+                    make_one_many_link(l1, l2)
+                case (LinkType.many, LinkType.one):
+                    make_one_many_link(l2, l1)
                 case (LinkType.many, LinkType.many):
-                    print(t1, t2)
-                    # TODO many-many
-        print()
+                    at_name = ['association_table']
+                    if l1.link_prefix() != "":
+                        at_name.append(l1.link_prefix().replace('_', ''))
+                    at_name += [l1.origin.name.table, l2.origin.name.table]
+                    association_table = AssociationTable(
+                        name='_'.join(at_name),
+                        left=l1.origin, right=l2.origin
+                    )
+                    l1.table = association_table
+                    l2.table = association_table
+                    self.association_tables.append(association_table)
+                    l1.origin.links.append(l1)
+                    l2.origin.links.append(l2)
+                    l1.make_render(l2)
+                    l2.make_render(l1)
 
     def _make_render_data_field(self, schema: Type[Schema]):
         fh = FieldHelper()
@@ -330,14 +384,15 @@ class CodeGenerator:
         template = self.env.get_template('models/main.py.jinja2')
         return template.render(
             deps=self.custom_types,
-            models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values())),
+            models=self.model_render_data.values(),
+            association_tables=self.association_tables,
         )
 
     def _define2schema(self) -> str:
         template = self.env.get_template('schemas/main.py.jinja2')
         return template.render(
             deps=self.custom_types,
-            models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values())),
+            models=self.model_render_data.values(),
         )
 
     def _from_template(self, template_name: str, **kwargs):
