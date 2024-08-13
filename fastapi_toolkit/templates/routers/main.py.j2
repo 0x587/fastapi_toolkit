@@ -14,6 +14,15 @@ class {{ name }}Router(BaseRouter):
         self.snake_plural_name = "{{ model.name.snake_plural }}"
         self.camel_name = "{{ name }}"
         super().__init__(config)
+        {% for link in model.links %}
+        {% for link_op_name in link.link_op_names %}
+        self.add_api_route(
+            endpoint={{ link_op_name }},
+            methods=["POST"],
+            path='/{{ link_op_name }}'
+        )
+        {% endfor %}
+        {% endfor %}
 
     def _get_one(self):
         return get_one

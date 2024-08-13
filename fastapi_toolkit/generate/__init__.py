@@ -62,6 +62,8 @@ class Link(BaseModel):
     type: LinkType
 
     render_data: Optional[LinkRenderData] = None
+    link_op_names: List[str] = PField(default_factory=list)
+    link_op_codes: List[str] = PField(default_factory=list)
 
     def make_render(self, pair_link: "Link"):
         self.render_data = LinkRenderData(link_name=self.link_name, target_type=f'"{self.target.name.db}"',
@@ -230,6 +232,51 @@ class CodeGenerator:
             l_many.origin.links.append(l_many)
             l_one.make_render(l_many)
             l_many.make_render(l_one)
+
+            def ff(link: Link, name: str, from_id: bool, from_batch: bool):
+                name += link.link_name
+                arg = link.target.name.snake
+                arg_type = link.target.name.base_schema
+                if from_id:
+                    name += '_id'
+                    arg += '_id'
+                    arg_type = 'int'
+                if from_batch:
+                    arg += 's'
+                    arg_type = f'List[{arg_type}]'
+                filter_expr = f'__eq__({arg})'
+                if from_batch:
+                    if from_id:
+                        filter_expr = f'in_({arg})'
+                    else:
+                        filter_expr = f'in_(map(lambda x: x.id, {arg}))'
+                elif not from_id:
+                    filter_expr = f'__eq__({arg}.id)'
+                link.link_op_names.append(name)
+                link.link_op_codes.append(
+                    f"""
+async def {name}_query({arg}: {arg_type}):
+    query = await __get_all_query()
+    return query.join({link.target.name.db}).filter({link.target.name.db}.id.{filter_expr})                    
+                    """
+                )
+                link.link_op_codes.append(
+                    f"""
+async def {name}({arg}: {arg_type}, db=Depends(get_db)) -> List[{link.origin.name.schema}]:
+    query = await __get_all_query()
+    query = query.join({link.target.name.db}).filter({link.target.name.db}.id.{filter_expr})     
+    return (await db.scalars(query)).all()                  
+                    """
+                )
+
+            def f(link: Link):
+                ff(link, f'get_all_is_', True, False)
+                ff(link, f'get_all_is_', False, False)
+                ff(link, f'get_all_has_', True, True)
+                ff(link, f'get_all_has_', False, True)
+
+            f(l_one)
+            f(l_many)
 
         for l1, l2 in link_groups:
             t1, t2 = l1.type, l2.type
@@ -437,15 +484,13 @@ class CodeGenerator:
 
     def _generate_routers(self):
         for model in self.model_render_data.values():
-            if model.name.camel == 'User':
-                continue
             self._generate_file(os.path.join(self.crud_path, f'{model.name.snake}_crud.py'),
                                 self._from_template('crud/main.py.jinja2', model=model))
             self._generate_file(os.path.join(self.routers_path, f'{model.name.snake}_router.py'),
                                 self._from_template('routers/main.py.j2', model=model))
         self._generate_file(os.path.join(self.routers_path, '__init__.py'), self._from_template(
             'routers/init.py.j2',
-            models=list(filter(lambda x: x.name.camel != 'User', self.model_render_data.values()))
+            models=self.model_render_data.values(),
         ))
         self._generate_file(os.path.join(self.crud_path, '__init__.py'), lambda: '')
 

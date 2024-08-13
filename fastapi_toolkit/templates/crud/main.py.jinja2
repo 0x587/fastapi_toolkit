@@ -40,7 +40,7 @@ async def __get_all_query(
     query = select({{ name }}).filter({{ name }}.deleted_at.is_(None))
     {% for field in model.fields %}
     if filter_{{field.name.snake}} is not None:
-        query = query.filter({{ name }}.{{field.name.snake}} == filter_{{field.name.snake}})
+        query = query.filter({{ name }}.{{field.name.snake}}.__eq__(filter_{{field.name.snake}}))
     {% endfor %}
     if sort_by is not None:
         if is_desc:
@@ -128,3 +128,8 @@ async def delete_one(ident: int, db=Depends(get_db)):
 
 # ----------------------Relation Routes-----------------------
 
+{% for link in model.links %}
+{% for link_op_code in link.link_op_codes %}
+{{ link_op_code }}
+{% endfor %}
+{% endfor %}
