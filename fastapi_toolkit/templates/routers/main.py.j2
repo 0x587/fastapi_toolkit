@@ -18,6 +18,9 @@ class {{ name }}Router(BaseRouter):
     def _get_one(self):
         return get_one
 
+    def _batch_get(self):
+        return batch_get
+
     def _get_all(self):
         return get_all
 

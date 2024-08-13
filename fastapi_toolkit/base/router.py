@@ -23,15 +23,26 @@ class BaseRouter(APIRouter, ABC):
                 response_description=f"A {self.snake_name}",
             )
 
+        if config.batch_get:
+            self.add_api_route(
+                path="/batch_get",
+                endpoint=self._batch_get(),
+                methods=["POST"],
+                dependencies=config.get_one.guards,
+                summary=f"Batch get {self.snake_name}",
+                description=f"Batch get {self.snake_name}",
+                response_description=f"Batch {self.snake_name}",
+            )
+
         if config.get_all:
             self.add_api_route(
                 path="/get_all",
                 endpoint=self._get_all(),
                 methods=["POST"],
                 dependencies=config.get_all.guards,
-                summary=f"Get all courses",
-                description=f"Get all courses",
-                response_description=f"All courses",
+                summary=f"Get all {self.snake_name}",
+                description=f"Get all {self.snake_name}",
+                response_description=f"All {self.snake_name}",
             )
 
         if config.get_link_all:
@@ -80,6 +91,10 @@ class BaseRouter(APIRouter, ABC):
 
     @abstractmethod
     def _get_one(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def _batch_get(self):
         raise NotImplementedError
 
     @abstractmethod

@@ -1,5 +1,6 @@
 {% import 'utils.j2' as utils %}
-from typing import List
+import datetime
+from typing import List, Optional
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Table, Column
@@ -29,6 +30,9 @@ class {{ model.name.db }}(Base):
     __tablename__ = "{{ model.name.table }}"
 
     id: Mapped[int] = mapped_column(sqltypes.Integer, primary_key=True, autoincrement=True)
+    deleted_at: Mapped[Optional[datetime.datetime]] = mapped_column(sqltypes.DateTime, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
+    updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
 
     {% for field in model.fields %}
     {{ utils.render_table_field(field) }}
@@ -39,10 +43,10 @@ class {{ model.name.db }}(Base):
     {% set fk = link.fk %}
     {% set table = link.table %}
     {% if fk %}
-    {{ fk.name }}: Mapped[{{ fk.key_type }}] = mapped_column(ForeignKey("{{ fk.column }}"))
+    {{ fk.name }}: Mapped[{{ fk.key_type }}] = mapped_column(ForeignKey("{{ fk.column }}"), nullable=True)
 
     {% endif %}
-    {{ l.link_name }}: Mapped["{{ l.target_type }}"] = relationship(
+    {{ l.link_name }}: Mapped[{{ l.target_type }}] = relationship(
         back_populates="{{ l.back_populates }}",
     {% if table %}
         secondary={{ table.name }}

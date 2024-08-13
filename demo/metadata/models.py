@@ -4,31 +4,23 @@ from typing import List
 from fastapi_toolkit.define import Schema
 
 
-class User(Schema):
+class Student(Schema):
     name: str
-    sex: bool
-    title: str
-    desc: str
-    hot_level: int
-    start_level: int
-    avatar: str
-
-    info_blocks: List['InfoBlock']
-    certified_info_blocks: List['InfoBlock']
+    pass_card: 'PassCard'
+    group: 'Group'
+    courses: List['Course']
 
 
-class InfoBlock(Schema):
-    user: User
-    type: str
-    title: str
-    sub_title: str
-    desc: str
-    # tags: List[str]
-    time_start: datetime.date
-    time_end: datetime.date
+class PassCard(Schema):
+    account: int
+    student: 'Student'
 
-    certified_users: List['User']
 
-# class CertifiedRecord(Schema):
-#     user: User
-#     info_block: InfoBlock
+class Group(Schema):
+    name: str
+    students: List['Student']
+
+
+class Course(Schema):
+    name: str
+    students: List['Student']

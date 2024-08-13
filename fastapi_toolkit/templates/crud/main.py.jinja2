@@ -9,8 +9,6 @@ from typing import List, Optional
 from fastapi import Depends, Response, HTTPException, status
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
-from pydantic import UUID4
-import uuid
 import datetime
 from sqlalchemy import select, Select
 from ..db import get_db
@@ -21,11 +19,16 @@ NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item No
 
 
 # ------------------------Query Routes------------------------
-async def get_one(ident: UUID4, db=Depends(get_db)) -> {{ base_schema }}:
+async def get_one(ident: int, db=Depends(get_db)) -> {{ base_schema }}:
     res = await db.get({{ name }}, ident)
-    if res:
+    if res and res.deleted_at is None:
         return res
     raise NOT_FOUND
+
+
+async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[{{ base_schema }}]:
+    query = select({{ name }}).filter({{ name }}.deleted_at.is_(None)).filter({{ name }}.id.in_(idents))
+    return await paginate(db, query)
 
 
 async def __get_all_query(
@@ -34,7 +37,7 @@ async def __get_all_query(
         {% endfor %}
         sort_by: Optional[str] = None, is_desc: bool = False,
 ) -> Select:
-    query = select({{ name }})
+    query = select({{ name }}).filter({{ name }}.deleted_at.is_(None))
     {% for field in model.fields %}
     if filter_{{field.name.snake}} is not None:
         query = query.filter({{ name }}.{{field.name.snake}} == filter_{{field.name.snake}})
@@ -83,27 +86,28 @@ async def create_one(
 
 # -----------------------Update Routes------------------------
 async def update_one(
-        ident: UUID4,
+        ident: int,
         {% for field in model.fields %}
         {{field.name.snake}}: Optional[{{field.type.python_type}}] = None,
         {% endfor %}
         db=Depends(get_db)) -> {{ base_schema }}:
     res = await db.get({{ name }}, ident)
-    if not res:
+    if not res or res.deleted_at is not None:
         raise NOT_FOUND
     {% for field in model.fields %}
     if {{field.name.snake}} is not None:
         res.{{field.name.snake}} = {{field.name.snake}}
     {% endfor %}
+    res.updated_at = datetime.datetime.now()
     await db.commit()
     await db.refresh(res)
     return {{ base_schema }}.model_validate(res)
 
 
 # -----------------------Delete Routes------------------------
-async def delete_one(ident: UUID4, db=Depends(get_db)):
+async def delete_one(ident: int, db=Depends(get_db)):
     res = await db.get({{ name }}, ident)
-    if not res:
+    if not res or res.deleted_at is not None:
         raise NOT_FOUND
 # TODO
 {#    {% if model.links %}#}
@@ -117,7 +121,7 @@ async def delete_one(ident: UUID4, db=Depends(get_db)):
 {#    {% endfor %}#}
 {#    await db.commit()#}
 {#    {% endif %}#}
-    await db.delete(res)
+    res.deleted_at = datetime.datetime.now()
     await db.commit()
     return {'message': 'Deleted', 'id': ident}
 

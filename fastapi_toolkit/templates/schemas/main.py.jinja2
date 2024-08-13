@@ -17,7 +17,11 @@ from .custom_types import  (
 
 class {{ model.name.base_schema }}(Schema):
     """pk"""
-    id: int = Field(default=0)
+    id: int = Field(default=None)
+
+    deleted_at: Optional[datetime.datetime] = Field(default=None, exclude=True)
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
+    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
     """fields"""
     {% for field in model.fields %}

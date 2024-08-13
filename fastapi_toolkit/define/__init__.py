@@ -1,6 +1,5 @@
-from .model import Field, Schema
+from .model import Schema
 
 __all__ = [
-    'Field',
     'Schema',
 ]

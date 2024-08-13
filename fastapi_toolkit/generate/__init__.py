@@ -63,17 +63,16 @@ class Link(BaseModel):
     render_data: Optional[LinkRenderData] = None
 
     def make_render(self, pair_link: "Link"):
-        self.render_data = LinkRenderData(link_name=self.link_name, target_type=self.target.name.db,
+        self.render_data = LinkRenderData(link_name=self.link_name, target_type=f'"{self.target.name.db}"',
                                           back_populates=pair_link.link_name,
-                                          schema_link_name=self.link_name,schema_target_type=self.target.name.base_schema)
+                                          schema_link_name=self.link_name,
+                                          schema_target_type=self.target.name.base_schema)
         if self.type == LinkType.many:
             self.render_data.target_type = f'List[{self.render_data.target_type}]'
-
-    # t1: Literal["one", "many"]
-    # t2: Optional[Literal["one", "many"]]
-    # m1: 'ModelRenderData'
-    # m2: 'ModelRenderData'
-    # nullable: bool
+            self.render_data.schema_target_type = f'List[{self.render_data.schema_target_type}]'
+        else:
+            self.render_data.target_type = f'Optional[{self.render_data.target_type}]'
+            self.render_data.schema_target_type = f'Optional[{self.render_data.schema_target_type}]'
 
     def link_prefix(self):
         if self.type == "one":
