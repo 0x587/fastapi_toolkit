@@ -219,7 +219,8 @@ class CodeGenerator:
                         link_groups.append((link, target_link))
                         break
                 else:
-                    raise ValueError(f"unable to pair link {link.link_name} to target {link.target.name.origin}")
+                    raise ValueError(f"unable to pair {link.origin.name.origin}'s link "
+                                     f"{link.link_name} to target {link.target.name.origin}")
 
         def make_one_many_link(l_one: Link, l_many: Link):
             l_one.fk = FK(name=f'_fk_{l_one.link_name}_{l_one.target.name.table}_id',

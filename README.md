@@ -189,6 +189,8 @@ class Teacher(Schema):
 Got
 
 成功绑定关联的同时，获得了更可读的字段名，也不需要遵守必须以目标对象名字结尾的要求
+
+但是alias要遵守规则，同时alias仅用于绑定关联
 ```python
 class DBStudent(Base):
     __tablename__ = "student"
