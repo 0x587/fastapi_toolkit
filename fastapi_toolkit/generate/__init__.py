@@ -54,6 +54,7 @@ class LinkRenderData(BaseModel):
 
 class Link(BaseModel):
     link_name: str
+    alias: Optional[str] = None
     origin: "ModelRenderData"
     target: "ModelRenderData"
     fk: Optional[FK] = None
@@ -79,13 +80,17 @@ class Link(BaseModel):
             target_name = self.target.name.snake
         else:
             target_name = self.target.name.snake_plural
-        if self.link_name[-len(target_name):] != target_name:
-            raise ValueError(f"link name {self.link_name} not match target {self.target.name.origin}")
-        return self.link_name[:-len(target_name)]
+        l_name = self.link_name
+        if self.alias is not None:
+            l_name = self.alias
+        if l_name[-len(target_name):] != target_name:
+            raise ValueError(f"link name {l_name} not match target {self.target.name.origin}")
+        return l_name[:-len(target_name)]
 
 
 class Field(BaseModel):
     name: NameInfo
+    alias: Optional[NameInfo] = None
     type: FieldType
 
 
@@ -188,8 +193,11 @@ class CodeGenerator:
         links: Dict[str, List[Link]] = defaultdict(list)
         for model in self.model_render_data.values():
             for field in filter(lambda x: x.type.link is not None, model.fields):
+                field: Field
                 link = Link(link_name=field.name.origin, origin=model,
                             target=self.model_render_data[field.type.link.model], type=field.type.link.type)
+                if field.alias is not None:
+                    link.alias = field.alias.origin
                 links[model.name.origin].append(link)
             model.fields = list(filter(lambda x: x.type.link is None, model.fields))
 
@@ -257,8 +265,9 @@ class CodeGenerator:
 
         return ModelRenderData(
             name=self._name_info(schema.__name__),
-            fields=[Field(name=self._name_info(name), type=fh.parse(field.annotation)) for name, field in
-                    schema.model_fields.items()]
+            fields=[
+                Field(name=self._name_info(name), alias=self._name_info(field.alias), type=fh.parse(field.annotation))
+                for name, field in schema.model_fields.items()]
         )
 
     def _parse_mock(self, export=False):
@@ -280,7 +289,9 @@ class CodeGenerator:
                 self.mock_dependency[node] = list(rooted_tree.successors(node))
 
     @staticmethod
-    def _name_info(name) -> NameInfo:
+    def _name_info(name: str) -> Optional[NameInfo]:
+        if type(name) is not str:
+            return None
         return NameInfo(
             origin=name,
             snake=to_snake(name),
