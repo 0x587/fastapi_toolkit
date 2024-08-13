@@ -1234,6 +1234,21 @@ files = [
 ]
 
 [[package]]
+name = "mpld3"
+version = "0.5.10"
+description = "D3 Viewer for Matplotlib"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mpld3-0.5.10-py3-none-any.whl", hash = "sha256:80877acce87ea447380fad7374668737505c8c0684aab05238e7c5dc1fab38c1"},
+    {file = "mpld3-0.5.10.tar.gz", hash = "sha256:a478eb404fa5212505c59133cf272cd9a94105872e605597720e7f84de38fbc7"},
+]
+
+[package.dependencies]
+jinja2 = "*"
+matplotlib = "*"
+
+[[package]]
 name = "munch"
 version = "4.0.0"
 description = "A dot-accessible dictionary (a la JavaScript objects)"
@@ -2608,4 +2623,4 @@ watchmedo = ["PyYAML (>=3.10)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "04640efaa078cc370c9d03d358390aa7d76cbfdc849d122e616a4764f3f2dcb1"
+content-hash = "a4e312e7dd9d4887afa709353c8c45d8af49368be84e338bd496bdc4a6c26418"

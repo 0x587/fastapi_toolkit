@@ -174,7 +174,8 @@ class CodeGenerator:
 
     def parse(self):
         self._parse_models()
-        self._parse_mock()
+        self._parse_network()
+        # self._parse_mock()
 
     def _get_schemas(self, root=Schema):
         for model_ in root.__subclasses__():
@@ -270,6 +271,24 @@ class CodeGenerator:
                 Field(name=self._name_info(name), alias=self._name_info(field.alias), type=fh.parse(field.annotation))
                 for name, field in schema.model_fields.items()]
         )
+
+    def _parse_network(self):
+        self.model_network.add_nodes_from(self.model_render_data.keys())
+        for model in self.model_render_data.values():
+            for link in model.links:
+                self.model_network.add_edge(link.origin.name.origin, link.target.name.origin)
+        import matplotlib.pyplot as plt
+        pos = nx.spring_layout(self.model_network)
+        edge_labels = {
+            (link.origin.name.origin, link.target.name.origin): link.link_name
+            for model in self.model_render_data.values() for link in model.links
+        }
+        nx.draw(self.model_network.to_directed(), pos, with_labels=True)
+        nx.draw_networkx_edge_labels(
+            self.model_network.to_directed(), pos,
+            edge_labels=edge_labels, label_pos=0.75
+        )
+        plt.show()
 
     def _parse_mock(self, export=False):
         self.model_network.add_nodes_from(self.model_render_data.keys())
