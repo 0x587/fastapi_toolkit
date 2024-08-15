@@ -233,51 +233,6 @@ class CodeGenerator:
             l_one.make_render(l_many)
             l_many.make_render(l_one)
 
-            def ff(link: Link, name: str, from_id: bool, from_batch: bool):
-                name += link.link_name
-                arg = link.target.name.snake
-                arg_type = link.target.name.base_schema
-                if from_id:
-                    name += '_id'
-                    arg += '_id'
-                    arg_type = 'int'
-                if from_batch:
-                    arg += 's'
-                    arg_type = f'List[{arg_type}]'
-                filter_expr = f'__eq__({arg})'
-                if from_batch:
-                    if from_id:
-                        filter_expr = f'in_({arg})'
-                    else:
-                        filter_expr = f'in_(map(lambda x: x.id, {arg}))'
-                elif not from_id:
-                    filter_expr = f'__eq__({arg}.id)'
-                link.link_op_names.append(name)
-                link.link_op_codes.append(
-                    f"""
-async def {name}_query({arg}: {arg_type}):
-    query = await __get_all_query()
-    return query.join({link.target.name.db}).filter({link.target.name.db}.id.{filter_expr})                    
-                    """
-                )
-                link.link_op_codes.append(
-                    f"""
-async def {name}({arg}: {arg_type}, db=Depends(get_db)) -> List[{link.origin.name.schema}]:
-    query = await __get_all_query()
-    query = query.join({link.target.name.db}).filter({link.target.name.db}.id.{filter_expr})     
-    return (await db.scalars(query)).all()                  
-                    """
-                )
-
-            def f(link: Link):
-                ff(link, f'get_all_is_', True, False)
-                ff(link, f'get_all_is_', False, False)
-                ff(link, f'get_all_has_', True, True)
-                ff(link, f'get_all_has_', False, True)
-
-            f(l_one)
-            f(l_many)
-
         for l1, l2 in link_groups:
             t1, t2 = l1.type, l2.type
             match (t1, t2):
@@ -308,6 +263,55 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db)) -> List[{link.origin.nam
                     l2.origin.links.append(l2)
                     l1.make_render(l2)
                     l2.make_render(l1)
+
+        def ff(link: Link, name: str, from_id: bool, from_batch: bool):
+            name += link.link_name
+            arg = link.target.name.snake
+            arg_type = link.target.name.base_schema
+            if from_id:
+                name += '_id'
+                arg += '_id'
+                arg_type = 'int'
+            if from_batch:
+                arg += 's'
+                arg_type = f'List[{arg_type}]'
+            filter_expr = f'__eq__({arg})'
+            if from_batch:
+                if from_id:
+                    filter_expr = f'in_({arg})'
+                else:
+                    filter_expr = f'in_(map(lambda x: x.id, {arg}))'
+            elif not from_id:
+                filter_expr = f'__eq__({arg}.id)'
+            query_code = f'query = query.join({link.target.name.db}).filter({link.target.name.db}.id.{filter_expr})'
+            o = link.origin
+            for l in o.links:
+                op = 'selectinload' if l.type is LinkType.many else 'joinedload'
+                query_code += f'\n    query = query.options({op}({o.name.db}.{l.link_name}))'
+            # link.link_op_names.append(name)
+#             link.link_op_codes.append(
+#                 f"""
+# async def {name}_query({arg}: {arg_type}):
+#     query = await __get_all_query()
+#     {query_code}
+#     return query
+#                 """
+#             )
+            link.link_op_codes.append(
+                f"""
+async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(__get_all_query)) -> List[{link.origin.name.schema}]:
+    if type(query) is not Select:
+        query = await __get_all_query()
+    {query_code}
+    return (await db.scalars(query)).all()
+                """
+            )
+
+        for link in (l for m in self.model_render_data.values() for l in m.links):
+            ff(link, f'get_all_is_', True, False)
+            ff(link, f'get_all_is_', False, False)
+            ff(link, f'get_all_has_', True, True)
+            ff(link, f'get_all_has_', False, True)
 
     def _make_render_data_field(self, schema: Type[Schema]):
         fh = FieldHelper()

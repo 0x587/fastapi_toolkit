@@ -11,6 +11,7 @@ from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
 from sqlalchemy import select, Select
+from sqlalchemy.orm import joinedload, selectinload
 from ..db import get_db
 from ..models import *
 from ..schemas import *

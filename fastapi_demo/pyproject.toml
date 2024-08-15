@@ -8,8 +8,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 aiomysql = "^0.2.0"
-fastapi-toolkit-shawn587 = {path = "../fastapi_toolkit"}
 greenlet = "^3.0.3"
+fastapi-toolkit-shawn587 = {path = ".."}
 
 [[tool.poetry.source]]
 name = "aliyun"

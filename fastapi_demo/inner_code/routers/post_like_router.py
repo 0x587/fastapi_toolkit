@@ -1,6 +1,6 @@
-# generate_hash: bca17ad70ae44c488a49eb37cb728da2
+# generate_hash: e20f419b542b0a15ccf96ce5a92c86e3
 """
-This file was automatically generated in 2024-08-14 00:21:38.642674
+This file was automatically generated in 2024-08-15 16:29:03.785812
 """
 
 from fastapi_toolkit.base.router import BaseRouter
@@ -15,46 +15,6 @@ class PostLikeRouter(BaseRouter):
         self.snake_plural_name = "post_likes"
         self.camel_name = "PostLike"
         super().__init__(config)
-        self.add_api_route(
-            endpoint=get_all_is_user_id,
-            methods=["POST"],
-            path='/get_all_is_user_id'
-        )
-        self.add_api_route(
-            endpoint=get_all_is_user,
-            methods=["POST"],
-            path='/get_all_is_user'
-        )
-        self.add_api_route(
-            endpoint=get_all_has_user_id,
-            methods=["POST"],
-            path='/get_all_has_user_id'
-        )
-        self.add_api_route(
-            endpoint=get_all_has_user,
-            methods=["POST"],
-            path='/get_all_has_user'
-        )
-        self.add_api_route(
-            endpoint=get_all_is_post_id,
-            methods=["POST"],
-            path='/get_all_is_post_id'
-        )
-        self.add_api_route(
-            endpoint=get_all_is_post,
-            methods=["POST"],
-            path='/get_all_is_post'
-        )
-        self.add_api_route(
-            endpoint=get_all_has_post_id,
-            methods=["POST"],
-            path='/get_all_has_post_id'
-        )
-        self.add_api_route(
-            endpoint=get_all_has_post,
-            methods=["POST"],
-            path='/get_all_has_post'
-        )
 
     def _get_one(self):
         return get_one

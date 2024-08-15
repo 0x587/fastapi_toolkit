@@ -36,7 +36,8 @@ from inner_code.schemas import *
 
 class HomePageView(BaseModel):
     user: 'SchemaBaseUser'
-    like_posts: List['SchemaBasePost']
+    my_posts: List['SchemaPost']
+    like_posts: List['SchemaPost']
     # recent_posts: List['SchemaBasePost']  # newest 10
     # hot_posts: List['SchemaBasePost']  # most like 10
 
@@ -47,12 +48,13 @@ import inner_code.crud.post_like_crud as pl
 
 
 @app.get('/shawn')
-async def f(ident: int, db=Depends(get_db)):
+async def f(ident: int, db=Depends(get_db)) -> HomePageView:
     db: AsyncSession
     user = await u.get_one(ident, db)
     likes = await pl.get_all_is_user(user, db)
     return HomePageView(
         user=user,
+        my_posts=await p.get_all_is_author(user, db),
         like_posts=await p.get_all_has_likes(likes, db),
     )
 

@@ -1,6 +1,6 @@
-# generate_hash: eb139d917b6590d50187b0fe1fed139c
+# generate_hash: 4cdaf130a6a917e4046cee6647a846f6
 """
-This file was automatically generated in 2024-08-14 00:21:38.642478
+This file was automatically generated in 2024-08-15 16:29:03.785135
 """
 
 from fastapi_toolkit.base.router import BaseRouter
@@ -15,66 +15,6 @@ class CommentRouter(BaseRouter):
         self.snake_plural_name = "comments"
         self.camel_name = "Comment"
         super().__init__(config)
-        self.add_api_route(
-            endpoint=get_all_is_user_id,
-            methods=["POST"],
-            path='/get_all_is_user_id'
-        )
-        self.add_api_route(
-            endpoint=get_all_is_user,
-            methods=["POST"],
-            path='/get_all_is_user'
-        )
-        self.add_api_route(
-            endpoint=get_all_has_user_id,
-            methods=["POST"],
-            path='/get_all_has_user_id'
-        )
-        self.add_api_route(
-            endpoint=get_all_has_user,
-            methods=["POST"],
-            path='/get_all_has_user'
-        )
-        self.add_api_route(
-            endpoint=get_all_is_post_id,
-            methods=["POST"],
-            path='/get_all_is_post_id'
-        )
-        self.add_api_route(
-            endpoint=get_all_is_post,
-            methods=["POST"],
-            path='/get_all_is_post'
-        )
-        self.add_api_route(
-            endpoint=get_all_has_post_id,
-            methods=["POST"],
-            path='/get_all_has_post_id'
-        )
-        self.add_api_route(
-            endpoint=get_all_has_post,
-            methods=["POST"],
-            path='/get_all_has_post'
-        )
-        self.add_api_route(
-            endpoint=get_all_is_likes_id,
-            methods=["POST"],
-            path='/get_all_is_likes_id'
-        )
-        self.add_api_route(
-            endpoint=get_all_is_likes,
-            methods=["POST"],
-            path='/get_all_is_likes'
-        )
-        self.add_api_route(
-            endpoint=get_all_has_likes_id,
-            methods=["POST"],
-            path='/get_all_has_likes_id'
-        )
-        self.add_api_route(
-            endpoint=get_all_has_likes,
-            methods=["POST"],
-            path='/get_all_has_likes'
-        )
 
     def _get_one(self):
         return get_one
