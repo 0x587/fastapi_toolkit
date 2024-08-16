@@ -47,12 +47,16 @@ import inner_code.crud.post_crud as p
 import inner_code.crud.post_like_crud as pl
 from sqlalchemy import func
 
+
 @app.get('/shawn')
 async def f(ident: int, db=Depends(get_db)) -> HomePageView:
     db: AsyncSession
     user = await u.get_one(ident, db)
     likes = await pl.get_all_is_user(user, db)
-    hp_q = db.scalars(select(DBPost).select(func.count(DBPostLike.id)).outerjoin(DBPostLike))
+    hp_q = db.scalars(select(DBPost)
+                      .outerjoin(DBPostLike)
+                      .group_by(DBPost)
+                      .order_by(func.count(DBPostLike.id).desc()))
     return HomePageView(
         user=user,
         my_posts=await p.get_all_is_author(user, db),
