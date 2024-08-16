@@ -299,9 +299,9 @@ class CodeGenerator:
 #             )
             link.link_op_codes.append(
                 f"""
-async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(__get_all_query)) -> List[{link.origin.name.schema}]:
+async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_query)) -> List[{link.origin.name.schema}]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     {query_code}
     return (await db.scalars(query)).all()
                 """

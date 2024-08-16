@@ -1,6 +1,6 @@
-# generate_hash: bf04f80becb436bfa71c78eb7d152e9d
+# generate_hash: f4847b2fbc4abcb13c3fdcf90d4ac58d
 """
-This file was automatically generated in 2024-08-15 16:27:24.117561
+This file was automatically generated in 2024-08-15 16:43:19.829367
 """
 
 from typing import List, Optional
@@ -30,7 +30,7 @@ async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseCom
     return await paginate(db, query)
 
 
-async def __get_all_query(
+async def get_all_query(
         filter_content: Optional[str] = None,
         sort_by: Optional[str] = None, is_desc: bool = False,
 ) -> Select:
@@ -46,14 +46,14 @@ async def __get_all_query(
 
 
 async def get_all(
-        query=Depends(__get_all_query),
+        query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[SchemaBaseComment]:
     return await paginate(db, query)
 
 
 async def get_link_all(
-        query=Depends(__get_all_query),
+        query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[SchemaComment]:
     return await paginate(db, query)
@@ -105,9 +105,9 @@ async def delete_one(ident: int, db=Depends(get_db)):
 # ----------------------Relation Routes-----------------------
 
 
-async def get_all_is_user_id(user_id: int, db=Depends(get_db), query=Depends(__get_all_query)) -> List[SchemaComment]:
+async def get_all_is_user_id(user_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaComment]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     query = query.join(DBUser).filter(DBUser.id.__eq__(user_id))
     query = query.options(joinedload(DBComment.user))
     query = query.options(joinedload(DBComment.post))
@@ -115,9 +115,9 @@ async def get_all_is_user_id(user_id: int, db=Depends(get_db), query=Depends(__g
     return (await db.scalars(query)).all()
                 
 
-async def get_all_is_user(user: SchemaBaseUser, db=Depends(get_db), query=Depends(__get_all_query)) -> List[SchemaComment]:
+async def get_all_is_user(user: SchemaBaseUser, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaComment]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     query = query.join(DBUser).filter(DBUser.id.__eq__(user.id))
     query = query.options(joinedload(DBComment.user))
     query = query.options(joinedload(DBComment.post))
@@ -125,9 +125,9 @@ async def get_all_is_user(user: SchemaBaseUser, db=Depends(get_db), query=Depend
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_user_id(user_ids: List[int], db=Depends(get_db), query=Depends(__get_all_query)) -> List[SchemaComment]:
+async def get_all_has_user_id(user_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaComment]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     query = query.join(DBUser).filter(DBUser.id.in_(user_ids))
     query = query.options(joinedload(DBComment.user))
     query = query.options(joinedload(DBComment.post))
@@ -135,9 +135,9 @@ async def get_all_has_user_id(user_ids: List[int], db=Depends(get_db), query=Dep
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_user(users: List[SchemaBaseUser], db=Depends(get_db), query=Depends(__get_all_query)) -> List[SchemaComment]:
+async def get_all_has_user(users: List[SchemaBaseUser], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaComment]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     query = query.join(DBUser).filter(DBUser.id.in_(map(lambda x: x.id, users)))
     query = query.options(joinedload(DBComment.user))
     query = query.options(joinedload(DBComment.post))
@@ -145,9 +145,9 @@ async def get_all_has_user(users: List[SchemaBaseUser], db=Depends(get_db), quer
     return (await db.scalars(query)).all()
                 
 
-async def get_all_is_post_id(post_id: int, db=Depends(get_db), query=Depends(__get_all_query)) -> List[SchemaComment]:
+async def get_all_is_post_id(post_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaComment]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     query = query.join(DBPost).filter(DBPost.id.__eq__(post_id))
     query = query.options(joinedload(DBComment.user))
     query = query.options(joinedload(DBComment.post))
@@ -155,9 +155,9 @@ async def get_all_is_post_id(post_id: int, db=Depends(get_db), query=Depends(__g
     return (await db.scalars(query)).all()
                 
 
-async def get_all_is_post(post: SchemaBasePost, db=Depends(get_db), query=Depends(__get_all_query)) -> List[SchemaComment]:
+async def get_all_is_post(post: SchemaBasePost, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaComment]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     query = query.join(DBPost).filter(DBPost.id.__eq__(post.id))
     query = query.options(joinedload(DBComment.user))
     query = query.options(joinedload(DBComment.post))
@@ -165,9 +165,9 @@ async def get_all_is_post(post: SchemaBasePost, db=Depends(get_db), query=Depend
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_post_id(post_ids: List[int], db=Depends(get_db), query=Depends(__get_all_query)) -> List[SchemaComment]:
+async def get_all_has_post_id(post_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaComment]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     query = query.join(DBPost).filter(DBPost.id.in_(post_ids))
     query = query.options(joinedload(DBComment.user))
     query = query.options(joinedload(DBComment.post))
@@ -175,9 +175,9 @@ async def get_all_has_post_id(post_ids: List[int], db=Depends(get_db), query=Dep
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_post(posts: List[SchemaBasePost], db=Depends(get_db), query=Depends(__get_all_query)) -> List[SchemaComment]:
+async def get_all_has_post(posts: List[SchemaBasePost], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaComment]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     query = query.join(DBPost).filter(DBPost.id.in_(map(lambda x: x.id, posts)))
     query = query.options(joinedload(DBComment.user))
     query = query.options(joinedload(DBComment.post))
@@ -185,9 +185,9 @@ async def get_all_has_post(posts: List[SchemaBasePost], db=Depends(get_db), quer
     return (await db.scalars(query)).all()
                 
 
-async def get_all_is_likes_id(comment_like_id: int, db=Depends(get_db), query=Depends(__get_all_query)) -> List[SchemaComment]:
+async def get_all_is_likes_id(comment_like_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaComment]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     query = query.join(DBCommentLike).filter(DBCommentLike.id.__eq__(comment_like_id))
     query = query.options(joinedload(DBComment.user))
     query = query.options(joinedload(DBComment.post))
@@ -195,9 +195,9 @@ async def get_all_is_likes_id(comment_like_id: int, db=Depends(get_db), query=De
     return (await db.scalars(query)).all()
                 
 
-async def get_all_is_likes(comment_like: SchemaBaseCommentLike, db=Depends(get_db), query=Depends(__get_all_query)) -> List[SchemaComment]:
+async def get_all_is_likes(comment_like: SchemaBaseCommentLike, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaComment]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     query = query.join(DBCommentLike).filter(DBCommentLike.id.__eq__(comment_like.id))
     query = query.options(joinedload(DBComment.user))
     query = query.options(joinedload(DBComment.post))
@@ -205,9 +205,9 @@ async def get_all_is_likes(comment_like: SchemaBaseCommentLike, db=Depends(get_d
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_likes_id(comment_like_ids: List[int], db=Depends(get_db), query=Depends(__get_all_query)) -> List[SchemaComment]:
+async def get_all_has_likes_id(comment_like_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaComment]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     query = query.join(DBCommentLike).filter(DBCommentLike.id.in_(comment_like_ids))
     query = query.options(joinedload(DBComment.user))
     query = query.options(joinedload(DBComment.post))
@@ -215,9 +215,9 @@ async def get_all_has_likes_id(comment_like_ids: List[int], db=Depends(get_db), 
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_likes(comment_likes: List[SchemaBaseCommentLike], db=Depends(get_db), query=Depends(__get_all_query)) -> List[SchemaComment]:
+async def get_all_has_likes(comment_likes: List[SchemaBaseCommentLike], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaComment]:
     if type(query) is not Select:
-        query = await __get_all_query()
+        query = await get_all_query()
     query = query.join(DBCommentLike).filter(DBCommentLike.id.in_(map(lambda x: x.id, comment_likes)))
     query = query.options(joinedload(DBComment.user))
     query = query.options(joinedload(DBComment.post))

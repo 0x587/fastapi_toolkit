@@ -32,7 +32,7 @@ async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[{{ base_schem
     return await paginate(db, query)
 
 
-async def __get_all_query(
+async def get_all_query(
         {% for field in model.fields %}
         filter_{{field.name.snake}}: Optional[{{field.type.python_type}}] = None,
         {% endfor %}
@@ -52,14 +52,14 @@ async def __get_all_query(
 
 
 async def get_all(
-        query=Depends(__get_all_query),
+        query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[{{ base_schema }}]:
     return await paginate(db, query)
 
 
 async def get_link_all(
-        query=Depends(__get_all_query),
+        query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[{{ model.name.schema }}]:
     return await paginate(db, query)
