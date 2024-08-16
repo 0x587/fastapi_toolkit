@@ -289,14 +289,14 @@ class CodeGenerator:
                 op = 'selectinload' if l.type is LinkType.many else 'joinedload'
                 query_code += f'\n    query = query.options({op}({o.name.db}.{l.link_name}))'
             # link.link_op_names.append(name)
-#             link.link_op_codes.append(
-#                 f"""
-# async def {name}_query({arg}: {arg_type}):
-#     query = await __get_all_query()
-#     {query_code}
-#     return query
-#                 """
-#             )
+            #             link.link_op_codes.append(
+            #                 f"""
+            # async def {name}_query({arg}: {arg_type}):
+            #     query = await __get_all_query()
+            #     {query_code}
+            #     return query
+            #                 """
+            #             )
             link.link_op_codes.append(
                 f"""
 async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_query)) -> List[{link.origin.name.schema}]:
@@ -316,12 +316,15 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
     def _make_render_data_field(self, schema: Type[Schema]):
         fh = FieldHelper()
 
-        return ModelRenderData(
+        m = ModelRenderData(
             name=self._name_info(schema.__name__),
             fields=[
                 Field(name=self._name_info(name), alias=self._name_info(field.alias), type=fh.parse(field.annotation))
                 for name, field in schema.model_fields.items()]
         )
+        if m.name.origin == 'User':
+            m.fields.append(Field(name=self._name_info('user_key'), type=fh.parse(str)))
+        return m
 
     def _parse_network(self):
         self.model_network.add_nodes_from(self.model_render_data.keys())
@@ -510,8 +513,9 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
         user_model = self.model_render_data['User']
         self._generate_file(os.path.join(self.auth_path, '__init__.py'),
                             self._from_template(f'auth/{mode}/__init__.py.j2'))
-        self._generate_file(os.path.join(self.auth_path, 'models.py'),
-                            self._from_template(f'auth/{mode}/models.py.j2', model=user_model))
+        if mode != 'key':
+            self._generate_file(os.path.join(self.auth_path, 'models.py'),
+                                self._from_template(f'auth/{mode}/models.py.j2', model=user_model))
         self._generate_file(os.path.join(self.auth_path, 'routes.py'), self._from_template(f'auth/{mode}/routes.py.j2'))
 
     def _generate_config(self):
@@ -531,6 +535,6 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
             self._generate_routers()
         # if mock:
         #     self._generate_mock()
-        # if auth != "":
-        #     self._generate_auth(mode=auth)
+        if auth != "":
+            self._generate_auth(mode=auth)
         self._generate_config()

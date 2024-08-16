@@ -1,6 +1,6 @@
-# generate_hash: f983980e17bcbda7b2ceec59419e6d18
+# generate_hash: 71a9b9c35566d9b2801e0523c6d3a161
 """
-This file was automatically generated in 2024-08-14 00:21:38.636293
+This file was automatically generated in 2024-08-16 23:39:27.960775
 """
 import uuid
 import datetime
@@ -20,6 +20,8 @@ class SchemaBaseUser(Schema):
 
     """fields"""
     name: str = Field()
+
+    user_key: str = Field()
 
 
 class SchemaUser(SchemaBaseUser):

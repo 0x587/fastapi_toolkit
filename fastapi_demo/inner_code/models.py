@@ -1,6 +1,6 @@
-# generate_hash: 6d7024eb641a2f1c12ce078ad90496a5
+# generate_hash: e7e05f94b1beacd28a13efb744c54d63
 """
-This file was automatically generated in 2024-08-14 00:21:38.634389
+This file was automatically generated in 2024-08-16 23:39:27.958207
 """
 import datetime
 from typing import List, Optional
@@ -21,6 +21,8 @@ class DBUser(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
 
     name: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
+
+    user_key: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
     posts: Mapped[List["DBPost"]] = relationship(
         back_populates="author",

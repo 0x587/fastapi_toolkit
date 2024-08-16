@@ -4,8 +4,8 @@ from sqlalchemy import select
 
 from inner_code.routers import InnerRouter
 from inner_code.config import Config
-# from inner_code.auth import AuthFactory
-# from inner_code.auth.routes import AuthRouter
+from inner_code.auth import AuthFactory
+from inner_code.auth.routes import AuthRouter
 # from fastapi_toolkit.define.guard import Guard
 
 from inner_code.setting import get_settings
@@ -15,12 +15,12 @@ setting = get_settings()
 app = FastAPI()
 
 inner_config = Config()
-# auth = AuthFactory.create(key_name="X-WX-OPENID")
-# auth_router = AuthRouter(auth)
+auth = AuthFactory.create(key_name="X-WX-OPENID")
+auth_router = AuthRouter(auth)
 # guard = Guard(auth)
 
 # inner_config.department.add_guard(Security(auth.require_user()))
-# app.include_router(auth_router)
+app.include_router(auth_router)
 app.include_router(InnerRouter(inner_config))
 
 from typing import List

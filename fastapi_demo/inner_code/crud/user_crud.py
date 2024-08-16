@@ -1,6 +1,6 @@
-# generate_hash: 3984adfa3ba28f68afefa0de002b74b4
+# generate_hash: 21ca5e4d895ba1d0e1d6b806de27106a
 """
-This file was automatically generated in 2024-08-15 16:43:19.820118
+This file was automatically generated in 2024-08-16 23:39:27.967310
 """
 
 from typing import List, Optional
@@ -32,11 +32,14 @@ async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseUse
 
 async def get_all_query(
         filter_name: Optional[str] = None,
+        filter_user_key: Optional[str] = None,
         sort_by: Optional[str] = None, is_desc: bool = False,
 ) -> Select:
     query = select(DBUser).filter(DBUser.deleted_at.is_(None))
     if filter_name is not None:
         query = query.filter(DBUser.name.__eq__(filter_name))
+    if filter_user_key is not None:
+        query = query.filter(DBUser.user_key.__eq__(filter_user_key))
     if sort_by is not None:
         if is_desc:
             query = query.order_by(getattr(DBUser, sort_by).desc())
@@ -63,10 +66,12 @@ async def get_link_all(
 # -----------------------Create Routes------------------------
 async def create_one(
         name: str,
+        user_key: str,
         db=Depends(get_db)
 ) -> SchemaBaseUser:
     user = SchemaBaseUser(
         name=name,
+        user_key=user_key,
     )
     user = DBUser(**user.model_dump())
     db.add(user)
@@ -79,12 +84,15 @@ async def create_one(
 async def update_one(
         ident: int,
         name: Optional[str] = None,
+        user_key: Optional[str] = None,
         db=Depends(get_db)) -> SchemaBaseUser:
     res = await db.get(DBUser, ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
     if name is not None:
         res.name = name
+    if user_key is not None:
+        res.user_key = user_key
     res.updated_at = datetime.datetime.now()
     await db.commit()
     await db.refresh(res)
