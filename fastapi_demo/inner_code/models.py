@@ -1,6 +1,6 @@
-# generate_hash: e7e05f94b1beacd28a13efb744c54d63
+# generate_hash: 59078b8f889971cfba84af3481c2e5a3
 """
-This file was automatically generated in 2024-08-16 23:39:27.958207
+This file was automatically generated in 2024-08-18 00:30:05.031883
 """
 import datetime
 from typing import List, Optional
@@ -10,6 +10,13 @@ from sqlalchemy import ForeignKey, Table, Column
 from sqlalchemy.sql import sqltypes
 
 from .db import Base
+
+association_table_user_group = Table(
+    "association_table_user_group",
+    Base.metadata,
+    Column("user_id", ForeignKey("user.id"), primary_key=True),
+    Column("group_id", ForeignKey("group.id"), primary_key=True),
+)
 
 
 class DBUser(Base):
@@ -38,6 +45,48 @@ class DBUser(Base):
 
     comment_likes: Mapped[List["DBCommentLike"]] = relationship(
         back_populates="user",
+    )
+
+    _fk_pass_card_pass_card_id: Mapped[int] = mapped_column(ForeignKey("pass_card.id"), nullable=True)
+
+    pass_card: Mapped[Optional["DBPassCard"]] = relationship(
+        back_populates="user",
+    )
+
+    groups: Mapped[List["DBGroup"]] = relationship(
+        back_populates="users",
+        secondary=association_table_user_group
+    )
+
+
+class DBPassCard(Base):
+    __tablename__ = "pass_card"
+
+    id: Mapped[int] = mapped_column(sqltypes.Integer, primary_key=True, autoincrement=True)
+    deleted_at: Mapped[Optional[datetime.datetime]] = mapped_column(sqltypes.DateTime, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
+    updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
+
+    account: Mapped[int] = mapped_column(sqltypes.Integer, nullable=False)
+
+    user: Mapped[Optional["DBUser"]] = relationship(
+        back_populates="pass_card",
+    )
+
+
+class DBGroup(Base):
+    __tablename__ = "group"
+
+    id: Mapped[int] = mapped_column(sqltypes.Integer, primary_key=True, autoincrement=True)
+    deleted_at: Mapped[Optional[datetime.datetime]] = mapped_column(sqltypes.DateTime, nullable=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
+    updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
+
+    name: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
+
+    users: Mapped[List["DBUser"]] = relationship(
+        back_populates="groups",
+        secondary=association_table_user_group
     )
 
 

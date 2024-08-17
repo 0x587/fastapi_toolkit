@@ -1,6 +1,6 @@
-# generate_hash: 71a9b9c35566d9b2801e0523c6d3a161
+# generate_hash: 1d7abba6cf5caa11bd4e5cb0d597b479
 """
-This file was automatically generated in 2024-08-16 23:39:27.960775
+This file was automatically generated in 2024-08-18 00:30:05.034363
 """
 import uuid
 import datetime
@@ -30,6 +30,42 @@ class SchemaUser(SchemaBaseUser):
     comments: "List[SchemaBaseComment]"
     post_likes: "List[SchemaBasePostLike]"
     comment_likes: "List[SchemaBaseCommentLike]"
+    pass_card: "Optional[SchemaBasePassCard]"
+    groups: "List[SchemaBaseGroup]"
+
+
+class SchemaBasePassCard(Schema):
+    """pk"""
+    id: int = Field(default=None)
+
+    deleted_at: Optional[datetime.datetime] = Field(default=None, exclude=True)
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
+    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
+
+    """fields"""
+    account: int = Field()
+
+
+class SchemaPassCard(SchemaBasePassCard):
+    """relationships"""
+    user: "Optional[SchemaBaseUser]"
+
+
+class SchemaBaseGroup(Schema):
+    """pk"""
+    id: int = Field(default=None)
+
+    deleted_at: Optional[datetime.datetime] = Field(default=None, exclude=True)
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
+    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
+
+    """fields"""
+    name: str = Field()
+
+
+class SchemaGroup(SchemaBaseGroup):
+    """relationships"""
+    users: "List[SchemaBaseUser]"
 
 
 class SchemaBasePost(Schema):
@@ -104,6 +140,10 @@ class SchemaCommentLike(SchemaBaseCommentLike):
 
 SchemaBaseUser.model_rebuild()
 SchemaUser.model_rebuild()
+SchemaBasePassCard.model_rebuild()
+SchemaPassCard.model_rebuild()
+SchemaBaseGroup.model_rebuild()
+SchemaGroup.model_rebuild()
 SchemaBasePost.model_rebuild()
 SchemaPost.model_rebuild()
 SchemaBaseComment.model_rebuild()

@@ -1,6 +1,6 @@
-# generate_hash: 21ca5e4d895ba1d0e1d6b806de27106a
+# generate_hash: c7c0ca24322410db4eb4a36d95cb9ef8
 """
-This file was automatically generated in 2024-08-16 23:39:27.967310
+This file was automatically generated in 2024-08-18 00:30:05.040380
 """
 
 from typing import List, Optional
@@ -113,7 +113,7 @@ async def delete_one(ident: int, db=Depends(get_db)):
 # ----------------------Relation Routes-----------------------
 
 
-async def get_all_is_posts_id(post_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_posts_id_is(post_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBPost).filter(DBPost.id.__eq__(post_id))
@@ -121,10 +121,12 @@ async def get_all_is_posts_id(post_id: int, db=Depends(get_db), query=Depends(ge
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_is_posts(post: SchemaBasePost, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_posts_is(post: SchemaBasePost, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBPost).filter(DBPost.id.__eq__(post.id))
@@ -132,10 +134,12 @@ async def get_all_is_posts(post: SchemaBasePost, db=Depends(get_db), query=Depen
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_posts_id(post_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_posts_id_has(post_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBPost).filter(DBPost.id.in_(post_ids))
@@ -143,10 +147,12 @@ async def get_all_has_posts_id(post_ids: List[int], db=Depends(get_db), query=De
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_posts(posts: List[SchemaBasePost], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_posts_has(posts: List[SchemaBasePost], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBPost).filter(DBPost.id.in_(map(lambda x: x.id, posts)))
@@ -154,10 +160,12 @@ async def get_all_has_posts(posts: List[SchemaBasePost], db=Depends(get_db), que
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_is_comments_id(comment_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_comments_id_is(comment_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBComment).filter(DBComment.id.__eq__(comment_id))
@@ -165,10 +173,12 @@ async def get_all_is_comments_id(comment_id: int, db=Depends(get_db), query=Depe
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_is_comments(comment: SchemaBaseComment, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_comments_is(comment: SchemaBaseComment, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBComment).filter(DBComment.id.__eq__(comment.id))
@@ -176,10 +186,12 @@ async def get_all_is_comments(comment: SchemaBaseComment, db=Depends(get_db), qu
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_comments_id(comment_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_comments_id_has(comment_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBComment).filter(DBComment.id.in_(comment_ids))
@@ -187,10 +199,12 @@ async def get_all_has_comments_id(comment_ids: List[int], db=Depends(get_db), qu
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_comments(comments: List[SchemaBaseComment], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_comments_has(comments: List[SchemaBaseComment], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBComment).filter(DBComment.id.in_(map(lambda x: x.id, comments)))
@@ -198,10 +212,12 @@ async def get_all_has_comments(comments: List[SchemaBaseComment], db=Depends(get
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_is_post_likes_id(post_like_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_post_likes_id_is(post_like_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBPostLike).filter(DBPostLike.id.__eq__(post_like_id))
@@ -209,10 +225,12 @@ async def get_all_is_post_likes_id(post_like_id: int, db=Depends(get_db), query=
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_is_post_likes(post_like: SchemaBasePostLike, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_post_likes_is(post_like: SchemaBasePostLike, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBPostLike).filter(DBPostLike.id.__eq__(post_like.id))
@@ -220,10 +238,12 @@ async def get_all_is_post_likes(post_like: SchemaBasePostLike, db=Depends(get_db
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_post_likes_id(post_like_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_post_likes_id_has(post_like_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBPostLike).filter(DBPostLike.id.in_(post_like_ids))
@@ -231,10 +251,12 @@ async def get_all_has_post_likes_id(post_like_ids: List[int], db=Depends(get_db)
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_post_likes(post_likes: List[SchemaBasePostLike], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_post_likes_has(post_likes: List[SchemaBasePostLike], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBPostLike).filter(DBPostLike.id.in_(map(lambda x: x.id, post_likes)))
@@ -242,10 +264,12 @@ async def get_all_has_post_likes(post_likes: List[SchemaBasePostLike], db=Depend
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_is_comment_likes_id(comment_like_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_comment_likes_id_is(comment_like_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBCommentLike).filter(DBCommentLike.id.__eq__(comment_like_id))
@@ -253,10 +277,12 @@ async def get_all_is_comment_likes_id(comment_like_id: int, db=Depends(get_db), 
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_is_comment_likes(comment_like: SchemaBaseCommentLike, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_comment_likes_is(comment_like: SchemaBaseCommentLike, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBCommentLike).filter(DBCommentLike.id.__eq__(comment_like.id))
@@ -264,10 +290,12 @@ async def get_all_is_comment_likes(comment_like: SchemaBaseCommentLike, db=Depen
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_comment_likes_id(comment_like_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_comment_likes_id_has(comment_like_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBCommentLike).filter(DBCommentLike.id.in_(comment_like_ids))
@@ -275,10 +303,12 @@ async def get_all_has_comment_likes_id(comment_like_ids: List[int], db=Depends(g
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 
 
-async def get_all_has_comment_likes(comment_likes: List[SchemaBaseCommentLike], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+async def get_comment_likes_has(comment_likes: List[SchemaBaseCommentLike], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
     if type(query) is not Select:
         query = await get_all_query()
     query = query.join(DBCommentLike).filter(DBCommentLike.id.in_(map(lambda x: x.id, comment_likes)))
@@ -286,5 +316,111 @@ async def get_all_has_comment_likes(comment_likes: List[SchemaBaseCommentLike], 
     query = query.options(selectinload(DBUser.comments))
     query = query.options(selectinload(DBUser.post_likes))
     query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
+    return (await db.scalars(query)).all()
+                
+
+async def get_pass_card_id_is(pass_card_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+    if type(query) is not Select:
+        query = await get_all_query()
+    query = query.join(DBPassCard).filter(DBPassCard.id.__eq__(pass_card_id))
+    query = query.options(selectinload(DBUser.posts))
+    query = query.options(selectinload(DBUser.comments))
+    query = query.options(selectinload(DBUser.post_likes))
+    query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
+    return (await db.scalars(query)).all()
+                
+
+async def get_pass_card_is(pass_card: SchemaBasePassCard, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+    if type(query) is not Select:
+        query = await get_all_query()
+    query = query.join(DBPassCard).filter(DBPassCard.id.__eq__(pass_card.id))
+    query = query.options(selectinload(DBUser.posts))
+    query = query.options(selectinload(DBUser.comments))
+    query = query.options(selectinload(DBUser.post_likes))
+    query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
+    return (await db.scalars(query)).all()
+                
+
+async def get_pass_card_id_has(pass_card_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+    if type(query) is not Select:
+        query = await get_all_query()
+    query = query.join(DBPassCard).filter(DBPassCard.id.in_(pass_card_ids))
+    query = query.options(selectinload(DBUser.posts))
+    query = query.options(selectinload(DBUser.comments))
+    query = query.options(selectinload(DBUser.post_likes))
+    query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
+    return (await db.scalars(query)).all()
+                
+
+async def get_pass_card_has(pass_cards: List[SchemaBasePassCard], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+    if type(query) is not Select:
+        query = await get_all_query()
+    query = query.join(DBPassCard).filter(DBPassCard.id.in_(map(lambda x: x.id, pass_cards)))
+    query = query.options(selectinload(DBUser.posts))
+    query = query.options(selectinload(DBUser.comments))
+    query = query.options(selectinload(DBUser.post_likes))
+    query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
+    return (await db.scalars(query)).all()
+                
+
+async def get_groups_id_is(group_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+    if type(query) is not Select:
+        query = await get_all_query()
+    query = query.join(DBGroup).filter(DBGroup.id.__eq__(group_id))
+    query = query.options(selectinload(DBUser.posts))
+    query = query.options(selectinload(DBUser.comments))
+    query = query.options(selectinload(DBUser.post_likes))
+    query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
+    return (await db.scalars(query)).all()
+                
+
+async def get_groups_is(group: SchemaBaseGroup, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+    if type(query) is not Select:
+        query = await get_all_query()
+    query = query.join(DBGroup).filter(DBGroup.id.__eq__(group.id))
+    query = query.options(selectinload(DBUser.posts))
+    query = query.options(selectinload(DBUser.comments))
+    query = query.options(selectinload(DBUser.post_likes))
+    query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
+    return (await db.scalars(query)).all()
+                
+
+async def get_groups_id_has(group_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+    if type(query) is not Select:
+        query = await get_all_query()
+    query = query.join(DBGroup).filter(DBGroup.id.in_(group_ids))
+    query = query.options(selectinload(DBUser.posts))
+    query = query.options(selectinload(DBUser.comments))
+    query = query.options(selectinload(DBUser.post_likes))
+    query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
+    return (await db.scalars(query)).all()
+                
+
+async def get_groups_has(groups: List[SchemaBaseGroup], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaUser]:
+    if type(query) is not Select:
+        query = await get_all_query()
+    query = query.join(DBGroup).filter(DBGroup.id.in_(map(lambda x: x.id, groups)))
+    query = query.options(selectinload(DBUser.posts))
+    query = query.options(selectinload(DBUser.comments))
+    query = query.options(selectinload(DBUser.post_likes))
+    query = query.options(selectinload(DBUser.comment_likes))
+    query = query.options(joinedload(DBUser.pass_card))
+    query = query.options(selectinload(DBUser.groups))
     return (await db.scalars(query)).all()
                 

@@ -52,16 +52,16 @@ from sqlalchemy import func
 async def f(ident: int, db=Depends(get_db)) -> HomePageView:
     db: AsyncSession
     user = await u.get_one(ident, db)
-    likes = await pl.get_all_is_user(user, db)
+    likes = await pl.get_user_is(user, db)
     hp_q = db.scalars(select(DBPost)
                       .outerjoin(DBPostLike)
                       .group_by(DBPost)
                       .order_by(func.count(DBPostLike.id).desc()))
     return HomePageView(
         user=user,
-        my_posts=await p.get_all_is_author(user, db),
-        like_posts=await p.get_all_has_likes(likes, db),
-        recent_posts=await p.get_all_is_author(user, db, await p.get_all_query(sort_by='created_at', is_desc=True)),
+        my_posts=await p.get_author_is(user, db),
+        like_posts=await p.get_likes_has(likes, db),
+        recent_posts=await p.get_author_is(user, db, await p.get_all_query(sort_by='created_at', is_desc=True)),
         hot_posts=(await hp_q).all()
     )
 

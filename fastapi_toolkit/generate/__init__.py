@@ -264,12 +264,10 @@ class CodeGenerator:
                     l1.make_render(l2)
                     l2.make_render(l1)
 
-        def ff(link: Link, name: str, from_id: bool, from_batch: bool):
-            name += link.link_name
+        def build_link_op(link: Link, name: str, from_id: bool, from_batch: bool):
             arg = link.target.name.snake
             arg_type = link.target.name.base_schema
             if from_id:
-                name += '_id'
                 arg += '_id'
                 arg_type = 'int'
             if from_batch:
@@ -288,15 +286,6 @@ class CodeGenerator:
             for l in o.links:
                 op = 'selectinload' if l.type is LinkType.many else 'joinedload'
                 query_code += f'\n    query = query.options({op}({o.name.db}.{l.link_name}))'
-            # link.link_op_names.append(name)
-            #             link.link_op_codes.append(
-            #                 f"""
-            # async def {name}_query({arg}: {arg_type}):
-            #     query = await __get_all_query()
-            #     {query_code}
-            #     return query
-            #                 """
-            #             )
             link.link_op_codes.append(
                 f"""
 async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_query)) -> List[{link.origin.name.schema}]:
@@ -308,10 +297,10 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
             )
 
         for link in (l for m in self.model_render_data.values() for l in m.links):
-            ff(link, f'get_all_is_', True, False)
-            ff(link, f'get_all_is_', False, False)
-            ff(link, f'get_all_has_', True, True)
-            ff(link, f'get_all_has_', False, True)
+            build_link_op(link, f'get_{link.link_name}_id_is', True, False)
+            build_link_op(link, f'get_{link.link_name}_is', False, False)
+            build_link_op(link, f'get_{link.link_name}_id_has', True, True)
+            build_link_op(link, f'get_{link.link_name}_has', False, True)
 
     def _make_render_data_field(self, schema: Type[Schema]):
         fh = FieldHelper()

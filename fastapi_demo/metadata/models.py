@@ -10,6 +10,18 @@ class User(Schema):
     comments: List['Comment']
     post_likes: List['PostLike']
     comment_likes: List['CommentLike']
+    pass_card: 'PassCard'
+    groups: List['Group']
+
+
+class PassCard(Schema):
+    account: int
+    user: 'User'
+
+
+class Group(Schema):
+    name: str
+    users: List['User']
 
 
 class Post(Schema):

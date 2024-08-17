@@ -1,10 +1,12 @@
-# generate_hash: 9352781531fb40acb892dca9e91a7b5a
+# generate_hash: 16c7ba95fccf42750575189cc7702f0d
 """
-This file was automatically generated in 2024-08-14 00:21:38.643786
+This file was automatically generated in 2024-08-18 00:30:05.044503
 """
 from fastapi import APIRouter
 
 from .user_router import UserRouter
+from .pass_card_router import PassCardRouter
+from .group_router import GroupRouter
 from .post_router import PostRouter
 from .comment_router import CommentRouter
 from .post_like_router import PostLikeRouter
@@ -18,6 +20,10 @@ class InnerRouter(APIRouter):
             return
         if config.user:
             self.include_router(UserRouter(config.user))
+        if config.pass_card:
+            self.include_router(PassCardRouter(config.pass_card))
+        if config.group:
+            self.include_router(GroupRouter(config.group))
         if config.post:
             self.include_router(PostRouter(config.post))
         if config.comment:
