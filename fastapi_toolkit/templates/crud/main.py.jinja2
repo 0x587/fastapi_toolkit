@@ -32,7 +32,7 @@ async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[{{ base_schem
     return await paginate(db, query)
 
 
-async def get_all_query(
+def get_all_query(
         {% for field in model.fields %}
         filter_{{field.name.snake}}: Optional[{{field.type.python_type}}] = None,
         {% endfor %}

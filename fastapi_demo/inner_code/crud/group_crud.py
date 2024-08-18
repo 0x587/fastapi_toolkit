@@ -1,6 +1,6 @@
-# generate_hash: 8432051ae57ec2c50c2b415032b640c0
+# generate_hash: fc6e2b44d60bb965965ec39e2e614e2e
 """
-This file was automatically generated in 2024-08-18 00:30:05.042152
+This file was automatically generated in 2024-08-18 15:51:57.929933
 """
 
 from typing import List, Optional
@@ -30,7 +30,7 @@ async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseGro
     return await paginate(db, query)
 
 
-async def get_all_query(
+def get_all_query(
         filter_name: Optional[str] = None,
         sort_by: Optional[str] = None, is_desc: bool = False,
 ) -> Select:
@@ -105,33 +105,61 @@ async def delete_one(ident: int, db=Depends(get_db)):
 # ----------------------Relation Routes-----------------------
 
 
+def get_users_id_is_query(user_id: int) -> Select:
+    query = get_all_query()
+    query = query.join(DBUser).filter(DBUser.id.__eq__(user_id))
+    query = query.options(selectinload(DBGroup.users))
+    return query
+                
+
 async def get_users_id_is(user_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaGroup]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.__eq__(user_id))
     query = query.options(selectinload(DBGroup.users))
     return (await db.scalars(query)).all()
                 
 
+def get_users_is_query(user: SchemaBaseUser) -> Select:
+    query = get_all_query()
+    query = query.join(DBUser).filter(DBUser.id.__eq__(user.id))
+    query = query.options(selectinload(DBGroup.users))
+    return query
+                
+
 async def get_users_is(user: SchemaBaseUser, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaGroup]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.__eq__(user.id))
     query = query.options(selectinload(DBGroup.users))
     return (await db.scalars(query)).all()
                 
 
+def get_users_id_has_query(user_ids: List[int]) -> Select:
+    query = get_all_query()
+    query = query.join(DBUser).filter(DBUser.id.in_(user_ids))
+    query = query.options(selectinload(DBGroup.users))
+    return query
+                
+
 async def get_users_id_has(user_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaGroup]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.in_(user_ids))
     query = query.options(selectinload(DBGroup.users))
     return (await db.scalars(query)).all()
                 
 
+def get_users_has_query(users: List[SchemaBaseUser]) -> Select:
+    query = get_all_query()
+    query = query.join(DBUser).filter(DBUser.id.in_(map(lambda x: x.id, users)))
+    query = query.options(selectinload(DBGroup.users))
+    return query
+                
+
 async def get_users_has(users: List[SchemaBaseUser], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaGroup]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.in_(map(lambda x: x.id, users)))
     query = query.options(selectinload(DBGroup.users))
     return (await db.scalars(query)).all()

@@ -1,6 +1,6 @@
-# generate_hash: 9e3e24b9395f537cea0a031efd862332
+# generate_hash: a990195a3503dc8ff534c99327fa1f14
 """
-This file was automatically generated in 2024-08-18 00:24:52.607828
+This file was automatically generated in 2024-08-18 15:51:57.932077
 """
 
 from typing import List, Optional
@@ -30,7 +30,7 @@ async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[SchemaBasePos
     return await paginate(db, query)
 
 
-async def get_all_query(
+def get_all_query(
         sort_by: Optional[str] = None, is_desc: bool = False,
 ) -> Select:
     query = select(DBPostLike).filter(DBPostLike.deleted_at.is_(None))
@@ -97,72 +97,136 @@ async def delete_one(ident: int, db=Depends(get_db)):
 # ----------------------Relation Routes-----------------------
 
 
+def get_user_id_is_query(user_id: int) -> Select:
+    query = get_all_query()
+    query = query.join(DBUser).filter(DBUser.id.__eq__(user_id))
+    query = query.options(joinedload(DBPostLike.user))
+    query = query.options(joinedload(DBPostLike.post))
+    return query
+                
+
 async def get_user_id_is(user_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaPostLike]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.__eq__(user_id))
     query = query.options(joinedload(DBPostLike.user))
     query = query.options(joinedload(DBPostLike.post))
     return (await db.scalars(query)).all()
                 
 
+def get_user_is_query(user: SchemaBaseUser) -> Select:
+    query = get_all_query()
+    query = query.join(DBUser).filter(DBUser.id.__eq__(user.id))
+    query = query.options(joinedload(DBPostLike.user))
+    query = query.options(joinedload(DBPostLike.post))
+    return query
+                
+
 async def get_user_is(user: SchemaBaseUser, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaPostLike]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.__eq__(user.id))
     query = query.options(joinedload(DBPostLike.user))
     query = query.options(joinedload(DBPostLike.post))
     return (await db.scalars(query)).all()
                 
 
+def get_user_id_has_query(user_ids: List[int]) -> Select:
+    query = get_all_query()
+    query = query.join(DBUser).filter(DBUser.id.in_(user_ids))
+    query = query.options(joinedload(DBPostLike.user))
+    query = query.options(joinedload(DBPostLike.post))
+    return query
+                
+
 async def get_user_id_has(user_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaPostLike]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.in_(user_ids))
     query = query.options(joinedload(DBPostLike.user))
     query = query.options(joinedload(DBPostLike.post))
     return (await db.scalars(query)).all()
                 
 
+def get_user_has_query(users: List[SchemaBaseUser]) -> Select:
+    query = get_all_query()
+    query = query.join(DBUser).filter(DBUser.id.in_(map(lambda x: x.id, users)))
+    query = query.options(joinedload(DBPostLike.user))
+    query = query.options(joinedload(DBPostLike.post))
+    return query
+                
+
 async def get_user_has(users: List[SchemaBaseUser], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaPostLike]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.in_(map(lambda x: x.id, users)))
     query = query.options(joinedload(DBPostLike.user))
     query = query.options(joinedload(DBPostLike.post))
     return (await db.scalars(query)).all()
                 
 
+def get_post_id_is_query(post_id: int) -> Select:
+    query = get_all_query()
+    query = query.join(DBPost).filter(DBPost.id.__eq__(post_id))
+    query = query.options(joinedload(DBPostLike.user))
+    query = query.options(joinedload(DBPostLike.post))
+    return query
+                
+
 async def get_post_id_is(post_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaPostLike]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBPost).filter(DBPost.id.__eq__(post_id))
     query = query.options(joinedload(DBPostLike.user))
     query = query.options(joinedload(DBPostLike.post))
     return (await db.scalars(query)).all()
                 
 
+def get_post_is_query(post: SchemaBasePost) -> Select:
+    query = get_all_query()
+    query = query.join(DBPost).filter(DBPost.id.__eq__(post.id))
+    query = query.options(joinedload(DBPostLike.user))
+    query = query.options(joinedload(DBPostLike.post))
+    return query
+                
+
 async def get_post_is(post: SchemaBasePost, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaPostLike]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBPost).filter(DBPost.id.__eq__(post.id))
     query = query.options(joinedload(DBPostLike.user))
     query = query.options(joinedload(DBPostLike.post))
     return (await db.scalars(query)).all()
                 
 
+def get_post_id_has_query(post_ids: List[int]) -> Select:
+    query = get_all_query()
+    query = query.join(DBPost).filter(DBPost.id.in_(post_ids))
+    query = query.options(joinedload(DBPostLike.user))
+    query = query.options(joinedload(DBPostLike.post))
+    return query
+                
+
 async def get_post_id_has(post_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaPostLike]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBPost).filter(DBPost.id.in_(post_ids))
     query = query.options(joinedload(DBPostLike.user))
     query = query.options(joinedload(DBPostLike.post))
     return (await db.scalars(query)).all()
                 
 
+def get_post_has_query(posts: List[SchemaBasePost]) -> Select:
+    query = get_all_query()
+    query = query.join(DBPost).filter(DBPost.id.in_(map(lambda x: x.id, posts)))
+    query = query.options(joinedload(DBPostLike.user))
+    query = query.options(joinedload(DBPostLike.post))
+    return query
+                
+
 async def get_post_has(posts: List[SchemaBasePost], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaPostLike]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBPost).filter(DBPost.id.in_(map(lambda x: x.id, posts)))
     query = query.options(joinedload(DBPostLike.user))
     query = query.options(joinedload(DBPostLike.post))

@@ -1,6 +1,6 @@
-# generate_hash: 597c4f7f19984d3db2bc771009abda67
+# generate_hash: 5230239fd8ed3ef1cbcb2b271fcccc30
 """
-This file was automatically generated in 2024-08-18 00:30:05.041885
+This file was automatically generated in 2024-08-18 15:51:57.928896
 """
 
 from typing import List, Optional
@@ -30,7 +30,7 @@ async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[SchemaBasePas
     return await paginate(db, query)
 
 
-async def get_all_query(
+def get_all_query(
         filter_account: Optional[int] = None,
         sort_by: Optional[str] = None, is_desc: bool = False,
 ) -> Select:
@@ -105,33 +105,61 @@ async def delete_one(ident: int, db=Depends(get_db)):
 # ----------------------Relation Routes-----------------------
 
 
+def get_user_id_is_query(user_id: int) -> Select:
+    query = get_all_query()
+    query = query.join(DBUser).filter(DBUser.id.__eq__(user_id))
+    query = query.options(joinedload(DBPassCard.user))
+    return query
+                
+
 async def get_user_id_is(user_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaPassCard]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.__eq__(user_id))
     query = query.options(joinedload(DBPassCard.user))
     return (await db.scalars(query)).all()
                 
 
+def get_user_is_query(user: SchemaBaseUser) -> Select:
+    query = get_all_query()
+    query = query.join(DBUser).filter(DBUser.id.__eq__(user.id))
+    query = query.options(joinedload(DBPassCard.user))
+    return query
+                
+
 async def get_user_is(user: SchemaBaseUser, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaPassCard]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.__eq__(user.id))
     query = query.options(joinedload(DBPassCard.user))
     return (await db.scalars(query)).all()
                 
 
+def get_user_id_has_query(user_ids: List[int]) -> Select:
+    query = get_all_query()
+    query = query.join(DBUser).filter(DBUser.id.in_(user_ids))
+    query = query.options(joinedload(DBPassCard.user))
+    return query
+                
+
 async def get_user_id_has(user_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaPassCard]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.in_(user_ids))
     query = query.options(joinedload(DBPassCard.user))
     return (await db.scalars(query)).all()
                 
 
+def get_user_has_query(users: List[SchemaBaseUser]) -> Select:
+    query = get_all_query()
+    query = query.join(DBUser).filter(DBUser.id.in_(map(lambda x: x.id, users)))
+    query = query.options(joinedload(DBPassCard.user))
+    return query
+                
+
 async def get_user_has(users: List[SchemaBaseUser], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaPassCard]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.in_(map(lambda x: x.id, users)))
     query = query.options(joinedload(DBPassCard.user))
     return (await db.scalars(query)).all()

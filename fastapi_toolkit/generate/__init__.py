@@ -135,6 +135,7 @@ class CodeGenerator:
         self.custom_types: List[Dict[str, Any]] = []
         self.model_network = nx.Graph()
         self.association_tables: List[AssociationTable] = []
+        self.parse()
 
     @staticmethod
     def _check_file_valid(path):
@@ -288,9 +289,17 @@ class CodeGenerator:
                 query_code += f'\n    query = query.options({op}({o.name.db}.{l.link_name}))'
             link.link_op_codes.append(
                 f"""
+def {name}_query({arg}: {arg_type}) -> Select:
+    query = get_all_query()
+    {query_code}
+    return query
+                """
+            )
+            link.link_op_codes.append(
+                f"""
 async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_query)) -> List[{link.origin.name.schema}]:
     if type(query) is not Select:
-        query = await get_all_query()
+        query = get_all_query()
     {query_code}
     return (await db.scalars(query)).all()
                 """
@@ -516,7 +525,6 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
             'custom_types.py.j2', custom_types=self.custom_types))
 
     def generate(self, table: bool = True, router: bool = True, mock: bool = True, auth: str = ""):
-        self.parse()
         self._generate_custom_types()
         if table:
             self._generate_tables(auth_type=auth)

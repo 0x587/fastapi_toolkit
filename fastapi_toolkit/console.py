@@ -7,6 +7,7 @@ from typing import Optional
 import typer
 
 from fastapi_toolkit.generate import CodeGenerator
+from fastapi_toolkit.apis_generate import ApiGenerator
 from fastapi_toolkit.configer import Configer
 
 app = typer.Typer()
@@ -65,6 +66,23 @@ def generate(metadata_path: Optional[Path] = None, root_path: Optional[Path] = N
     generator = CodeGenerator(root_path)
     generator.force_rewrite = force
     generator.generate(table, router, mock, auth)
+
+
+@app.command('api')
+def api(metadata_path: Optional[Path] = None, root_path: Optional[Path] = None):
+    if metadata_path is None:
+        metadata_path = Path(configer['metadata_path'] or 'metadata')
+    if root_path is None:
+        root_path = Path(configer['root_path'] or 'inner_code')
+    if not root_path.is_dir():
+        typer.confirm(f'root_path: {root_path} is not a dir, do you want to create it?', abort=True)
+        root_path.mkdir(parents=True)
+    module_name = "apis"
+    import_module(module_name, metadata_path.joinpath(f'{module_name}.py'))
+    generator = CodeGenerator(root_path)
+    api_g = ApiGenerator(generator)
+    # generator.force_rewrite = force
+    # generator.generate(table, router, mock, auth)
 
 
 @app.command('mock')
