@@ -1,7 +1,7 @@
-from fastapi_toolkit.generate import CodeGenerator
-from fastapi_toolkit.apis_generate import ApiGenerator
+import models
 
-import apis
+from fastapi_toolkit.generate import CodeGenerator
 
 generator = CodeGenerator('inner_code')
-api_g = ApiGenerator(generator)
+generator.force_rewrite = True
+generator.generate(True, True, False, 'key')

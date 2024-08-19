@@ -1,7 +1,7 @@
 import datetime
 from typing import List
 from pydantic import Field, BaseModel
-from fastapi_toolkit.define import Schema
+from fastapi_toolkit.define import Schema, Controller
 
 
 class User(Schema):
@@ -47,8 +47,21 @@ class CommentLike(Schema):
     comment: 'Comment'
     user: 'User'
 
+
 # class HomePageView:
 #     user: 'User'
 #     like_posts: List['Post']
 #     recent_posts: List['Post']  # newest 10
 #     hot_posts: List['Post']  # most like 10
+
+class HomePageView(BaseModel):
+    user: 'User'
+    recent_posts: List['Post']  # newest 1
+    hot_posts: List['Post']  # most like 1
+    my_posts: List['Post']
+    like_posts: List['Post']
+
+
+class UserController(Controller):
+    def get_homepage(self, user: User, comment: Comment, count: int) -> HomePageView:
+        pass

@@ -32,7 +32,7 @@ class {{ model.name.schema }}({{ model.name.base_schema }}):
     """relationships"""
     {% for link in model.links %}
     {% set l = link.render_data %}
-    {{ l.schema_link_name }}: "{{ l.schema_target_type }}"
+    {{ l.schema_link_name }}: "{{ l.schema_target_type }}" = {{ l.default_value }}
     {% endfor %}
 
 {% endfor %}

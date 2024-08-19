@@ -1,6 +1,6 @@
-# generate_hash: 1d7abba6cf5caa11bd4e5cb0d597b479
+# generate_hash: ac31764e076bd0e6844a251dd4168cb9
 """
-This file was automatically generated in 2024-08-18 00:30:05.034363
+This file was automatically generated in 2024-08-19 17:09:23.583329
 """
 import uuid
 import datetime
@@ -26,12 +26,12 @@ class SchemaBaseUser(Schema):
 
 class SchemaUser(SchemaBaseUser):
     """relationships"""
-    posts: "List[SchemaBasePost]"
-    comments: "List[SchemaBaseComment]"
-    post_likes: "List[SchemaBasePostLike]"
-    comment_likes: "List[SchemaBaseCommentLike]"
-    pass_card: "Optional[SchemaBasePassCard]"
-    groups: "List[SchemaBaseGroup]"
+    posts: "List[SchemaBasePost]" = Field(default=list)
+    comments: "List[SchemaBaseComment]" = Field(default=list)
+    post_likes: "List[SchemaBasePostLike]" = Field(default=list)
+    comment_likes: "List[SchemaBaseCommentLike]" = Field(default=list)
+    pass_card: "Optional[SchemaBasePassCard]" = None
+    groups: "List[SchemaBaseGroup]" = Field(default=list)
 
 
 class SchemaBasePassCard(Schema):
@@ -48,7 +48,7 @@ class SchemaBasePassCard(Schema):
 
 class SchemaPassCard(SchemaBasePassCard):
     """relationships"""
-    user: "Optional[SchemaBaseUser]"
+    user: "Optional[SchemaBaseUser]" = None
 
 
 class SchemaBaseGroup(Schema):
@@ -65,7 +65,7 @@ class SchemaBaseGroup(Schema):
 
 class SchemaGroup(SchemaBaseGroup):
     """relationships"""
-    users: "List[SchemaBaseUser]"
+    users: "List[SchemaBaseUser]" = Field(default=list)
 
 
 class SchemaBasePost(Schema):
@@ -82,9 +82,9 @@ class SchemaBasePost(Schema):
 
 class SchemaPost(SchemaBasePost):
     """relationships"""
-    author: "Optional[SchemaBaseUser]"
-    comments: "List[SchemaBaseComment]"
-    likes: "List[SchemaBasePostLike]"
+    author: "Optional[SchemaBaseUser]" = None
+    comments: "List[SchemaBaseComment]" = Field(default=list)
+    likes: "List[SchemaBasePostLike]" = Field(default=list)
 
 
 class SchemaBaseComment(Schema):
@@ -101,9 +101,9 @@ class SchemaBaseComment(Schema):
 
 class SchemaComment(SchemaBaseComment):
     """relationships"""
-    user: "Optional[SchemaBaseUser]"
-    post: "Optional[SchemaBasePost]"
-    likes: "List[SchemaBaseCommentLike]"
+    user: "Optional[SchemaBaseUser]" = None
+    post: "Optional[SchemaBasePost]" = None
+    likes: "List[SchemaBaseCommentLike]" = Field(default=list)
 
 
 class SchemaBasePostLike(Schema):
@@ -118,8 +118,8 @@ class SchemaBasePostLike(Schema):
 
 class SchemaPostLike(SchemaBasePostLike):
     """relationships"""
-    user: "Optional[SchemaBaseUser]"
-    post: "Optional[SchemaBasePost]"
+    user: "Optional[SchemaBaseUser]" = None
+    post: "Optional[SchemaBasePost]" = None
 
 
 class SchemaBaseCommentLike(Schema):
@@ -134,8 +134,8 @@ class SchemaBaseCommentLike(Schema):
 
 class SchemaCommentLike(SchemaBaseCommentLike):
     """relationships"""
-    user: "Optional[SchemaBaseUser]"
-    comment: "Optional[SchemaBaseComment]"
+    user: "Optional[SchemaBaseUser]" = None
+    comment: "Optional[SchemaBaseComment]" = None
 
 
 SchemaBaseUser.model_rebuild()

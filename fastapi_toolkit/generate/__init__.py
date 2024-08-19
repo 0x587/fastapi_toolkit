@@ -1,4 +1,5 @@
 import datetime
+import inspect
 import os
 import hashlib
 from collections import defaultdict
@@ -9,7 +10,7 @@ from jinja2 import Environment, PackageLoader
 import networkx as nx
 
 from pydantic import BaseModel, Field as PField
-from fastapi_toolkit.define import Schema
+from fastapi_toolkit.define import Schema, Controller
 from .field_helper import FieldHelper, FieldType, LinkType
 
 from .sql_mapping import mapping
@@ -50,6 +51,7 @@ class LinkRenderData(BaseModel):
 
     schema_link_name: str
     schema_target_type: str
+    default_value: str = ''
 
 
 class Link(BaseModel):
@@ -73,9 +75,11 @@ class Link(BaseModel):
         if self.type == LinkType.many:
             self.render_data.target_type = f'List[{self.render_data.target_type}]'
             self.render_data.schema_target_type = f'List[{self.render_data.schema_target_type}]'
+            self.render_data.default_value = 'Field(default=list)'
         else:
             self.render_data.target_type = f'Optional[{self.render_data.target_type}]'
             self.render_data.schema_target_type = f'Optional[{self.render_data.schema_target_type}]'
+            self.render_data.default_value = 'None'
 
     def link_prefix(self):
         if self.type == "one":
@@ -103,6 +107,18 @@ class ModelRenderData(BaseModel):
     links: List[Link] = []
 
 
+class MethodRenderData(BaseModel):
+    name: str
+    defines: List[str]
+    args: Dict[str, str]
+    res: str
+
+
+class ControllerRenderData(BaseModel):
+    name: str
+    methods: List[MethodRenderData]
+
+
 class CodeGenerator:
     def __init__(self, root_path='inner_code'):
         self.root_path = root_path
@@ -112,6 +128,7 @@ class CodeGenerator:
         self.crud_path = os.path.join(root_path, 'crud')
         self.routers_path = os.path.join(root_path, 'routers')
         self.auth_path = os.path.join(root_path, 'auth')
+        self.api_path = os.path.join(root_path, 'api')
 
         self.force_rewrite = False
 
@@ -125,6 +142,8 @@ class CodeGenerator:
             os.mkdir(self.routers_path)
         if not os.path.exists(self.auth_path):
             os.mkdir(self.auth_path)
+        if not os.path.exists(self.api_path):
+            os.mkdir(self.api_path)
         self.env = Environment(
             loader=PackageLoader('fastapi_toolkit', 'templates'),
             trim_blocks=True, lstrip_blocks=True)
@@ -135,6 +154,7 @@ class CodeGenerator:
         self.custom_types: List[Dict[str, Any]] = []
         self.model_network = nx.Graph()
         self.association_tables: List[AssociationTable] = []
+        self.crds: List[ControllerRenderData] = []
         self.parse()
 
     @staticmethod
@@ -178,6 +198,7 @@ class CodeGenerator:
     def parse(self):
         self._parse_models()
         self._parse_network()
+        self._parse_api()
         # self._parse_mock()
 
     def _get_schemas(self, root=Schema):
@@ -324,6 +345,48 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
             m.fields.append(Field(name=self._name_info('user_key'), type=fh.parse(str)))
         return m
 
+    def _parse_api(self):
+
+        def make_render(name, args, res) -> MethodRenderData:
+            fh = FieldHelper()
+            defines = []
+
+            def f(t: Type):
+                if fh.is_model(t):
+                    if fh.parse_model(t).python_type not in self.model_render_data:
+                        c = f'class {fh.parse(t).python_type}(BaseModel):'
+                        t: Type[BaseModel]
+                        for k, v in t.model_fields.items():
+                            c += f'    {k}: {fh.parse(v.annotation).python_type}\n'
+                        defines.append(c)
+                    return self._name_info(fh.parse_model(t).python_type).base_schema
+                return fh.parse(t).python_type
+
+            return MethodRenderData(
+                name=name,
+                args={k: f(v) for k, v in args.items()},
+                defines=defines,
+                res=f(res),
+            )
+
+        def get_controller(root=Controller):
+            for model_ in root.__subclasses__():
+                yield model_
+                yield from get_controller(model_)
+
+        for c in get_controller():
+            crd = ControllerRenderData(name=c.__name__, methods=[])
+            for n, f in inspect.getmembers(c, predicate=inspect.isfunction):
+                args = {}
+                res = type(None)
+                for k, v in f.__annotations__.items():
+                    if k == 'return':
+                        res = v
+                        continue
+                    args[k] = v
+                crd.methods.append(make_render(n, args, res))
+            self.crds.append(crd)
+
     def _parse_network(self):
         self.model_network.add_nodes_from(self.model_render_data.keys())
         for model in self.model_render_data.values():
@@ -376,82 +439,6 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
             base_schema=f'SchemaBase{name}',
             fk=f'fk_{to_snake(name)}_id',
         )
-
-    # def _make_field(self, name, field_info):
-    #     type_ = field_info.annotation
-    #     is_custom, sql_type_ = mapping(type_)
-    #     if type_.__module__ != 'builtins':
-    #         type_str = f'{type_.__module__}.{type_.__name__}'
-    #     else:
-    #         type_str = type_.__name__
-    #     res = {
-    #         'name': self._name_info(name),
-    #         'type': type_str,
-    #         'sql_type': sql_type_,
-    #         'default': field_info.default,
-    #         'default_factory': field_info.default_factory,
-    #         'nullable': not field_info.is_required(),
-    #         'alias': field_info.alias,
-    #     }
-    #
-    #     # custom type
-    #     if is_custom:
-    #         import importlib.util
-    #         import sys
-    #         spec = importlib.util.spec_from_file_location("metadata.models", os.getcwd() + '/metadata/models.py')
-    #         models = importlib.util.module_from_spec(spec)
-    #         sys.modules["metadata.models"] = models
-    #         spec.loader.exec_module(models)
-    #         cls = getattr(models, type_.__name__)
-    #         module_path = os.path.abspath(inspect.getfile(cls))
-    #         current_directory = os.getcwd()
-    #         import_path, _ = os.path.splitext(os.path.relpath(module_path, current_directory))
-    #         self.custom_types.append({
-    #             'name': type_.__name__,
-    #             'source': inspect.getsource(cls),
-    #             'import_path': import_path.replace(os.path.sep, '.')
-    #         })
-    #
-    #     return res
-
-    # def _make_render_data(self, model_name: str, model_: Type[Schema],
-    #                       d: Dict[str, ModelRenderData]) -> ModelRenderData:
-    #     def is_model(t: Type) -> bool:
-    #         return isinstance(t, type) and Schema.__subclasscheck__(t)
-    #
-    #     def is_batch_model(t: Type) -> bool:
-    #         if hasattr(t, '__origin__') and Sequence.__subclasscheck__(
-    #                 getattr(t, '__origin__')):
-    #             seq_member: Type[Schema] = getattr(t, '__args__')[0]
-    #             return is_model(seq_member)
-    #         return False
-    #
-    #     model = d[model_name]
-    #     for name, field in model_.model_fields.items():
-    #         if name in ['id']:
-    #             raise ValueError(f'{model_name}.{name} is reserved')
-    #
-    #         field_type: Type[Schema] | None = field.annotation
-    #         if field_type is None:
-    #             raise ValueError(f'{model_name}.{name} missing type hint')
-    #
-    #         if is_model(field_type):
-    #             model.links.append(Link(
-    #                 link_name=name,
-    #                 t1='one', t2=None, m1=model, m2=d[field_type.__name__],
-    #                 nullable=not field.is_required()))
-    #             self.model_network.add_edge(model.name.camel, d[field_type.__name__].name.camel)
-    #             continue
-    #
-    #         if is_batch_model(field_type):
-    #             model.links.append(Link(
-    #                 link_name=name,
-    #                 t1="many", t2=None, m1=model, m2=d[getattr(field_type, '__args__')[0].__name__],
-    #                 nullable=not field.is_required()))
-    #             continue
-    #
-    #         model.fields.append(self._make_field(name, field))
-    #     return model
 
     def _define2table(self) -> str:
         template = self.env.get_template('models/main.py.jinja2')
@@ -524,6 +511,11 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
         self._generate_file(os.path.join(self.root_path, 'custom_types.py'), self._from_template(
             'custom_types.py.j2', custom_types=self.custom_types))
 
+    def _generate_apis(self):
+        for crd in self.crds:
+            self._generate_file(os.path.join(self.api_path, f'{crd.name}.py'), self._from_template(
+                'api/main.py.j2', crd=crd))
+
     def generate(self, table: bool = True, router: bool = True, mock: bool = True, auth: str = ""):
         self._generate_custom_types()
         if table:
@@ -534,4 +526,5 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
         #     self._generate_mock()
         if auth != "":
             self._generate_auth(mode=auth)
+        self._generate_apis()
         self._generate_config()

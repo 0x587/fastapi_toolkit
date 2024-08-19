@@ -1,0 +1,11 @@
+from pydantic import BaseModel
+from fastapi import APIRouter
+
+
+class {{ crd.name }}(APIRouter):
+{% for method in crd.methods %}
+    def {{ method.name }}(self):
+        def f():
+            pass
+        return f
+{% endfor %}

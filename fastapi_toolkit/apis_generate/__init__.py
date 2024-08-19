@@ -13,7 +13,6 @@ class ApiGenerator:
             for name, f in inspect.getmembers(c, predicate=inspect.isfunction):
                 print(name, f.__annotations__['return'])
                 r = f.__annotations__['return']
-                print(inspect.getmembers(r))
 
     def _get_controller(self, root=Controller):
         for model_ in root.__subclasses__():

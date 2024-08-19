@@ -62,7 +62,7 @@ def generate(metadata_path: Optional[Path] = None, root_path: Optional[Path] = N
         typer.confirm(f'root_path: {root_path} is not a dir, do you want to create it?', abort=True)
         root_path.mkdir(parents=True)
     module_name = "models"
-    import_module(module_name, metadata_path.joinpath(f'{module_name}.py'))
+    _ = import_module(module_name, metadata_path.joinpath(f'{module_name}.py'))
     generator = CodeGenerator(root_path)
     generator.force_rewrite = force
     generator.generate(table, router, mock, auth)
