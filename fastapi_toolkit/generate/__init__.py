@@ -111,11 +111,13 @@ class MethodRenderData(BaseModel):
     name: str
     defines: List[str]
     args: Dict[str, str]
-    res: str
+    res_type: str
+    process: List[str]
+    res_fields: Dict[str, str]
 
 
 class ControllerRenderData(BaseModel):
-    name: str
+    name: NameInfo
     methods: List[MethodRenderData]
 
 
@@ -131,6 +133,7 @@ class CodeGenerator:
         self.api_path = os.path.join(root_path, 'api')
 
         self.force_rewrite = False
+        self.show_network = False
 
         if not os.path.exists(self.root_path):
             os.mkdir(self.root_path)
@@ -352,21 +355,52 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
             defines = []
 
             def f(t: Type):
+                if fh.is_builtin(t):
+                    return fh.parse_builtin(t).python_type
                 if fh.is_model(t):
                     if fh.parse_model(t).python_type not in self.model_render_data:
-                        c = f'class {fh.parse(t).python_type}(BaseModel):'
+                        c = f'class {fh.parse(t).python_type}(BaseModel):\n'
                         t: Type[BaseModel]
                         for k, v in t.model_fields.items():
-                            c += f'    {k}: {fh.parse(v.annotation).python_type}\n'
+                            c += f'        {k}: {f(v.annotation)}\n'
                         defines.append(c)
-                    return self._name_info(fh.parse_model(t).python_type).base_schema
+                        return fh.parse(t).python_type
+                    return self.model_render_data[fh.parse(t).python_type].name.base_schema
+                if fh.is_batch(t):
+                    py_t = fh.parse_batch(t).python_type
+                    arg = py_t[5:-1]
+                    if arg in self.model_render_data:
+                        py_t = f'List[{self.model_render_data[arg].name.base_schema}]'
+                    return py_t
                 return fh.parse(t).python_type
 
+            process = []
+            inputs = {}
+            # 解析需要输入什么
+            for k, v in args.items():
+                if fh.is_builtin(v):
+                    inputs[k] = f(v)
+                    continue
+                if fh.is_model(v):
+                    inputs[f'{k}_ident'] = 'int'
+                    crud_name = self.model_render_data[v.__name__].name.snake + '_crud'
+                    process.append(f'{k} = await {crud_name}.get_one({k}_ident, db)')
+                    continue
+                else:
+                    raise ValueError(f'Unsupported type {v}')
+            # 解析需要输出什么
+            res: BaseModel
+            res_fields = {}
+            for k, v in res.model_fields.items():
+                t = v.annotation
+                res_fields[k] = f(t)
             return MethodRenderData(
                 name=name,
-                args={k: f(v) for k, v in args.items()},
+                args=inputs,
                 defines=defines,
-                res=f(res),
+                res_type=f(res),
+                process=process,
+                res_fields=res_fields,
             )
 
         def get_controller(root=Controller):
@@ -375,7 +409,7 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
                 yield from get_controller(model_)
 
         for c in get_controller():
-            crd = ControllerRenderData(name=c.__name__, methods=[])
+            crd = ControllerRenderData(name=self._name_info(c.__name__), methods=[])
             for n, f in inspect.getmembers(c, predicate=inspect.isfunction):
                 args = {}
                 res = type(None)
@@ -392,18 +426,20 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
         for model in self.model_render_data.values():
             for link in model.links:
                 self.model_network.add_edge(link.origin.name.origin, link.target.name.origin)
-        import matplotlib.pyplot as plt
+
         pos = nx.spring_layout(self.model_network)
         edge_labels = {
             (link.origin.name.origin, link.target.name.origin): link.link_name
             for model in self.model_render_data.values() for link in model.links
         }
-        nx.draw(self.model_network.to_directed(), pos, with_labels=True)
-        nx.draw_networkx_edge_labels(
-            self.model_network.to_directed(), pos,
-            edge_labels=edge_labels, label_pos=0.75
-        )
-        plt.show()
+        if self.show_network:
+            nx.draw(self.model_network.to_directed(), pos, with_labels=True)
+            nx.draw_networkx_edge_labels(
+                self.model_network.to_directed(), pos,
+                edge_labels=edge_labels, label_pos=0.75
+            )
+            import matplotlib.pyplot as plt
+            plt.show()
 
     def _parse_mock(self, export=False):
         self.model_network.add_nodes_from(self.model_render_data.keys())
@@ -511,10 +547,16 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
         self._generate_file(os.path.join(self.root_path, 'custom_types.py'), self._from_template(
             'custom_types.py.j2', custom_types=self.custom_types))
 
-    def _generate_apis(self):
+    def _generate_apis(self, name):
         for crd in self.crds:
-            self._generate_file(os.path.join(self.api_path, f'{crd.name}.py'), self._from_template(
-                'api/main.py.j2', crd=crd))
+            if name != '' and crd.name.origin.lower() != name.lower():
+                continue
+            path = os.path.join(self.api_path, f'{crd.name.snake}.py')
+            while os.path.exists(path):
+                path = path + '.new'
+            self._generate_file(path, self._from_template(
+                'api/main.py.j2', crd=crd,
+                cruds=map(lambda x: x.name.snake + '_crud', self.model_render_data.values())))
 
     def generate(self, table: bool = True, router: bool = True, mock: bool = True, auth: str = ""):
         self._generate_custom_types()
@@ -526,5 +568,8 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
         #     self._generate_mock()
         if auth != "":
             self._generate_auth(mode=auth)
-        self._generate_apis()
+        # self._generate_apis()
         self._generate_config()
+
+    def generate_api(self, name):
+        self._generate_apis(name)

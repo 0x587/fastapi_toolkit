@@ -114,9 +114,9 @@ async def delete_one(ident: int, db=Depends(get_db)):
 {#    {% if model.links %}#}
 {#    {% for link in model.links %}#}
 {#    {% if link.t1 == 'one' %}#}
-{#    res.{{ link.m2.name.snake }} = None#}
+{#    res_type.{{ link.m2.name.snake }} = None#}
 {#    {% else %}#}
-{#    for i in await res.awaitable_attrs.{{ link.m2.name.snake_plural }}:#}
+{#    for i in await res_type.awaitable_attrs.{{ link.m2.name.snake_plural }}:#}
 {#        await db.delete(i)#}
 {#    {% endif %}#}
 {#    {% endfor %}#}

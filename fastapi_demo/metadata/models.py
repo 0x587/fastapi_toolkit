@@ -56,6 +56,7 @@ class CommentLike(Schema):
 
 class HomePageView(BaseModel):
     user: 'User'
+    level: int
     recent_posts: List['Post']  # newest 1
     hot_posts: List['Post']  # most like 1
     my_posts: List['Post']
@@ -65,3 +66,7 @@ class HomePageView(BaseModel):
 class UserController(Controller):
     def get_homepage(self, user: User, comment: Comment, count: int) -> HomePageView:
         pass
+
+
+class FileController(Controller):
+    pass
