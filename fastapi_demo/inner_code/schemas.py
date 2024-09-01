@@ -1,6 +1,6 @@
-# generate_hash: ac31764e076bd0e6844a251dd4168cb9
+# generate_hash: 37b3b394b758d5582edbd328b930029d
 """
-This file was automatically generated in 2024-08-19 17:09:23.583329
+This file was automatically generated in 2024-09-01 21:06:47.286871
 """
 import uuid
 import datetime
@@ -19,22 +19,32 @@ class SchemaBaseUser(Schema):
     updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
     """fields"""
+    sex: bool = Field()
+
+    title: str = Field()
+
     name: str = Field()
+
+    desc: str = Field()
+
+    avatar: str = Field()
+
+    bg_img: str = Field()
+
+    hot_level: int = Field()
+
+    star_level: int = Field()
 
     user_key: str = Field()
 
 
 class SchemaUser(SchemaBaseUser):
     """relationships"""
-    posts: "List[SchemaBasePost]" = Field(default=list)
-    comments: "List[SchemaBaseComment]" = Field(default=list)
-    post_likes: "List[SchemaBasePostLike]" = Field(default=list)
-    comment_likes: "List[SchemaBaseCommentLike]" = Field(default=list)
-    pass_card: "Optional[SchemaBasePassCard]" = None
-    groups: "List[SchemaBaseGroup]" = Field(default=list)
+    info_blocks: "List[SchemaBaseInfoBlock]" = Field(default=list)
+    certified_records: "List[SchemaBaseCertifiedRecord]" = Field(default=list)
 
 
-class SchemaBasePassCard(Schema):
+class SchemaBaseInfoBlock(Schema):
     """pk"""
     id: int = Field(default=None)
 
@@ -43,15 +53,30 @@ class SchemaBasePassCard(Schema):
     updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
     """fields"""
-    account: int = Field()
+    type: str = Field()
+
+    title: str = Field()
+
+    sub_title: str = Field()
+
+    desc: str = Field()
+
+    tags: str = Field()
+
+    show: bool = Field()
+
+    time_start: datetime.date = Field()
+
+    time_end: datetime.date = Field()
 
 
-class SchemaPassCard(SchemaBasePassCard):
+class SchemaInfoBlock(SchemaBaseInfoBlock):
     """relationships"""
     user: "Optional[SchemaBaseUser]" = None
+    certified_records: "List[SchemaBaseCertifiedRecord]" = Field(default=list)
 
 
-class SchemaBaseGroup(Schema):
+class SchemaBaseCertifiedRecord(Schema):
     """pk"""
     id: int = Field(default=None)
 
@@ -60,95 +85,24 @@ class SchemaBaseGroup(Schema):
     updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
     """fields"""
-    name: str = Field()
+    done: bool = Field()
+
+    target_real_name: str = Field()
+
+    self_real_name: str = Field()
+
+    relation: str = Field()
 
 
-class SchemaGroup(SchemaBaseGroup):
-    """relationships"""
-    users: "List[SchemaBaseUser]" = Field(default=list)
-
-
-class SchemaBasePost(Schema):
-    """pk"""
-    id: int = Field(default=None)
-
-    deleted_at: Optional[datetime.datetime] = Field(default=None, exclude=True)
-    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
-    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
-
-    """fields"""
-    text: str = Field()
-
-
-class SchemaPost(SchemaBasePost):
-    """relationships"""
-    author: "Optional[SchemaBaseUser]" = None
-    comments: "List[SchemaBaseComment]" = Field(default=list)
-    likes: "List[SchemaBasePostLike]" = Field(default=list)
-
-
-class SchemaBaseComment(Schema):
-    """pk"""
-    id: int = Field(default=None)
-
-    deleted_at: Optional[datetime.datetime] = Field(default=None, exclude=True)
-    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
-    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
-
-    """fields"""
-    content: str = Field()
-
-
-class SchemaComment(SchemaBaseComment):
+class SchemaCertifiedRecord(SchemaBaseCertifiedRecord):
     """relationships"""
     user: "Optional[SchemaBaseUser]" = None
-    post: "Optional[SchemaBasePost]" = None
-    likes: "List[SchemaBaseCommentLike]" = Field(default=list)
-
-
-class SchemaBasePostLike(Schema):
-    """pk"""
-    id: int = Field(default=None)
-
-    deleted_at: Optional[datetime.datetime] = Field(default=None, exclude=True)
-    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
-    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
-
-    """fields"""
-
-class SchemaPostLike(SchemaBasePostLike):
-    """relationships"""
-    user: "Optional[SchemaBaseUser]" = None
-    post: "Optional[SchemaBasePost]" = None
-
-
-class SchemaBaseCommentLike(Schema):
-    """pk"""
-    id: int = Field(default=None)
-
-    deleted_at: Optional[datetime.datetime] = Field(default=None, exclude=True)
-    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
-    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
-
-    """fields"""
-
-class SchemaCommentLike(SchemaBaseCommentLike):
-    """relationships"""
-    user: "Optional[SchemaBaseUser]" = None
-    comment: "Optional[SchemaBaseComment]" = None
+    info_block: "Optional[SchemaBaseInfoBlock]" = None
 
 
 SchemaBaseUser.model_rebuild()
 SchemaUser.model_rebuild()
-SchemaBasePassCard.model_rebuild()
-SchemaPassCard.model_rebuild()
-SchemaBaseGroup.model_rebuild()
-SchemaGroup.model_rebuild()
-SchemaBasePost.model_rebuild()
-SchemaPost.model_rebuild()
-SchemaBaseComment.model_rebuild()
-SchemaComment.model_rebuild()
-SchemaBasePostLike.model_rebuild()
-SchemaPostLike.model_rebuild()
-SchemaBaseCommentLike.model_rebuild()
-SchemaCommentLike.model_rebuild()
+SchemaBaseInfoBlock.model_rebuild()
+SchemaInfoBlock.model_rebuild()
+SchemaBaseCertifiedRecord.model_rebuild()
+SchemaCertifiedRecord.model_rebuild()

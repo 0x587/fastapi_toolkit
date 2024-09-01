@@ -5,68 +5,37 @@ from fastapi_toolkit.define import Schema, Controller
 
 
 class User(Schema):
+    sex: bool
+    title: str
     name: str
-    posts: List['Post']
-    comments: List['Comment']
-    post_likes: List['PostLike']
-    comment_likes: List['CommentLike']
-    pass_card: 'PassCard'
-    groups: List['Group']
+    desc: str
+    avatar: str
+    bg_img: str
+    hot_level: int
+    star_level: int
+
+    info_blocks: List['InfoBlock']
+    certified_records: List['CertifiedRecord']
 
 
-class PassCard(Schema):
-    account: int
+class InfoBlock(Schema):
+    type: str
+    title: str
+    sub_title: str
+    desc: str
+    tags: str
+    show: bool
+    time_start: datetime.date
+    time_end: datetime.date
+
     user: 'User'
+    certified_records: List['CertifiedRecord']
 
 
-class Group(Schema):
-    name: str
-    users: List['User']
-
-
-class Post(Schema):
-    text: str
-    author: 'User' = Field(alias='user')
-    comments: List['Comment']
-    likes: List['PostLike'] = Field(alias='post_likes')
-
-
-class Comment(Schema):
-    content: str
+class CertifiedRecord(Schema):
     user: 'User'
-    post: 'Post'
-    likes: List['CommentLike'] = Field(alias='comment_likes')
-
-
-class PostLike(Schema):
-    post: 'Post'
-    user: 'User'
-
-
-class CommentLike(Schema):
-    comment: 'Comment'
-    user: 'User'
-
-
-# class HomePageView:
-#     user: 'User'
-#     like_posts: List['Post']
-#     recent_posts: List['Post']  # newest 10
-#     hot_posts: List['Post']  # most like 10
-
-class HomePageView(BaseModel):
-    user: 'User'
-    level: int
-    recent_posts: List['Post']  # newest 1
-    hot_posts: List['Post']  # most like 1
-    my_posts: List['Post']
-    like_posts: List['Post']
-
-
-class UserController(Controller):
-    def get_homepage(self, user: User, comment: Comment, count: int) -> HomePageView:
-        pass
-
-
-class FileController(Controller):
-    pass
+    info_block: 'InfoBlock'
+    done: bool
+    target_real_name: str
+    self_real_name: str
+    relation: str

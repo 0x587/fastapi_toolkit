@@ -1,19 +1,19 @@
-# generate_hash: 4cdaf130a6a917e4046cee6647a846f6
+# generate_hash: 0b2ff2ae9d2c006cd80663441dedabde
 """
-This file was automatically generated in 2024-08-15 16:29:03.785135
+This file was automatically generated in 2024-08-31 15:00:10.649329
 """
 
 from fastapi_toolkit.base.router import BaseRouter
 
 from ..config import ModelConfig
-from ..crud.comment_crud import *
+from ..crud.info_block_crud import *
 
 
-class CommentRouter(BaseRouter):
+class InfoBlockRouter(BaseRouter):
     def __init__(self, config: ModelConfig):
-        self.snake_name = "comment"
-        self.snake_plural_name = "comments"
-        self.camel_name = "Comment"
+        self.snake_name = "info_block"
+        self.snake_plural_name = "info_blocks"
+        self.camel_name = "InfoBlock"
         super().__init__(config)
 
     def _get_one(self):

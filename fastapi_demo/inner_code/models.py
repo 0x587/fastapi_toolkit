@@ -1,6 +1,6 @@
-# generate_hash: 59078b8f889971cfba84af3481c2e5a3
+# generate_hash: 9ade647e396806f4981bf3e4c0873d44
 """
-This file was automatically generated in 2024-08-18 00:30:05.031883
+This file was automatically generated in 2024-09-01 21:06:47.284610
 """
 import datetime
 from typing import List, Optional
@@ -11,13 +11,6 @@ from sqlalchemy.sql import sqltypes
 
 from .db import Base
 
-association_table_user_group = Table(
-    "association_table_user_group",
-    Base.metadata,
-    Column("user_id", ForeignKey("user.id"), primary_key=True),
-    Column("group_id", ForeignKey("group.id"), primary_key=True),
-)
-
 
 class DBUser(Base):
     __tablename__ = "user"
@@ -27,160 +20,94 @@ class DBUser(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
     updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
 
+    sex: Mapped[bool] = mapped_column(sqltypes.Boolean, nullable=False)
+
+    title: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
+
     name: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
+
+    desc: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
+
+    avatar: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
+
+    bg_img: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
+
+    hot_level: Mapped[int] = mapped_column(sqltypes.Integer, nullable=False)
+
+    star_level: Mapped[int] = mapped_column(sqltypes.Integer, nullable=False)
 
     user_key: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
-    posts: Mapped[List["DBPost"]] = relationship(
-        back_populates="author",
-    )
-
-    comments: Mapped[List["DBComment"]] = relationship(
+    info_blocks: Mapped[List["DBInfoBlock"]] = relationship(
         back_populates="user",
     )
 
-    post_likes: Mapped[List["DBPostLike"]] = relationship(
+    certified_records: Mapped[List["DBCertifiedRecord"]] = relationship(
         back_populates="user",
     )
 
-    comment_likes: Mapped[List["DBCommentLike"]] = relationship(
-        back_populates="user",
-    )
 
-    _fk_pass_card_pass_card_id: Mapped[int] = mapped_column(ForeignKey("pass_card.id"), nullable=True)
-
-    pass_card: Mapped[Optional["DBPassCard"]] = relationship(
-        back_populates="user",
-    )
-
-    groups: Mapped[List["DBGroup"]] = relationship(
-        back_populates="users",
-        secondary=association_table_user_group
-    )
-
-
-class DBPassCard(Base):
-    __tablename__ = "pass_card"
+class DBInfoBlock(Base):
+    __tablename__ = "info_block"
 
     id: Mapped[int] = mapped_column(sqltypes.Integer, primary_key=True, autoincrement=True)
     deleted_at: Mapped[Optional[datetime.datetime]] = mapped_column(sqltypes.DateTime, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
     updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
 
-    account: Mapped[int] = mapped_column(sqltypes.Integer, nullable=False)
+    type: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
-    user: Mapped[Optional["DBUser"]] = relationship(
-        back_populates="pass_card",
-    )
+    title: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
+    sub_title: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
-class DBGroup(Base):
-    __tablename__ = "group"
+    desc: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
-    id: Mapped[int] = mapped_column(sqltypes.Integer, primary_key=True, autoincrement=True)
-    deleted_at: Mapped[Optional[datetime.datetime]] = mapped_column(sqltypes.DateTime, nullable=True)
-    created_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
-    updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
+    tags: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
-    name: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
+    show: Mapped[bool] = mapped_column(sqltypes.Boolean, nullable=False)
 
-    users: Mapped[List["DBUser"]] = relationship(
-        back_populates="groups",
-        secondary=association_table_user_group
-    )
+    time_start: Mapped[datetime.date] = mapped_column(sqltypes.Date, nullable=False)
 
-
-class DBPost(Base):
-    __tablename__ = "post"
-
-    id: Mapped[int] = mapped_column(sqltypes.Integer, primary_key=True, autoincrement=True)
-    deleted_at: Mapped[Optional[datetime.datetime]] = mapped_column(sqltypes.DateTime, nullable=True)
-    created_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
-    updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
-
-    text: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
-    _fk_author_user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=True)
-
-    author: Mapped[Optional["DBUser"]] = relationship(
-        back_populates="posts",
-    )
-
-    comments: Mapped[List["DBComment"]] = relationship(
-        back_populates="post",
-    )
-
-    likes: Mapped[List["DBPostLike"]] = relationship(
-        back_populates="post",
-    )
-
-
-class DBComment(Base):
-    __tablename__ = "comment"
-
-    id: Mapped[int] = mapped_column(sqltypes.Integer, primary_key=True, autoincrement=True)
-    deleted_at: Mapped[Optional[datetime.datetime]] = mapped_column(sqltypes.DateTime, nullable=True)
-    created_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
-    updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
-
-    content: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
+    time_end: Mapped[datetime.date] = mapped_column(sqltypes.Date, nullable=False)
 
     _fk_user_user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=True)
 
     user: Mapped[Optional["DBUser"]] = relationship(
-        back_populates="comments",
+        back_populates="info_blocks",
     )
 
-    _fk_post_post_id: Mapped[int] = mapped_column(ForeignKey("post.id"), nullable=True)
-
-    post: Mapped[Optional["DBPost"]] = relationship(
-        back_populates="comments",
-    )
-
-    likes: Mapped[List["DBCommentLike"]] = relationship(
-        back_populates="comment",
+    certified_records: Mapped[List["DBCertifiedRecord"]] = relationship(
+        back_populates="info_block",
     )
 
 
-class DBPostLike(Base):
-    __tablename__ = "post_like"
+class DBCertifiedRecord(Base):
+    __tablename__ = "certified_record"
 
     id: Mapped[int] = mapped_column(sqltypes.Integer, primary_key=True, autoincrement=True)
     deleted_at: Mapped[Optional[datetime.datetime]] = mapped_column(sqltypes.DateTime, nullable=True)
     created_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
     updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
 
-    _fk_user_user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=True)
+    done: Mapped[bool] = mapped_column(sqltypes.Boolean, nullable=False)
 
-    user: Mapped[Optional["DBUser"]] = relationship(
-        back_populates="post_likes",
-    )
+    target_real_name: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
-    _fk_post_post_id: Mapped[int] = mapped_column(ForeignKey("post.id"), nullable=True)
+    self_real_name: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
-    post: Mapped[Optional["DBPost"]] = relationship(
-        back_populates="likes",
-    )
-
-
-class DBCommentLike(Base):
-    __tablename__ = "comment_like"
-
-    id: Mapped[int] = mapped_column(sqltypes.Integer, primary_key=True, autoincrement=True)
-    deleted_at: Mapped[Optional[datetime.datetime]] = mapped_column(sqltypes.DateTime, nullable=True)
-    created_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
-    updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
+    relation: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
     _fk_user_user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=True)
 
     user: Mapped[Optional["DBUser"]] = relationship(
-        back_populates="comment_likes",
+        back_populates="certified_records",
     )
 
-    _fk_comment_comment_id: Mapped[int] = mapped_column(ForeignKey("comment.id"), nullable=True)
+    _fk_info_block_info_block_id: Mapped[int] = mapped_column(ForeignKey("info_block.id"), nullable=True)
 
-    comment: Mapped[Optional["DBComment"]] = relationship(
-        back_populates="likes",
+    info_block: Mapped[Optional["DBInfoBlock"]] = relationship(
+        back_populates="certified_records",
     )
 
 

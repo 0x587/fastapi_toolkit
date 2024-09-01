@@ -1,19 +1,19 @@
-# generate_hash: e20f419b542b0a15ccf96ce5a92c86e3
+# generate_hash: 902c5fde1d8c40d11d32c68f9da21921
 """
-This file was automatically generated in 2024-08-15 16:29:03.785812
+This file was automatically generated in 2024-09-01 20:27:13.508489
 """
 
 from fastapi_toolkit.base.router import BaseRouter
 
 from ..config import ModelConfig
-from ..crud.post_like_crud import *
+from ..crud.certified_record_crud import *
 
 
-class PostLikeRouter(BaseRouter):
+class CertifiedRecordRouter(BaseRouter):
     def __init__(self, config: ModelConfig):
-        self.snake_name = "post_like"
-        self.snake_plural_name = "post_likes"
-        self.camel_name = "PostLike"
+        self.snake_name = "certified_record"
+        self.snake_plural_name = "certified_records"
+        self.camel_name = "CertifiedRecord"
         super().__init__(config)
 
     def _get_one(self):

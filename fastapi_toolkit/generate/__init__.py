@@ -75,7 +75,7 @@ class Link(BaseModel):
         if self.type == LinkType.many:
             self.render_data.target_type = f'List[{self.render_data.target_type}]'
             self.render_data.schema_target_type = f'List[{self.render_data.schema_target_type}]'
-            self.render_data.default_value = 'Field(default=list)'
+            self.render_data.default_value = 'Field(default_factory=list)'
         else:
             self.render_data.target_type = f'Optional[{self.render_data.target_type}]'
             self.render_data.schema_target_type = f'Optional[{self.render_data.schema_target_type}]'
