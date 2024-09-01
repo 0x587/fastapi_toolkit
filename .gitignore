@@ -12,3 +12,5 @@ config.yaml
 .fastapi-toolkit
 
 .env
+
+.DS_Store
