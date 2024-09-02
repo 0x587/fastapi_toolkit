@@ -7,7 +7,7 @@
 
 from typing import List, Optional
 from fastapi import Depends, Response, HTTPException, status
-from fastapi_pagination import Page
+from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
 from sqlalchemy import select, Select
@@ -52,17 +52,19 @@ def get_all_query(
 
 
 async def get_all(
+        paginate_parmas: Params,
         query=Depends(get_all_query),
-        db=Depends(get_db)
+        db=Depends(get_db),
 ) -> Page[{{ base_schema }}]:
-    return await paginate(db, query)
+    return await paginate(db, query, params=paginate_parmas)
 
 
 async def get_link_all(
+        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[{{ model.name.schema }}]:
-    return await paginate(db, query)
+    return await paginate(db, query, params=paginate_parmas)
 # ---------------------User Query Routes----------------------
 
 

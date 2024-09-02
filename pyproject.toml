@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastapi_toolkit_shawn587"
-version = "0.2.2.5"
+version = "0.2.2.6"
 authors = ["0x587 <shawnsiu@outlook.com>"]
 description = "This toolkit can generate database CRUD operations based on defined metadata in one click, basic fastapi routing and mock data scripts."
 readme = "README.md"
@@ -13,7 +13,7 @@ packages = [{ include = "fastapi_toolkit" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = "^0.104.1"
+fastapi = "0.112.2"
 fastapi-pagination = "^0.12.12"
 sqlalchemy = "^2.0.23"
 typer = { extras = ["all"], version = "^0.9.0" }

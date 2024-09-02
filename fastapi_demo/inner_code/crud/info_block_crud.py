@@ -1,11 +1,11 @@
-# generate_hash: eab75eff9b4763a6725755f2a82aafde
+# generate_hash: 33f35e949cbf718e7479263dcd63c70d
 """
-This file was automatically generated in 2024-09-01 20:27:13.507939
+This file was automatically generated in 2024-09-02 21:56:14.802051
 """
 
 from typing import List, Optional
 from fastapi import Depends, Response, HTTPException, status
-from fastapi_pagination import Page
+from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
 from sqlalchemy import select, Select
@@ -67,17 +67,19 @@ def get_all_query(
 
 
 async def get_all(
+        paginate_parmas: Params,
         query=Depends(get_all_query),
-        db=Depends(get_db)
+        db=Depends(get_db),
 ) -> Page[SchemaBaseInfoBlock]:
-    return await paginate(db, query)
+    return await paginate(db, query, params=paginate_parmas)
 
 
 async def get_link_all(
+        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[SchemaInfoBlock]:
-    return await paginate(db, query)
+    return await paginate(db, query, params=paginate_parmas)
 # ---------------------User Query Routes----------------------
 
 

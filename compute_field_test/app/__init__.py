@@ -1,8 +1,10 @@
 import asyncio
 import time
 from collections import defaultdict
+from typing_extensions import Doc
+from typing import TypeVar, Callable, Coroutine, Any, Annotated, Union
 
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi_pagination import add_pagination, Page, paginate, pagination_ctx, Params
 from pydantic import BaseModel, ConfigDict, TypeAdapter
 from sqlalchemy import select
@@ -35,9 +37,53 @@ def computed_field(func, *args, **kw):
     return wrapper
 
 
-# class RangeSession(SchemaRange):
-#     model_config = ConfigDict(arbitrary_types_allowed=True)
-#     db: Session = Field(exclude=True)
+T = TypeVar("T")
+
+
+def Depends(  # noqa: N802
+        dependency: Annotated[
+            Optional[
+                Union[Callable[..., Coroutine[Any, Any, T]], Callable[..., T]]
+            ],
+            Doc(
+                """
+                A "dependable" callable (like a function).
+    
+                Don't call it directly, FastAPI will call it for you, just pass the object
+                directly.
+                """
+            ),
+        ] = None,
+        *,
+        use_cache: Annotated[
+            bool,
+            Doc(
+                """
+                By default, after a dependency is called the first time in a request, if
+                the dependency is declared again for the rest of the request (for example
+                if the dependency is needed by several dependencies), the value will be
+                re-used for the rest of the request.
+    
+                Set `use_cache` to `False` to disable this behavior and ensure the
+                dependency is called again (if declared more than once) in the same request.
+                """
+            ),
+        ] = True,
+) -> T:
+    from fastapi import Depends
+    return Depends(dependency, use_cache=use_cache)
+
+
+def f1() -> int:
+    return 1
+
+
+async def f2() -> int:
+    return 1
+
+
+v1 = Depends(f1)
+v2 = Depends(f2)
 
 
 class RangeView(RangeSession):
@@ -52,23 +98,18 @@ import inner_code.crud.range_crud as range_crud
 
 
 @app.get('/f')
-async def f(r=Depends(range_crud.get_one), db: Session = Depends(get_db_sync)):
+async def f(r=Depends(range_crud.get_one), db: Session = Depends(get_db_sync)) -> RangeView:
     return RangeView(**r.__dict__, db=db)
 
 
-@app.get('/fs')
-async def fs(db: Session = Depends(get_db_sync), rs=Depends(range_crud.get_all)) -> Page[int]:
-    # a = db.scalars(select(DBRange)).all()
-    #
-    # return [RangeView(**r.__dict__, db=db) for r in a]
-    # return paginate(TypeAdapter(List[RangeView]).validate_python(rs))
-    return paginate([1, 2, 3])
+def aaa() -> int:
+    return 123
 
-add_pagination(app)
-# TODO????????????????
-@app.get('/asd')
-def asd(rs=Depends(range_crud.get_all)) -> Page[int]:
-    return paginate(rs, params=Params(page=1, size=50))
+
+@app.post('/fs')
+async def fs(rs=Depends(range_crud.get_all), db: Session = Depends(get_db_sync)) -> Page[RangeView]:
+    rs.items = [RangeView(**r.__dict__, db=db) for r in rs.items]
+    return TypeAdapter(Page[RangeView]).validate_python(rs)
 
 
 add_pagination(app)
