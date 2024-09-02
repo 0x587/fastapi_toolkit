@@ -1,13 +1,15 @@
-# generate_hash: 37b3b394b758d5582edbd328b930029d
+# generate_hash: 62f6620f96fcc4efa256e2f2945a7da2
 """
-This file was automatically generated in 2024-09-01 21:06:47.286871
+This file was automatically generated in 2024-09-02 19:03:29.861698
 """
 import uuid
 import datetime
 from typing import List, Optional
 
 from fastapi_toolkit.define import Schema
-from pydantic import Field
+from pydantic import Field, ConfigDict
+from sqlalchemy.orm import Session
+
 
 
 class SchemaBaseUser(Schema):
@@ -40,8 +42,13 @@ class SchemaBaseUser(Schema):
 
 class SchemaUser(SchemaBaseUser):
     """relationships"""
-    info_blocks: "List[SchemaBaseInfoBlock]" = Field(default=list)
-    certified_records: "List[SchemaBaseCertifiedRecord]" = Field(default=list)
+    info_blocks: "List[SchemaBaseInfoBlock]" = Field(default_factory=list)
+    certified_records: "List[SchemaBaseCertifiedRecord]" = Field(default_factory=list)
+
+
+class UserSession(SchemaUser):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    db: Session = Field(exclude=True)
 
 
 class SchemaBaseInfoBlock(Schema):
@@ -73,7 +80,12 @@ class SchemaBaseInfoBlock(Schema):
 class SchemaInfoBlock(SchemaBaseInfoBlock):
     """relationships"""
     user: "Optional[SchemaBaseUser]" = None
-    certified_records: "List[SchemaBaseCertifiedRecord]" = Field(default=list)
+    certified_records: "List[SchemaBaseCertifiedRecord]" = Field(default_factory=list)
+
+
+class InfoBlockSession(SchemaInfoBlock):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    db: Session = Field(exclude=True)
 
 
 class SchemaBaseCertifiedRecord(Schema):
@@ -98,6 +110,11 @@ class SchemaCertifiedRecord(SchemaBaseCertifiedRecord):
     """relationships"""
     user: "Optional[SchemaBaseUser]" = None
     info_block: "Optional[SchemaBaseInfoBlock]" = None
+
+
+class CertifiedRecordSession(SchemaCertifiedRecord):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    db: Session = Field(exclude=True)
 
 
 SchemaBaseUser.model_rebuild()

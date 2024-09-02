@@ -1,13 +1,15 @@
-# generate_hash: a81fe813ad549ddaaac23db796e2561c
+# generate_hash: 42818ae20fcbd0eca28d416f1d50f802
 """
-This file was automatically generated in 2024-09-01 22:59:20.605937
+This file was automatically generated in 2024-09-02 19:04:05.899622
 """
 import uuid
 import datetime
 from typing import List, Optional
 
 from fastapi_toolkit.define import Schema
-from pydantic import Field
+from pydantic import Field, ConfigDict
+from sqlalchemy.orm import Session
+
 
 
 class SchemaBaseUser(Schema):
@@ -26,6 +28,11 @@ class SchemaUser(SchemaBaseUser):
     """relationships"""
 
 
+class UserSession(SchemaUser):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    db: Session = Field(exclude=True)
+
+
 class SchemaBaseItem(Schema):
     """pk"""
     id: int = Field(default=None)
@@ -40,6 +47,11 @@ class SchemaBaseItem(Schema):
 
 class SchemaItem(SchemaBaseItem):
     """relationships"""
+
+
+class ItemSession(SchemaItem):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    db: Session = Field(exclude=True)
 
 
 class SchemaBaseRange(Schema):
@@ -58,6 +70,11 @@ class SchemaBaseRange(Schema):
 
 class SchemaRange(SchemaBaseRange):
     """relationships"""
+
+
+class RangeSession(SchemaRange):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    db: Session = Field(exclude=True)
 
 
 SchemaBaseUser.model_rebuild()

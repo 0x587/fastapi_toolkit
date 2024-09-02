@@ -1,13 +1,14 @@
-# generate_hash: 716bcf3d4bd56bacf822cbdd051682f2
+# generate_hash: 4fd13c490bebd8837ac599511a415176
 """
-This file was automatically generated in 2024-08-31 15:00:10.634926
+This file was automatically generated in 2024-09-02 19:02:24.544228
 """
 from typing import Any, AsyncIterator, Annotated
 import contextlib
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncConnection, AsyncSession, async_sessionmaker, AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import create_engine
+from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from .setting import get_settings
 
@@ -18,7 +19,9 @@ db_name = setting.database
 host = setting.host
 
 database_url = f"mysql+aiomysql://{user}:{password}@{host}/{db_name}"
+
 async_engine = create_async_engine(database_url)
+sync_engine = create_engine(f"mysql+pymysql://{user}:{password}@{host}/{db_name}")
 
 
 class DatabaseSessionManager:
@@ -77,6 +80,12 @@ async def get_db() -> AsyncSession:
         async_engine, class_=AsyncSession, expire_on_commit=False
     )
     async with async_session() as session:
+        yield session
+
+
+def get_db_sync() -> Session:
+    session = sessionmaker(sync_engine, class_=Session, expire_on_commit=False)
+    with session() as session:
         yield session
 
 
