@@ -1,6 +1,6 @@
-# generate_hash: a79a883d57489215ce87021d631b82fa
+# generate_hash: e2492a232838a8f1aaae7fca4185f1d5
 """
-This file was automatically generated in 2024-09-02 21:56:44.624226
+This file was automatically generated in 2024-09-03 17:14:42.828781
 """
 
 from typing import List, Optional
@@ -18,15 +18,15 @@ NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item No
 
 
 # ------------------------Query Routes------------------------
-async def get_one(ident: int, db=Depends(get_db)) -> SchemaBaseItem:
-    res = await db.get(DBItem, ident)
+async def get_one(item_ident: int, db=Depends(get_db)) -> SchemaBaseItem:
+    res = await db.get(DBItem, item_ident)
     if res and res.deleted_at is None:
         return res
     raise NOT_FOUND
 
 
-async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseItem]:
-    query = select(DBItem).filter(DBItem.deleted_at.is_(None)).filter(DBItem.id.in_(idents))
+async def batch_get(item_idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseItem]:
+    query = select(DBItem).filter(DBItem.deleted_at.is_(None)).filter(DBItem.id.in_(item_idents))
     return await paginate(db, query)
 
 
@@ -79,10 +79,10 @@ async def create_one(
 
 # -----------------------Update Routes------------------------
 async def update_one(
-        ident: int,
+        item_ident: int,
         value: Optional[int] = None,
         db=Depends(get_db)) -> SchemaBaseItem:
-    res = await db.get(DBItem, ident)
+    res = await db.get(DBItem, item_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
     if value is not None:
@@ -94,14 +94,14 @@ async def update_one(
 
 
 # -----------------------Delete Routes------------------------
-async def delete_one(ident: int, db=Depends(get_db)):
-    res = await db.get(DBItem, ident)
+async def delete_one(item_ident: int, db=Depends(get_db)):
+    res = await db.get(DBItem, item_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
 # TODO
     res.deleted_at = datetime.datetime.now()
     await db.commit()
-    return {'message': 'Deleted', 'id': ident}
+    return {'message': 'Deleted', 'id': item_ident}
 
 
 # ----------------------Relation Routes-----------------------

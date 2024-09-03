@@ -1,6 +1,6 @@
-# generate_hash: 9aa226c6654147182a7d2bddce8fc46f
+# generate_hash: c5afa47fd7a58d5c8a057690af226db0
 """
-This file was automatically generated in 2024-09-02 21:56:44.622606
+This file was automatically generated in 2024-09-03 17:14:42.825249
 """
 
 from typing import List, Optional
@@ -18,15 +18,15 @@ NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item No
 
 
 # ------------------------Query Routes------------------------
-async def get_one(ident: int, db=Depends(get_db)) -> SchemaBaseUser:
-    res = await db.get(DBUser, ident)
+async def get_one(user_ident: int, db=Depends(get_db)) -> SchemaBaseUser:
+    res = await db.get(DBUser, user_ident)
     if res and res.deleted_at is None:
         return res
     raise NOT_FOUND
 
 
-async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseUser]:
-    query = select(DBUser).filter(DBUser.deleted_at.is_(None)).filter(DBUser.id.in_(idents))
+async def batch_get(user_idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseUser]:
+    query = select(DBUser).filter(DBUser.deleted_at.is_(None)).filter(DBUser.id.in_(user_idents))
     return await paginate(db, query)
 
 
@@ -79,10 +79,10 @@ async def create_one(
 
 # -----------------------Update Routes------------------------
 async def update_one(
-        ident: int,
+        user_ident: int,
         user_key: Optional[str] = None,
         db=Depends(get_db)) -> SchemaBaseUser:
-    res = await db.get(DBUser, ident)
+    res = await db.get(DBUser, user_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
     if user_key is not None:
@@ -94,14 +94,14 @@ async def update_one(
 
 
 # -----------------------Delete Routes------------------------
-async def delete_one(ident: int, db=Depends(get_db)):
-    res = await db.get(DBUser, ident)
+async def delete_one(user_ident: int, db=Depends(get_db)):
+    res = await db.get(DBUser, user_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
 # TODO
     res.deleted_at = datetime.datetime.now()
     await db.commit()
-    return {'message': 'Deleted', 'id': ident}
+    return {'message': 'Deleted', 'id': user_ident}
 
 
 # ----------------------Relation Routes-----------------------

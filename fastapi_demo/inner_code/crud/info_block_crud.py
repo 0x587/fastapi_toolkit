@@ -1,6 +1,6 @@
-# generate_hash: 33f35e949cbf718e7479263dcd63c70d
+# generate_hash: d267269d595bc74a02a37f40caceaf31
 """
-This file was automatically generated in 2024-09-02 21:56:14.802051
+This file was automatically generated in 2024-09-03 17:14:12.334457
 """
 
 from typing import List, Optional
@@ -18,15 +18,15 @@ NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item No
 
 
 # ------------------------Query Routes------------------------
-async def get_one(ident: int, db=Depends(get_db)) -> SchemaBaseInfoBlock:
-    res = await db.get(DBInfoBlock, ident)
+async def get_one(info_block_ident: int, db=Depends(get_db)) -> SchemaBaseInfoBlock:
+    res = await db.get(DBInfoBlock, info_block_ident)
     if res and res.deleted_at is None:
         return res
     raise NOT_FOUND
 
 
-async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseInfoBlock]:
-    query = select(DBInfoBlock).filter(DBInfoBlock.deleted_at.is_(None)).filter(DBInfoBlock.id.in_(idents))
+async def batch_get(info_block_idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseInfoBlock]:
+    query = select(DBInfoBlock).filter(DBInfoBlock.deleted_at.is_(None)).filter(DBInfoBlock.id.in_(info_block_idents))
     return await paginate(db, query)
 
 
@@ -114,7 +114,7 @@ async def create_one(
 
 # -----------------------Update Routes------------------------
 async def update_one(
-        ident: int,
+        info_block_ident: int,
         type: Optional[str] = None,
         title: Optional[str] = None,
         sub_title: Optional[str] = None,
@@ -124,7 +124,7 @@ async def update_one(
         time_start: Optional[datetime.date] = None,
         time_end: Optional[datetime.date] = None,
         db=Depends(get_db)) -> SchemaBaseInfoBlock:
-    res = await db.get(DBInfoBlock, ident)
+    res = await db.get(DBInfoBlock, info_block_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
     if type is not None:
@@ -150,14 +150,14 @@ async def update_one(
 
 
 # -----------------------Delete Routes------------------------
-async def delete_one(ident: int, db=Depends(get_db)):
-    res = await db.get(DBInfoBlock, ident)
+async def delete_one(info_block_ident: int, db=Depends(get_db)):
+    res = await db.get(DBInfoBlock, info_block_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
 # TODO
     res.deleted_at = datetime.datetime.now()
     await db.commit()
-    return {'message': 'Deleted', 'id': ident}
+    return {'message': 'Deleted', 'id': info_block_ident}
 
 
 # ----------------------Relation Routes-----------------------

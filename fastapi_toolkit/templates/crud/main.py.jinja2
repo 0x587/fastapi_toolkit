@@ -20,15 +20,15 @@ NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item No
 
 
 # ------------------------Query Routes------------------------
-async def get_one(ident: int, db=Depends(get_db)) -> {{ base_schema }}:
-    res = await db.get({{ name }}, ident)
+async def get_one({{ s_name }}_ident: int, db=Depends(get_db)) -> {{ base_schema }}:
+    res = await db.get({{ name }}, {{ s_name }}_ident)
     if res and res.deleted_at is None:
         return res
     raise NOT_FOUND
 
 
-async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[{{ base_schema }}]:
-    query = select({{ name }}).filter({{ name }}.deleted_at.is_(None)).filter({{ name }}.id.in_(idents))
+async def batch_get({{ s_name }}_idents: List[int], db=Depends(get_db)) -> Page[{{ base_schema }}]:
+    query = select({{ name }}).filter({{ name }}.deleted_at.is_(None)).filter({{ name }}.id.in_({{ s_name }}_idents))
     return await paginate(db, query)
 
 
@@ -89,12 +89,12 @@ async def create_one(
 
 # -----------------------Update Routes------------------------
 async def update_one(
-        ident: int,
+        {{ s_name }}_ident: int,
         {% for field in model.fields %}
         {{field.name.snake}}: Optional[{{field.type.python_type}}] = None,
         {% endfor %}
         db=Depends(get_db)) -> {{ base_schema }}:
-    res = await db.get({{ name }}, ident)
+    res = await db.get({{ name }}, {{ s_name }}_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
     {% for field in model.fields %}
@@ -108,8 +108,8 @@ async def update_one(
 
 
 # -----------------------Delete Routes------------------------
-async def delete_one(ident: int, db=Depends(get_db)):
-    res = await db.get({{ name }}, ident)
+async def delete_one({{ s_name }}_ident: int, db=Depends(get_db)):
+    res = await db.get({{ name }}, {{ s_name }}_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
 # TODO
@@ -126,7 +126,7 @@ async def delete_one(ident: int, db=Depends(get_db)):
 {#    {% endif %}#}
     res.deleted_at = datetime.datetime.now()
     await db.commit()
-    return {'message': 'Deleted', 'id': ident}
+    return {'message': 'Deleted', 'id': {{ s_name }}_ident}
 
 
 # ----------------------Relation Routes-----------------------

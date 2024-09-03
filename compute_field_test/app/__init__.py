@@ -2,13 +2,14 @@ import asyncio
 import time
 from collections import defaultdict
 from typing_extensions import Doc
-from typing import TypeVar, Callable, Coroutine, Any, Annotated, Union
+from typing import TypeVar, Callable, Coroutine, Any, Annotated, Union, Generator
 
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination, Page, paginate, pagination_ctx, Params
-from pydantic import BaseModel, ConfigDict, TypeAdapter
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
+from fastapi_toolkit import computed_field
 
 from inner_code.db import get_db, get_db_sync
 from inner_code.routers import InnerRouter
@@ -24,18 +25,6 @@ app.include_router(InnerRouter(inner_config))
 
 from inner_code.schemas import *
 from inner_code.models import *
-
-
-def computed_field(func, *args, **kw):
-    from pydantic import computed_field
-
-    @computed_field(*args, **kw)
-    def wrapper(*args, **kw) -> func.__annotations__.get('return'):
-        self = args[0]
-        return func(*args, **kw, db=self.db)
-
-    return wrapper
-
 
 T = TypeVar("T")
 
@@ -74,42 +63,49 @@ def Depends(  # noqa: N802
     return Depends(dependency, use_cache=use_cache)
 
 
-def f1() -> int:
-    return 1
+class ItemView(SchemaItem):
+    @computed_field(db_func=get_db_sync)
+    def ranges(self, db: Session) -> List[SchemaRange]:
+        return [
+            SchemaRange.model_validate(r) for r in db.scalars(
+                select(DBRange).filter(DBRange.min_value < self.value).filter(DBRange.max_value > self.value)
+            )
+        ]
 
 
-async def f2() -> int:
-    return 1
-
-
-v1 = Depends(f1)
-v2 = Depends(f2)
-
-
-class RangeView(RangeSession):
-    @computed_field
-    def items(self, db: Session) -> List[SchemaItem]:
-        return [SchemaItem.model_validate(i) for i in db.scalars(
+class RangeView(SchemaRange):
+    @computed_field(db_func=get_db_sync)
+    def items(self, db: Session) -> List[ItemView]:
+        return [ItemView(**i.__dict__) for i in db.scalars(
             select(DBItem).filter(DBItem.value > self.min_value).filter(DBItem.value < self.max_value)
         )]
 
 
 import inner_code.crud.range_crud as range_crud
+import inner_code.crud.item_crud as item_crud
 
 
-@app.get('/f')
-async def f(r=Depends(range_crud.get_one), db: Session = Depends(get_db_sync)) -> RangeView:
-    return RangeView(**r.__dict__, db=db)
+@app.get('/ss')
+async def fr(r=Depends(range_crud.get_one), i=Depends(item_crud.get_one)) -> RangeView:
+    print(r.id)
+    print(i.id)
+    return RangeView(**r.__dict__)
 
 
-def aaa() -> int:
-    return 123
+@app.get('/r')
+async def fr(r=Depends(range_crud.get_one)) -> RangeView:
+    return RangeView(**r.__dict__)
 
 
-@app.post('/fs')
-async def fs(rs=Depends(range_crud.get_all), db: Session = Depends(get_db_sync)) -> Page[RangeView]:
-    rs.items = [RangeView(**r.__dict__, db=db) for r in rs.items]
-    return TypeAdapter(Page[RangeView]).validate_python(rs)
+@app.post('/rs', response_model=Page[RangeView])
+async def frs(rs=Depends(range_crud.get_all)):
+    rs.items = [RangeView(**r.__dict__) for r in rs.items]
+    return rs
+
+
+@app.post('/i', response_model=ItemView)
+def fs(i=Depends(item_crud.get_one)):
+    return i
 
 
 add_pagination(app)

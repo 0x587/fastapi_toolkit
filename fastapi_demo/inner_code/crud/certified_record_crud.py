@@ -1,6 +1,6 @@
-# generate_hash: 5101e6f80b990ecc65e5e646621ec508
+# generate_hash: 7a55990f34b79caa693569c488e063e6
 """
-This file was automatically generated in 2024-09-02 21:56:14.802685
+This file was automatically generated in 2024-09-03 17:14:12.335164
 """
 
 from typing import List, Optional
@@ -18,15 +18,15 @@ NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item No
 
 
 # ------------------------Query Routes------------------------
-async def get_one(ident: int, db=Depends(get_db)) -> SchemaBaseCertifiedRecord:
-    res = await db.get(DBCertifiedRecord, ident)
+async def get_one(certified_record_ident: int, db=Depends(get_db)) -> SchemaBaseCertifiedRecord:
+    res = await db.get(DBCertifiedRecord, certified_record_ident)
     if res and res.deleted_at is None:
         return res
     raise NOT_FOUND
 
 
-async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseCertifiedRecord]:
-    query = select(DBCertifiedRecord).filter(DBCertifiedRecord.deleted_at.is_(None)).filter(DBCertifiedRecord.id.in_(idents))
+async def batch_get(certified_record_idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseCertifiedRecord]:
+    query = select(DBCertifiedRecord).filter(DBCertifiedRecord.deleted_at.is_(None)).filter(DBCertifiedRecord.id.in_(certified_record_idents))
     return await paginate(db, query)
 
 
@@ -94,13 +94,13 @@ async def create_one(
 
 # -----------------------Update Routes------------------------
 async def update_one(
-        ident: int,
+        certified_record_ident: int,
         done: Optional[bool] = None,
         target_real_name: Optional[str] = None,
         self_real_name: Optional[str] = None,
         relation: Optional[str] = None,
         db=Depends(get_db)) -> SchemaBaseCertifiedRecord:
-    res = await db.get(DBCertifiedRecord, ident)
+    res = await db.get(DBCertifiedRecord, certified_record_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
     if done is not None:
@@ -118,14 +118,14 @@ async def update_one(
 
 
 # -----------------------Delete Routes------------------------
-async def delete_one(ident: int, db=Depends(get_db)):
-    res = await db.get(DBCertifiedRecord, ident)
+async def delete_one(certified_record_ident: int, db=Depends(get_db)):
+    res = await db.get(DBCertifiedRecord, certified_record_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
 # TODO
     res.deleted_at = datetime.datetime.now()
     await db.commit()
-    return {'message': 'Deleted', 'id': ident}
+    return {'message': 'Deleted', 'id': certified_record_ident}
 
 
 # ----------------------Relation Routes-----------------------

@@ -1,8 +1,8 @@
-# generate_hash: 4fd13c490bebd8837ac599511a415176
+# generate_hash: 8fbe6f62b13910280fe77cb86bb6aeb5
 """
-This file was automatically generated in 2024-09-02 19:02:24.544228
+This file was automatically generated in 2024-09-03 17:13:37.877880
 """
-from typing import Any, AsyncIterator, Annotated
+from typing import Any, AsyncIterator, Annotated, Generator
 import contextlib
 
 from fastapi import Depends
@@ -83,7 +83,7 @@ async def get_db() -> AsyncSession:
         yield session
 
 
-def get_db_sync() -> Session:
+def get_db_sync() -> Generator[Session, Any, None]:
     session = sessionmaker(sync_engine, class_=Session, expire_on_commit=False)
     with session() as session:
         yield session

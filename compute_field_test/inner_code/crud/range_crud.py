@@ -1,6 +1,6 @@
-# generate_hash: b0278bb6e5fd5562f253c4b934f08fdf
+# generate_hash: 14d95515de83d0918c3c90ab818071a3
 """
-This file was automatically generated in 2024-09-02 21:56:44.625421
+This file was automatically generated in 2024-09-03 17:14:42.829657
 """
 
 from typing import List, Optional
@@ -18,15 +18,15 @@ NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item No
 
 
 # ------------------------Query Routes------------------------
-async def get_one(ident: int, db=Depends(get_db)) -> SchemaBaseRange:
-    res = await db.get(DBRange, ident)
+async def get_one(range_ident: int, db=Depends(get_db)) -> SchemaBaseRange:
+    res = await db.get(DBRange, range_ident)
     if res and res.deleted_at is None:
         return res
     raise NOT_FOUND
 
 
-async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseRange]:
-    query = select(DBRange).filter(DBRange.deleted_at.is_(None)).filter(DBRange.id.in_(idents))
+async def batch_get(range_idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseRange]:
+    query = select(DBRange).filter(DBRange.deleted_at.is_(None)).filter(DBRange.id.in_(range_idents))
     return await paginate(db, query)
 
 
@@ -84,11 +84,11 @@ async def create_one(
 
 # -----------------------Update Routes------------------------
 async def update_one(
-        ident: int,
+        range_ident: int,
         min_value: Optional[int] = None,
         max_value: Optional[int] = None,
         db=Depends(get_db)) -> SchemaBaseRange:
-    res = await db.get(DBRange, ident)
+    res = await db.get(DBRange, range_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
     if min_value is not None:
@@ -102,14 +102,14 @@ async def update_one(
 
 
 # -----------------------Delete Routes------------------------
-async def delete_one(ident: int, db=Depends(get_db)):
-    res = await db.get(DBRange, ident)
+async def delete_one(range_ident: int, db=Depends(get_db)):
+    res = await db.get(DBRange, range_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
 # TODO
     res.deleted_at = datetime.datetime.now()
     await db.commit()
-    return {'message': 'Deleted', 'id': ident}
+    return {'message': 'Deleted', 'id': range_ident}
 
 
 # ----------------------Relation Routes-----------------------

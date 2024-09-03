@@ -1,6 +1,6 @@
-# generate_hash: fbeb53488242e6a3fc1c82f199150c2f
+# generate_hash: 86cd883088769b9faf575cc441244af7
 """
-This file was automatically generated in 2024-09-02 21:56:14.800221
+This file was automatically generated in 2024-09-03 17:14:12.330902
 """
 
 from typing import List, Optional
@@ -18,15 +18,15 @@ NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item No
 
 
 # ------------------------Query Routes------------------------
-async def get_one(ident: int, db=Depends(get_db)) -> SchemaBaseUser:
-    res = await db.get(DBUser, ident)
+async def get_one(user_ident: int, db=Depends(get_db)) -> SchemaBaseUser:
+    res = await db.get(DBUser, user_ident)
     if res and res.deleted_at is None:
         return res
     raise NOT_FOUND
 
 
-async def batch_get(idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseUser]:
-    query = select(DBUser).filter(DBUser.deleted_at.is_(None)).filter(DBUser.id.in_(idents))
+async def batch_get(user_idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseUser]:
+    query = select(DBUser).filter(DBUser.deleted_at.is_(None)).filter(DBUser.id.in_(user_idents))
     return await paginate(db, query)
 
 
@@ -119,7 +119,7 @@ async def create_one(
 
 # -----------------------Update Routes------------------------
 async def update_one(
-        ident: int,
+        user_ident: int,
         sex: Optional[bool] = None,
         title: Optional[str] = None,
         name: Optional[str] = None,
@@ -130,7 +130,7 @@ async def update_one(
         star_level: Optional[int] = None,
         user_key: Optional[str] = None,
         db=Depends(get_db)) -> SchemaBaseUser:
-    res = await db.get(DBUser, ident)
+    res = await db.get(DBUser, user_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
     if sex is not None:
@@ -158,14 +158,14 @@ async def update_one(
 
 
 # -----------------------Delete Routes------------------------
-async def delete_one(ident: int, db=Depends(get_db)):
-    res = await db.get(DBUser, ident)
+async def delete_one(user_ident: int, db=Depends(get_db)):
+    res = await db.get(DBUser, user_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
 # TODO
     res.deleted_at = datetime.datetime.now()
     await db.commit()
-    return {'message': 'Deleted', 'id': ident}
+    return {'message': 'Deleted', 'id': user_ident}
 
 
 # ----------------------Relation Routes-----------------------
