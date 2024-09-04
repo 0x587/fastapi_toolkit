@@ -1,12 +1,12 @@
-# generate_hash: f07d74c8fbc24f35ab2acf49ca2b4603
+# generate_hash: 6d7f71822c79928a3ec3869e5c51da28
 """
-This file was automatically generated in 2024-09-04 15:12:19.344675
+This file was automatically generated in 2024-09-04 16:25:51.563141
 """
 from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, Field
-from fastapi import Depends, Response, HTTPException, status
-from fastapi_pagination import Page, Params
+from fastapi import Depends, Body, Response, HTTPException, status
+from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
 from sqlalchemy import select, Select
@@ -46,27 +46,42 @@ class QueryParams(BaseModel):
         is_desc: bool = False
 
     type: Optional[str] = None
+    type_like = None
     title: Optional[str] = None
+    title_like = None
     sub_title: Optional[str] = None
+    sub_title_like = None
     desc: Optional[str] = None
+    desc_like = None
     tags: Optional[str] = None
+    tags_like = None
     show: Optional[bool] = None
     time_start: Optional[datetime.date] = None
     time_end: Optional[datetime.date] = None
     sort_by: List[SortParams] = Field(default_factory=list)
 
-def get_all_query(params: QueryParams = Depends()) -> Select:
+def get_all_query(params: QueryParams = Body()) -> Select:
     query = select(DBInfoBlock).filter(DBInfoBlock.deleted_at.is_(None))
     if params.type is not None:
         query = query.filter(DBInfoBlock.type.__eq__(params.type))
+    if params.type_like is not None:
+        query = query.filter(DBInfoBlock.type.like(params.type_like))
     if params.title is not None:
         query = query.filter(DBInfoBlock.title.__eq__(params.title))
+    if params.title_like is not None:
+        query = query.filter(DBInfoBlock.title.like(params.title_like))
     if params.sub_title is not None:
         query = query.filter(DBInfoBlock.sub_title.__eq__(params.sub_title))
+    if params.sub_title_like is not None:
+        query = query.filter(DBInfoBlock.sub_title.like(params.sub_title_like))
     if params.desc is not None:
         query = query.filter(DBInfoBlock.desc.__eq__(params.desc))
+    if params.desc_like is not None:
+        query = query.filter(DBInfoBlock.desc.like(params.desc_like))
     if params.tags is not None:
         query = query.filter(DBInfoBlock.tags.__eq__(params.tags))
+    if params.tags_like is not None:
+        query = query.filter(DBInfoBlock.tags.like(params.tags_like))
     if params.show is not None:
         query = query.filter(DBInfoBlock.show.__eq__(params.show))
     if params.time_start is not None:
@@ -82,19 +97,17 @@ def get_all_query(params: QueryParams = Depends()) -> Select:
 
 
 async def get_all(
-        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db),
 ) -> Page[SchemaBaseInfoBlock]:
-    return await paginate(db, query, params=paginate_parmas)
+    return await paginate(db, query)
 
 
 async def get_link_all(
-        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[SchemaInfoBlock]:
-    return await paginate(db, query, params=paginate_parmas)
+    return await paginate(db, query)
 # ---------------------User Query Routes----------------------
 
 

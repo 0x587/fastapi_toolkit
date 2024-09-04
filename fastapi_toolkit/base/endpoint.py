@@ -1,4 +1,4 @@
-from typing import Type, List
+from typing import Type, List, Optional, Callable
 
 from fastapi import FastAPI, APIRouter
 from fastapi_pagination import Page
@@ -22,11 +22,14 @@ class Endpoint:
             if c in self.repo_map:
                 return self.repo_map[c]
 
-    def get_one(self, router: FastAPI | APIRouter, url: str):
+    def get_one(self, router: FastAPI | APIRouter, url: str, func: Optional[Callable[..., Schema]] = None):
         def decorator(view: Type[Schema]):
+            nonlocal func
+            if func is None:
+                func = self._get_repo(view).get_one
             router.add_api_route(
                 path=url,
-                endpoint=self._get_repo(view).get_one,
+                endpoint=func,
                 methods=['POST'],
                 tags=[view.__name__],
                 response_model=view,
@@ -36,8 +39,11 @@ class Endpoint:
 
         return decorator
 
-    def get_many(self, router: FastAPI | APIRouter, url: str):
+    def get_many(self, router: FastAPI | APIRouter, url: str, func: Optional[Callable[..., Page[Schema]]] = None):
         def decorator(view: Type[Schema]):
+            nonlocal func
+            if func is None:
+                func = self._get_repo(view).get_all
             router.add_api_route(
                 path=url,
                 endpoint=self._get_repo(view).get_all,

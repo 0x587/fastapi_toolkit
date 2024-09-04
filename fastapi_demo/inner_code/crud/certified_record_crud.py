@@ -1,12 +1,12 @@
-# generate_hash: 2a9815a5af1946caeeb794169850c40d
+# generate_hash: 6901dada59925f6b234903c3e15f8b96
 """
-This file was automatically generated in 2024-09-04 15:12:19.346595
+This file was automatically generated in 2024-09-04 16:25:51.563902
 """
 from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, Field
-from fastapi import Depends, Response, HTTPException, status
-from fastapi_pagination import Page, Params
+from fastapi import Depends, Body, Response, HTTPException, status
+from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
 from sqlalchemy import select, Select
@@ -43,20 +43,29 @@ class QueryParams(BaseModel):
 
     done: Optional[bool] = None
     target_real_name: Optional[str] = None
+    target_real_name_like = None
     self_real_name: Optional[str] = None
+    self_real_name_like = None
     relation: Optional[str] = None
+    relation_like = None
     sort_by: List[SortParams] = Field(default_factory=list)
 
-def get_all_query(params: QueryParams = Depends()) -> Select:
+def get_all_query(params: QueryParams = Body()) -> Select:
     query = select(DBCertifiedRecord).filter(DBCertifiedRecord.deleted_at.is_(None))
     if params.done is not None:
         query = query.filter(DBCertifiedRecord.done.__eq__(params.done))
     if params.target_real_name is not None:
         query = query.filter(DBCertifiedRecord.target_real_name.__eq__(params.target_real_name))
+    if params.target_real_name_like is not None:
+        query = query.filter(DBCertifiedRecord.target_real_name.like(params.target_real_name_like))
     if params.self_real_name is not None:
         query = query.filter(DBCertifiedRecord.self_real_name.__eq__(params.self_real_name))
+    if params.self_real_name_like is not None:
+        query = query.filter(DBCertifiedRecord.self_real_name.like(params.self_real_name_like))
     if params.relation is not None:
         query = query.filter(DBCertifiedRecord.relation.__eq__(params.relation))
+    if params.relation_like is not None:
+        query = query.filter(DBCertifiedRecord.relation.like(params.relation_like))
     for sort_item in params.sort_by:
         if sort_item.is_desc:
             query = query.order_by(getattr(DBCertifiedRecord, sort_item.field).desc())
@@ -66,19 +75,17 @@ def get_all_query(params: QueryParams = Depends()) -> Select:
 
 
 async def get_all(
-        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db),
 ) -> Page[SchemaBaseCertifiedRecord]:
-    return await paginate(db, query, params=paginate_parmas)
+    return await paginate(db, query)
 
 
 async def get_link_all(
-        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[SchemaCertifiedRecord]:
-    return await paginate(db, query, params=paginate_parmas)
+    return await paginate(db, query)
 # ---------------------User Query Routes----------------------
 
 

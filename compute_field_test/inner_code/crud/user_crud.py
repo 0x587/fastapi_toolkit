@@ -1,12 +1,12 @@
-# generate_hash: 9f8f926b906c5601053b01c1e0182382
+# generate_hash: 1e97b0d677716b857a4ca9e7f5ae706f
 """
-This file was automatically generated in 2024-09-04 15:42:46.067574
+This file was automatically generated in 2024-09-04 16:31:29.859088
 """
 from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, Field
-from fastapi import Depends, Response, HTTPException, status
-from fastapi_pagination import Page, Params
+from fastapi import Depends, Body, Response, HTTPException, status
+from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
 from sqlalchemy import select, Select
@@ -39,12 +39,15 @@ class QueryParams(BaseModel):
         is_desc: bool = False
 
     user_key: Optional[str] = None
+    user_key_like: Optional[str] = None
     sort_by: List[SortParams] = Field(default_factory=list)
 
-def get_all_query(params: QueryParams = Depends()) -> Select:
+def get_all_query(params: QueryParams = Body()) -> Select:
     query = select(DBUser).filter(DBUser.deleted_at.is_(None))
     if params.user_key is not None:
         query = query.filter(DBUser.user_key.__eq__(params.user_key))
+    if params.user_key_like is not None:
+        query = query.filter(DBUser.user_key.like(params.user_key_like))
     for sort_item in params.sort_by:
         if sort_item.is_desc:
             query = query.order_by(getattr(DBUser, sort_item.field).desc())
@@ -54,19 +57,17 @@ def get_all_query(params: QueryParams = Depends()) -> Select:
 
 
 async def get_all(
-        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db),
 ) -> Page[SchemaBaseUser]:
-    return await paginate(db, query, params=paginate_parmas)
+    return await paginate(db, query)
 
 
 async def get_link_all(
-        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[SchemaUser]:
-    return await paginate(db, query, params=paginate_parmas)
+    return await paginate(db, query)
 # ---------------------User Query Routes----------------------
 
 

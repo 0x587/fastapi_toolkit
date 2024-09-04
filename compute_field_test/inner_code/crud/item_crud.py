@@ -1,12 +1,12 @@
-# generate_hash: 8c38803b53f36f77d42c937340b88fa3
+# generate_hash: 820c3c1ea370628b615dd2606fee2e56
 """
-This file was automatically generated in 2024-09-04 15:14:00.245530
+This file was automatically generated in 2024-09-04 16:09:39.492180
 """
 from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, Field
-from fastapi import Depends, Response, HTTPException, status
-from fastapi_pagination import Page, Params
+from fastapi import Depends, Body, Response, HTTPException, status
+from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
 from sqlalchemy import select, Select
@@ -41,7 +41,7 @@ class QueryParams(BaseModel):
     value: Optional[int] = None
     sort_by: List[SortParams] = Field(default_factory=list)
 
-def get_all_query(params: QueryParams = Depends()) -> Select:
+def get_all_query(params: QueryParams = Body()) -> Select:
     query = select(DBItem).filter(DBItem.deleted_at.is_(None))
     if params.value is not None:
         query = query.filter(DBItem.value.__eq__(params.value))
@@ -54,19 +54,17 @@ def get_all_query(params: QueryParams = Depends()) -> Select:
 
 
 async def get_all(
-        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db),
 ) -> Page[SchemaBaseItem]:
-    return await paginate(db, query, params=paginate_parmas)
+    return await paginate(db, query)
 
 
 async def get_link_all(
-        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[SchemaItem]:
-    return await paginate(db, query, params=paginate_parmas)
+    return await paginate(db, query)
 # ---------------------User Query Routes----------------------
 
 

@@ -6,8 +6,8 @@
 {#{% set pk_type = (metadata.model.pk.values()|list)[0].python_type_str %}#}from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, Field
-from fastapi import Depends, Response, HTTPException, status
-from fastapi_pagination import Page, Params
+from fastapi import Depends, Body, Response, HTTPException, status
+from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
 from sqlalchemy import select, Select
@@ -43,14 +43,21 @@ class QueryParams(BaseModel):
 
     {% for field in model.fields %}
     {{field.name.snake}}: Optional[{{field.type.python_type}}] = None
+    {% if field.type.python_type == 'str' %}
+    {{field.name.snake}}_like: Optional[{{field.type.python_type}}] = None
+    {% endif %}
     {% endfor %}
     sort_by: List[SortParams] = Field(default_factory=list)
 
-def get_all_query(params: QueryParams = Depends()) -> Select:
+def get_all_query(params: QueryParams = Body()) -> Select:
     query = select({{ name }}).filter({{ name }}.deleted_at.is_(None))
     {% for field in model.fields %}
     if params.{{field.name.snake}} is not None:
         query = query.filter({{ name }}.{{field.name.snake}}.__eq__(params.{{field.name.snake}}))
+    {% if field.type.python_type == 'str' %}
+    if params.{{field.name.snake}}_like is not None:
+        query = query.filter({{ name }}.{{field.name.snake}}.like(params.{{field.name.snake}}_like))
+    {% endif %}
     {% endfor %}
     for sort_item in params.sort_by:
         if sort_item.is_desc:
@@ -61,19 +68,17 @@ def get_all_query(params: QueryParams = Depends()) -> Select:
 
 
 async def get_all(
-        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db),
 ) -> Page[{{ base_schema }}]:
-    return await paginate(db, query, params=paginate_parmas)
+    return await paginate(db, query)
 
 
 async def get_link_all(
-        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[{{ model.name.schema }}]:
-    return await paginate(db, query, params=paginate_parmas)
+    return await paginate(db, query)
 # ---------------------User Query Routes----------------------
 
 

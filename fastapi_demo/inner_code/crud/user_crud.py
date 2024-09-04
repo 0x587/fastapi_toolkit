@@ -1,12 +1,12 @@
-# generate_hash: a0b8e602683ad434a2db36f9f5065bb8
+# generate_hash: cf514ea8f009d3d8622bfc88ccecd5d8
 """
-This file was automatically generated in 2024-09-04 15:12:19.339850
+This file was automatically generated in 2024-09-04 16:25:51.559213
 """
 from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, Field
-from fastapi import Depends, Response, HTTPException, status
-from fastapi_pagination import Page, Params
+from fastapi import Depends, Body, Response, HTTPException, status
+from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
 from sqlalchemy import select, Select
@@ -48,35 +48,53 @@ class QueryParams(BaseModel):
 
     sex: Optional[bool] = None
     title: Optional[str] = None
+    title_like = None
     name: Optional[str] = None
+    name_like = None
     desc: Optional[str] = None
+    desc_like = None
     avatar: Optional[str] = None
+    avatar_like = None
     bg_img: Optional[str] = None
+    bg_img_like = None
     hot_level: Optional[int] = None
     star_level: Optional[int] = None
     user_key: Optional[str] = None
+    user_key_like = None
     sort_by: List[SortParams] = Field(default_factory=list)
 
-def get_all_query(params: QueryParams = Depends()) -> Select:
+def get_all_query(params: QueryParams = Body()) -> Select:
     query = select(DBUser).filter(DBUser.deleted_at.is_(None))
     if params.sex is not None:
         query = query.filter(DBUser.sex.__eq__(params.sex))
     if params.title is not None:
         query = query.filter(DBUser.title.__eq__(params.title))
+    if params.title_like is not None:
+        query = query.filter(DBUser.title.like(params.title_like))
     if params.name is not None:
         query = query.filter(DBUser.name.__eq__(params.name))
+    if params.name_like is not None:
+        query = query.filter(DBUser.name.like(params.name_like))
     if params.desc is not None:
         query = query.filter(DBUser.desc.__eq__(params.desc))
+    if params.desc_like is not None:
+        query = query.filter(DBUser.desc.like(params.desc_like))
     if params.avatar is not None:
         query = query.filter(DBUser.avatar.__eq__(params.avatar))
+    if params.avatar_like is not None:
+        query = query.filter(DBUser.avatar.like(params.avatar_like))
     if params.bg_img is not None:
         query = query.filter(DBUser.bg_img.__eq__(params.bg_img))
+    if params.bg_img_like is not None:
+        query = query.filter(DBUser.bg_img.like(params.bg_img_like))
     if params.hot_level is not None:
         query = query.filter(DBUser.hot_level.__eq__(params.hot_level))
     if params.star_level is not None:
         query = query.filter(DBUser.star_level.__eq__(params.star_level))
     if params.user_key is not None:
         query = query.filter(DBUser.user_key.__eq__(params.user_key))
+    if params.user_key_like is not None:
+        query = query.filter(DBUser.user_key.like(params.user_key_like))
     for sort_item in params.sort_by:
         if sort_item.is_desc:
             query = query.order_by(getattr(DBUser, sort_item.field).desc())
@@ -86,19 +104,17 @@ def get_all_query(params: QueryParams = Depends()) -> Select:
 
 
 async def get_all(
-        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db),
 ) -> Page[SchemaBaseUser]:
-    return await paginate(db, query, params=paginate_parmas)
+    return await paginate(db, query)
 
 
 async def get_link_all(
-        paginate_parmas: Params,
         query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[SchemaUser]:
-    return await paginate(db, query, params=paginate_parmas)
+    return await paginate(db, query)
 # ---------------------User Query Routes----------------------
 
 
