@@ -1,6 +1,6 @@
-# generate_hash: f62c1dcdec615c5dcd865be0fbfb8260
+# generate_hash: 486345461547b20795633bd8886437bc
 """
-This file was automatically generated in 2024-09-01 22:59:20.059940
+This file was automatically generated in 2024-09-04 15:56:04.567719
 """
 import datetime
 from typing import List, Optional
@@ -47,3 +47,8 @@ class DBRange(Base):
     max_value: Mapped[int] = mapped_column(sqltypes.Integer, nullable=False)
 
 
+__all__ = [
+    'DBUser',
+    'DBItem',
+    'DBRange',
+]

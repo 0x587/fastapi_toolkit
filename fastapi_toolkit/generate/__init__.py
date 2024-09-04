@@ -313,17 +313,17 @@ class CodeGenerator:
                 query_code += f'\n    query = query.options({op}({o.name.db}.{l.link_name}))'
             link.link_op_codes.append(
                 f"""
-def {name}_query({arg}: {arg_type}) -> Select:
-    query = get_all_query()
+def {name}_query(self, {arg}: {arg_type}) -> Select:
+    query = self.get_all_query()
     {query_code}
     return query
                 """
             )
             link.link_op_codes.append(
                 f"""
-async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_query)) -> List[{link.origin.name.schema}]:
+async def {name}(self, {arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_query)) -> List[{link.origin.name.schema}]:
     if type(query) is not Select:
-        query = get_all_query()
+        query = self.get_all_query()
     {query_code}
     return (await db.scalars(query)).all()
                 """
@@ -516,11 +516,13 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
                                 self._from_template('crud/main.py.jinja2', model=model))
             self._generate_file(os.path.join(self.routers_path, f'{model.name.snake}_router.py'),
                                 self._from_template('routers/main.py.j2', model=model))
+        self._generate_file(os.path.join(self.crud_path, '__init__.py'),
+                            self._from_template('crud/__init__.py.jinja2',
+                                                models=self.model_render_data.values()))
         self._generate_file(os.path.join(self.routers_path, '__init__.py'), self._from_template(
             'routers/init.py.j2',
             models=self.model_render_data.values(),
         ))
-        self._generate_file(os.path.join(self.crud_path, '__init__.py'), lambda: '')
 
     def _generate_mock(self):
         self._generate_file(

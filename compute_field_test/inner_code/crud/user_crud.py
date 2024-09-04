@@ -1,9 +1,10 @@
-# generate_hash: c5afa47fd7a58d5c8a057690af226db0
+# generate_hash: 9f8f926b906c5601053b01c1e0182382
 """
-This file was automatically generated in 2024-09-03 17:14:42.825249
+This file was automatically generated in 2024-09-04 15:42:46.067574
 """
-
+from enum import Enum
 from typing import List, Optional
+from pydantic import BaseModel, Field
 from fastapi import Depends, Response, HTTPException, status
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
@@ -29,19 +30,26 @@ async def batch_get(user_idents: List[int], db=Depends(get_db)) -> Page[SchemaBa
     query = select(DBUser).filter(DBUser.deleted_at.is_(None)).filter(DBUser.id.in_(user_idents))
     return await paginate(db, query)
 
+class QueryParams(BaseModel):
+    class SortParams(BaseModel):
+        class StorFieldEnum(str, Enum):
+            user_key = "user_key"
 
-def get_all_query(
-        filter_user_key: Optional[str] = None,
-        sort_by: Optional[str] = None, is_desc: bool = False,
-) -> Select:
+        field: StorFieldEnum
+        is_desc: bool = False
+
+    user_key: Optional[str] = None
+    sort_by: List[SortParams] = Field(default_factory=list)
+
+def get_all_query(params: QueryParams = Depends()) -> Select:
     query = select(DBUser).filter(DBUser.deleted_at.is_(None))
-    if filter_user_key is not None:
-        query = query.filter(DBUser.user_key.__eq__(filter_user_key))
-    if sort_by is not None:
-        if is_desc:
-            query = query.order_by(getattr(DBUser, sort_by).desc())
+    if params.user_key is not None:
+        query = query.filter(DBUser.user_key.__eq__(params.user_key))
+    for sort_item in params.sort_by:
+        if sort_item.is_desc:
+            query = query.order_by(getattr(DBUser, sort_item.field).desc())
         else:
-            query = query.order_by(getattr(DBUser, sort_by))
+            query = query.order_by(getattr(DBUser, sort_item.field))
     return query
 
 

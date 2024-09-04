@@ -668,7 +668,7 @@ tortoise = ["tortoise-orm (>=0.16.18,!=0.21.0,<0.22.0)"]
 
 [[package]]
 name = "fastapi-toolkit-shawn587"
-version = "0.2.2.8"
+version = "0.2.2.2"
 description = "This toolkit can generate database CRUD operations based on defined metadata in one click, basic fastapi routing and mock data scripts."
 optional = false
 python-versions = "^3.10"

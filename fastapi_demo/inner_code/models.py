@@ -1,6 +1,6 @@
-# generate_hash: 9ade647e396806f4981bf3e4c0873d44
+# generate_hash: 96873d7a129c8312a0e8dba34811d157
 """
-This file was automatically generated in 2024-09-01 21:06:47.284610
+This file was automatically generated in 2024-09-04 15:55:42.709138
 """
 import datetime
 from typing import List, Optional
@@ -111,3 +111,8 @@ class DBCertifiedRecord(Base):
     )
 
 
+__all__ = [
+    'DBUser',
+    'DBInfoBlock',
+    'DBCertifiedRecord',
+]

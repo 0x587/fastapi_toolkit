@@ -3,9 +3,9 @@
 {% set base_schema = model.name.base_schema %}
 {#{% set router = s_name + "_router" %}#}
 {#{% set just_one_pk = metadata.model.pk|length == 1 %}#}
-{#{% set pk_type = (metadata.model.pk.values()|list)[0].python_type_str %}#}
-
+{#{% set pk_type = (metadata.model.pk.values()|list)[0].python_type_str %}#}from enum import Enum
 from typing import List, Optional
+from pydantic import BaseModel, Field
 from fastapi import Depends, Response, HTTPException, status
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
@@ -31,23 +31,32 @@ async def batch_get({{ s_name }}_idents: List[int], db=Depends(get_db)) -> Page[
     query = select({{ name }}).filter({{ name }}.deleted_at.is_(None)).filter({{ name }}.id.in_({{ s_name }}_idents))
     return await paginate(db, query)
 
+class QueryParams(BaseModel):
+    class SortParams(BaseModel):
+        class StorFieldEnum(str, Enum):
+            {% for field in model.fields %}
+            {{field.name.snake}} = "{{field.name.snake}}"
+            {% endfor %}
 
-def get_all_query(
-        {% for field in model.fields %}
-        filter_{{field.name.snake}}: Optional[{{field.type.python_type}}] = None,
-        {% endfor %}
-        sort_by: Optional[str] = None, is_desc: bool = False,
-) -> Select:
+        field: StorFieldEnum
+        is_desc: bool = False
+
+    {% for field in model.fields %}
+    {{field.name.snake}}: Optional[{{field.type.python_type}}] = None
+    {% endfor %}
+    sort_by: List[SortParams] = Field(default_factory=list)
+
+def get_all_query(params: QueryParams = Depends()) -> Select:
     query = select({{ name }}).filter({{ name }}.deleted_at.is_(None))
     {% for field in model.fields %}
-    if filter_{{field.name.snake}} is not None:
-        query = query.filter({{ name }}.{{field.name.snake}}.__eq__(filter_{{field.name.snake}}))
+    if params.{{field.name.snake}} is not None:
+        query = query.filter({{ name }}.{{field.name.snake}}.__eq__(params.{{field.name.snake}}))
     {% endfor %}
-    if sort_by is not None:
-        if is_desc:
-            query = query.order_by(getattr({{ name }}, sort_by).desc())
+    for sort_item in params.sort_by:
+        if sort_item.is_desc:
+            query = query.order_by(getattr({{ name }}, sort_item.field).desc())
         else:
-            query = query.order_by(getattr({{ name }}, sort_by))
+            query = query.order_by(getattr({{ name }}, sort_item.field))
     return query
 
 

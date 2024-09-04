@@ -4,8 +4,7 @@ import datetime
 from typing import List, Optional
 
 from fastapi_toolkit.define import Schema
-from pydantic import Field, ConfigDict
-from sqlalchemy.orm import Session
+from pydantic import Field
 
 {% if deps %}
 from .custom_types import  (
@@ -37,14 +36,16 @@ class {{ model.name.schema }}({{ model.name.base_schema }}):
     {{ l.schema_link_name }}: "{{ l.schema_target_type }}" = {{ l.default_value }}
     {% endfor %}
 
-
-class {{ model.name.origin }}Session({{ model.name.schema }}):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    db: Session = Field(exclude=True)
-
 {% endfor %}
 
 {% for model in models %}
 {{ model.name.base_schema }}.model_rebuild()
 {{ model.name.schema }}.model_rebuild()
 {% endfor %}
+
+__all__ = [
+    {% for model in models %}
+    '{{ model.name.base_schema }}',
+    '{{ model.name.schema }}',
+    {% endfor %}
+]

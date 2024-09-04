@@ -67,3 +67,8 @@ class {{ model.name.db }}(Base):
     {% endfor %}
 
 {% endfor %}
+__all__ = [
+    {% for model in models %}
+    '{{ model.name.db }}',
+    {% endfor %}
+]

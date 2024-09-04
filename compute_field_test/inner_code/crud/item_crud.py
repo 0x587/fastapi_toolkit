@@ -1,9 +1,10 @@
-# generate_hash: e2492a232838a8f1aaae7fca4185f1d5
+# generate_hash: 8c38803b53f36f77d42c937340b88fa3
 """
-This file was automatically generated in 2024-09-03 17:14:42.828781
+This file was automatically generated in 2024-09-04 15:14:00.245530
 """
-
+from enum import Enum
 from typing import List, Optional
+from pydantic import BaseModel, Field
 from fastapi import Depends, Response, HTTPException, status
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
@@ -29,19 +30,26 @@ async def batch_get(item_idents: List[int], db=Depends(get_db)) -> Page[SchemaBa
     query = select(DBItem).filter(DBItem.deleted_at.is_(None)).filter(DBItem.id.in_(item_idents))
     return await paginate(db, query)
 
+class QueryParams(BaseModel):
+    class SortParams(BaseModel):
+        class StorFieldEnum(str, Enum):
+            value = "value"
 
-def get_all_query(
-        filter_value: Optional[int] = None,
-        sort_by: Optional[str] = None, is_desc: bool = False,
-) -> Select:
+        field: StorFieldEnum
+        is_desc: bool = False
+
+    value: Optional[int] = None
+    sort_by: List[SortParams] = Field(default_factory=list)
+
+def get_all_query(params: QueryParams = Depends()) -> Select:
     query = select(DBItem).filter(DBItem.deleted_at.is_(None))
-    if filter_value is not None:
-        query = query.filter(DBItem.value.__eq__(filter_value))
-    if sort_by is not None:
-        if is_desc:
-            query = query.order_by(getattr(DBItem, sort_by).desc())
+    if params.value is not None:
+        query = query.filter(DBItem.value.__eq__(params.value))
+    for sort_item in params.sort_by:
+        if sort_item.is_desc:
+            query = query.order_by(getattr(DBItem, sort_item.field).desc())
         else:
-            query = query.order_by(getattr(DBItem, sort_by))
+            query = query.order_by(getattr(DBItem, sort_item.field))
     return query
 
 

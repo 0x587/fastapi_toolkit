@@ -1,9 +1,10 @@
-# generate_hash: 14d95515de83d0918c3c90ab818071a3
+# generate_hash: 393a18ab07c0d505285bd6dcdf9514f4
 """
-This file was automatically generated in 2024-09-03 17:14:42.829657
+This file was automatically generated in 2024-09-04 15:14:00.246387
 """
-
+from enum import Enum
 from typing import List, Optional
+from pydantic import BaseModel, Field
 from fastapi import Depends, Response, HTTPException, status
 from fastapi_pagination import Page, Params
 from fastapi_pagination.ext.sqlalchemy import paginate
@@ -29,22 +30,30 @@ async def batch_get(range_idents: List[int], db=Depends(get_db)) -> Page[SchemaB
     query = select(DBRange).filter(DBRange.deleted_at.is_(None)).filter(DBRange.id.in_(range_idents))
     return await paginate(db, query)
 
+class QueryParams(BaseModel):
+    class SortParams(BaseModel):
+        class StorFieldEnum(str, Enum):
+            min_value = "min_value"
+            max_value = "max_value"
 
-def get_all_query(
-        filter_min_value: Optional[int] = None,
-        filter_max_value: Optional[int] = None,
-        sort_by: Optional[str] = None, is_desc: bool = False,
-) -> Select:
+        field: StorFieldEnum
+        is_desc: bool = False
+
+    min_value: Optional[int] = None
+    max_value: Optional[int] = None
+    sort_by: List[SortParams] = Field(default_factory=list)
+
+def get_all_query(params: QueryParams = Depends()) -> Select:
     query = select(DBRange).filter(DBRange.deleted_at.is_(None))
-    if filter_min_value is not None:
-        query = query.filter(DBRange.min_value.__eq__(filter_min_value))
-    if filter_max_value is not None:
-        query = query.filter(DBRange.max_value.__eq__(filter_max_value))
-    if sort_by is not None:
-        if is_desc:
-            query = query.order_by(getattr(DBRange, sort_by).desc())
+    if params.min_value is not None:
+        query = query.filter(DBRange.min_value.__eq__(params.min_value))
+    if params.max_value is not None:
+        query = query.filter(DBRange.max_value.__eq__(params.max_value))
+    for sort_item in params.sort_by:
+        if sort_item.is_desc:
+            query = query.order_by(getattr(DBRange, sort_item.field).desc())
         else:
-            query = query.order_by(getattr(DBRange, sort_by))
+            query = query.order_by(getattr(DBRange, sort_item.field))
     return query
 
 

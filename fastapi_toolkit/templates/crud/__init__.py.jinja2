@@ -1,0 +1,10 @@
+{% for model in models %}
+import inner_code.crud.{{ model.name.snake }}_crud as {{ model.name.snake }}_crud
+{% endfor %}
+from ..schemas import {{ models | map(attribute="name.base_schema") | join(', ')}}
+
+repo_map = {
+    {% for model in models %}
+    {{ model.name.base_schema }}: {{ model.name.snake }}_crud,
+    {% endfor %}
+}
