@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi_toolkit.define import Schema
 
 
@@ -11,4 +13,4 @@ class Item(Schema):
 
 class Range(Schema):
     min_value: int
-    max_value: int
+    max_value: Optional[int]

@@ -229,6 +229,7 @@ class CodeGenerator:
                     link.alias = field.alias.origin
                 links[model.name.origin].append(link)
             model.fields = list(filter(lambda x: x.type.link is None, model.fields))
+            model.fields.sort(key=lambda x: x.type.nullable)
 
         link_groups: List[Tuple[Link, Link]] = []
         visited_link = set()
@@ -315,7 +316,7 @@ class CodeGenerator:
             link.link_op_codes.append(
                 f"""
 def {name}_query({arg}: {arg_type}) -> Select:
-    query = get_all_query()
+    query = get_all_query(QueryParams())
     {query_code}
     return query
                 """
@@ -324,7 +325,7 @@ def {name}_query({arg}: {arg_type}) -> Select:
                 f"""
 {'async ' if self.async_repo else ''}def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_query)) -> List[{link.origin.name.schema}]:
     if type(query) is not Select:
-        query = get_all_query()
+        query = get_all_query(QueryParams())
     {query_code}
     return {'(await db.scalars(query)).all() ' if self.async_repo else 'db.scalars(query).all()'}
                 """

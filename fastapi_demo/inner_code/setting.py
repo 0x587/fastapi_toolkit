@@ -1,8 +1,9 @@
-# generate_hash: 0e5d98df5de73f209975c89c51ee7dd9
+# generate_hash: 5afa6d2cc6a1959e851a96e5bb7fa21c
 """
-This file was automatically generated in 2024-09-05 20:52:50.432886
+This file was automatically generated in 2024-09-05 23:02:16.835496
 """
 from functools import lru_cache
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
