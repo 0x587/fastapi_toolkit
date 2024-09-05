@@ -9,16 +9,15 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from .setting import get_settings
 
 setting = get_settings()
-user = setting.user
+username = setting.username
 password = setting.password
-db_name = setting.database
 host = setting.host
-port = setting.port
+db_name = setting.database
 
-database_url = f"mysql+aiomysql://{user}:{password}@{host}:{port}/{db_name}"
+database_url = f"mysql+aiomysql://{username}:{password}@{host}/{db_name}"
 
 async_engine = create_async_engine(database_url)
-sync_engine = create_engine(f"mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}")
+sync_engine = create_engine(f"mysql+pymysql://{username}:{password}@{host}/{db_name}")
 
 
 class DatabaseSessionManager:

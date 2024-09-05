@@ -31,22 +31,21 @@ def init():
     command.init(alembic_cfg, "./.alembic")
 
     setting = get_settings()
-    user = setting.user
+    username = setting.username
     password = setting.password
     host = setting.host
     db_name = setting.database
 
     config = configparser.ConfigParser()
     config.read(alembic_ini_path)
-    config["alembic"]["sqlalchemy.url"] = f"mysql+pymysql://{user}:{password}@{host}/{db_name}"
+    config["alembic"]["sqlalchemy.url"] = f"mysql+pymysql://{username}:{password}@{host}/{db_name}"
     with open(alembic_ini_path, "w") as f:
         config.write(f)
 
     with open(".alembic/env.py", "r") as f:
         env_content = f.read()
         env_content = ("from sqlalchemy.orm import DeclarativeBase\n"
-                       f"from {{ root_path }}.models import *\n"
-                       f"from {{ root_path }}.auth.models import *\n") + env_content
+                       f"from {{ root_path }}.models import *\n") + env_content
         env_content = env_content.replace("target_metadata = None",
                                           "target_metadata = Base.metadata")
     with open(".alembic/env.py", "w") as f:
