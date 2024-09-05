@@ -134,6 +134,7 @@ class CodeGenerator:
 
         self.force_rewrite = False
         self.show_network = False
+        self.async_repo = False
 
         if not os.path.exists(self.root_path):
             os.mkdir(self.root_path)
@@ -321,11 +322,11 @@ def {name}_query({arg}: {arg_type}) -> Select:
             )
             link.link_op_codes.append(
                 f"""
-async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_query)) -> List[{link.origin.name.schema}]:
+{'async ' if self.async_repo else ''}def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_query)) -> List[{link.origin.name.schema}]:
     if type(query) is not Select:
         query = get_all_query()
     {query_code}
-    return (await db.scalars(query)).all()
+    return {'(await db.scalars(query)).all() ' if self.async_repo else 'db.scalars(query).all()'}
                 """
             )
 
@@ -511,17 +512,19 @@ async def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_qu
         self._generate_file(os.path.join(self.dev_path, '__init__.py'), lambda: '')
 
     def _generate_routers(self):
-        for model in self.model_render_data.values():
+        template_path = 'async/' if self.async_repo else 'sync/'
+        models = self.model_render_data.values()
+        for model in models:
             self._generate_file(os.path.join(self.crud_path, f'{model.name.snake}_repo.py'),
-                                self._from_template('repo/main.py.jinja2', model=model))
+                                self._from_template(f'repo/{template_path}main.py.jinja2', model=model))
             self._generate_file(os.path.join(self.routers_path, f'{model.name.snake}_router.py'),
                                 self._from_template('routers/main.py.j2', model=model))
         self._generate_file(os.path.join(self.crud_path, '__init__.py'),
-                            self._from_template('repo/__init__.py.jinja2',
-                                                models=self.model_render_data.values()))
+                            self._from_template(f'repo/{template_path}__init__.py.jinja2',
+                                                models=models))
         self._generate_file(os.path.join(self.routers_path, '__init__.py'), self._from_template(
             'routers/init.py.j2',
-            models=self.model_render_data.values(),
+            models=models,
         ))
 
     def _generate_mock(self):
