@@ -6,7 +6,7 @@ from fastapi import APIRouter
 
 from ..schemas import *
 {% for crud in cruds %}
-from ..crud import {{ crud }} as {{ crud }}
+from ..repo import {{ crud }} as {{ crud }}
 {% endfor %}
 
 

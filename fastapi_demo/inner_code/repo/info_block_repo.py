@@ -1,6 +1,6 @@
-# generate_hash: 6d7f71822c79928a3ec3869e5c51da28
+# generate_hash: b1002f2e59f2d7bb95046f371ec1745b
 """
-This file was automatically generated in 2024-09-04 16:25:51.563141
+This file was automatically generated in 2024-09-05 10:59:21.794310
 """
 from enum import Enum
 from typing import List, Optional
@@ -46,15 +46,15 @@ class QueryParams(BaseModel):
         is_desc: bool = False
 
     type: Optional[str] = None
-    type_like = None
+    type_like: Optional[str] = None
     title: Optional[str] = None
-    title_like = None
+    title_like: Optional[str] = None
     sub_title: Optional[str] = None
-    sub_title_like = None
+    sub_title_like: Optional[str] = None
     desc: Optional[str] = None
-    desc_like = None
+    desc_like: Optional[str] = None
     tags: Optional[str] = None
-    tags_like = None
+    tags_like: Optional[str] = None
     show: Optional[bool] = None
     time_start: Optional[datetime.date] = None
     time_end: Optional[datetime.date] = None
@@ -191,136 +191,136 @@ async def delete_one(info_block_ident: int, db=Depends(get_db)):
 # ----------------------Relation Routes-----------------------
 
 
-def get_user_id_is_query(self, user_id: int) -> Select:
-    query = self.get_all_query()
+def get_user_id_is_query(user_id: int) -> Select:
+    query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.__eq__(user_id))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return query
                 
 
-async def get_user_id_is(self, user_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
+async def get_user_id_is(user_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
     if type(query) is not Select:
-        query = self.get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.__eq__(user_id))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return (await db.scalars(query)).all()
                 
 
-def get_user_is_query(self, user: SchemaBaseUser) -> Select:
-    query = self.get_all_query()
+def get_user_is_query(user: SchemaBaseUser) -> Select:
+    query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.__eq__(user.id))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return query
                 
 
-async def get_user_is(self, user: SchemaBaseUser, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
+async def get_user_is(user: SchemaBaseUser, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
     if type(query) is not Select:
-        query = self.get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.__eq__(user.id))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return (await db.scalars(query)).all()
                 
 
-def get_user_id_has_query(self, user_ids: List[int]) -> Select:
-    query = self.get_all_query()
+def get_user_id_has_query(user_ids: List[int]) -> Select:
+    query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.in_(user_ids))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return query
                 
 
-async def get_user_id_has(self, user_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
+async def get_user_id_has(user_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
     if type(query) is not Select:
-        query = self.get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.in_(user_ids))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return (await db.scalars(query)).all()
                 
 
-def get_user_has_query(self, users: List[SchemaBaseUser]) -> Select:
-    query = self.get_all_query()
+def get_user_has_query(users: List[SchemaBaseUser]) -> Select:
+    query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.in_(map(lambda x: x.id, users)))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return query
                 
 
-async def get_user_has(self, users: List[SchemaBaseUser], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
+async def get_user_has(users: List[SchemaBaseUser], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
     if type(query) is not Select:
-        query = self.get_all_query()
+        query = get_all_query()
     query = query.join(DBUser).filter(DBUser.id.in_(map(lambda x: x.id, users)))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return (await db.scalars(query)).all()
                 
 
-def get_certified_records_id_is_query(self, certified_record_id: int) -> Select:
-    query = self.get_all_query()
+def get_certified_records_id_is_query(certified_record_id: int) -> Select:
+    query = get_all_query()
     query = query.join(DBCertifiedRecord).filter(DBCertifiedRecord.id.__eq__(certified_record_id))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return query
                 
 
-async def get_certified_records_id_is(self, certified_record_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
+async def get_certified_records_id_is(certified_record_id: int, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
     if type(query) is not Select:
-        query = self.get_all_query()
+        query = get_all_query()
     query = query.join(DBCertifiedRecord).filter(DBCertifiedRecord.id.__eq__(certified_record_id))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return (await db.scalars(query)).all()
                 
 
-def get_certified_records_is_query(self, certified_record: SchemaBaseCertifiedRecord) -> Select:
-    query = self.get_all_query()
+def get_certified_records_is_query(certified_record: SchemaBaseCertifiedRecord) -> Select:
+    query = get_all_query()
     query = query.join(DBCertifiedRecord).filter(DBCertifiedRecord.id.__eq__(certified_record.id))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return query
                 
 
-async def get_certified_records_is(self, certified_record: SchemaBaseCertifiedRecord, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
+async def get_certified_records_is(certified_record: SchemaBaseCertifiedRecord, db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
     if type(query) is not Select:
-        query = self.get_all_query()
+        query = get_all_query()
     query = query.join(DBCertifiedRecord).filter(DBCertifiedRecord.id.__eq__(certified_record.id))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return (await db.scalars(query)).all()
                 
 
-def get_certified_records_id_has_query(self, certified_record_ids: List[int]) -> Select:
-    query = self.get_all_query()
+def get_certified_records_id_has_query(certified_record_ids: List[int]) -> Select:
+    query = get_all_query()
     query = query.join(DBCertifiedRecord).filter(DBCertifiedRecord.id.in_(certified_record_ids))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return query
                 
 
-async def get_certified_records_id_has(self, certified_record_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
+async def get_certified_records_id_has(certified_record_ids: List[int], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
     if type(query) is not Select:
-        query = self.get_all_query()
+        query = get_all_query()
     query = query.join(DBCertifiedRecord).filter(DBCertifiedRecord.id.in_(certified_record_ids))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return (await db.scalars(query)).all()
                 
 
-def get_certified_records_has_query(self, certified_records: List[SchemaBaseCertifiedRecord]) -> Select:
-    query = self.get_all_query()
+def get_certified_records_has_query(certified_records: List[SchemaBaseCertifiedRecord]) -> Select:
+    query = get_all_query()
     query = query.join(DBCertifiedRecord).filter(DBCertifiedRecord.id.in_(map(lambda x: x.id, certified_records)))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))
     return query
                 
 
-async def get_certified_records_has(self, certified_records: List[SchemaBaseCertifiedRecord], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
+async def get_certified_records_has(certified_records: List[SchemaBaseCertifiedRecord], db=Depends(get_db), query=Depends(get_all_query)) -> List[SchemaInfoBlock]:
     if type(query) is not Select:
-        query = self.get_all_query()
+        query = get_all_query()
     query = query.join(DBCertifiedRecord).filter(DBCertifiedRecord.id.in_(map(lambda x: x.id, certified_records)))
     query = query.options(joinedload(DBInfoBlock.user))
     query = query.options(selectinload(DBInfoBlock.certified_records))

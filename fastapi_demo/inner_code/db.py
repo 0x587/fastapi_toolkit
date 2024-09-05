@@ -1,6 +1,6 @@
-# generate_hash: 8fbe6f62b13910280fe77cb86bb6aeb5
+# generate_hash: a28c991c3035768a3c14ac74b64d7cb1
 """
-This file was automatically generated in 2024-09-03 17:13:37.877880
+This file was automatically generated in 2024-09-05 10:54:53.683174
 """
 from typing import Any, AsyncIterator, Annotated, Generator
 import contextlib
@@ -17,11 +17,12 @@ user = setting.user
 password = setting.password
 db_name = setting.database
 host = setting.host
+port = setting.port
 
-database_url = f"mysql+aiomysql://{user}:{password}@{host}/{db_name}"
+database_url = f"mysql+aiomysql://{user}:{password}@{host}:{port}/{db_name}"
 
 async_engine = create_async_engine(database_url)
-sync_engine = create_engine(f"mysql+pymysql://{user}:{password}@{host}/{db_name}")
+sync_engine = create_engine(f"mysql+pymysql://{user}:{password}@{host}:{port}/{db_name}")
 
 
 class DatabaseSessionManager:

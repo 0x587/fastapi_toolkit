@@ -2,6 +2,7 @@ from typing import List
 
 from fastapi import FastAPI
 from fastapi_pagination import add_pagination
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -20,7 +21,7 @@ setting = get_settings()
 inner_config = Config()
 
 app = FastAPI()
-app.include_router(InnerRouter(inner_config))
+# app.include_router(InnerRouter(inner_config))
 endpoints = Endpoint(repo_map)
 
 
@@ -44,6 +45,11 @@ class RangeView(SchemaRange):
         return [ItemView(**i.__dict__) for i in db.scalars(
             select(DBItem).filter(DBItem.value > self.min_value).filter(DBItem.value < self.max_value)
         )]
+
+
+@endpoints.get_one(app, '/get_a_item_and_range_view')
+class RangeAndItemView(BaseModel):
+    pass
 
 
 add_pagination(app)

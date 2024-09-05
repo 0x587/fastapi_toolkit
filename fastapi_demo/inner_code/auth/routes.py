@@ -1,6 +1,6 @@
 # generate_hash: 9dab0999900c1e1043fc01cac0892534
 """
-This file was automatically generated in 2024-08-31 15:00:10.651345
+This file was automatically generated in 2024-09-05 10:54:53.726885
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi_toolkit.base.auth.key import Auth

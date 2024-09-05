@@ -1,12 +1,12 @@
-# generate_hash: 0b2ff2ae9d2c006cd80663441dedabde
+# generate_hash: 3d93ddb0539c5b979807f6e5f897fad8
 """
-This file was automatically generated in 2024-09-04 15:13:11.173141
+This file was automatically generated in 2024-09-05 10:56:05.160955
 """
 
 from fastapi_toolkit.base.router import BaseRouter
 
 from ..config import ModelConfig
-from ..crud.info_block_crud import *
+from ..repo.info_block_repo import *
 
 
 class InfoBlockRouter(BaseRouter):

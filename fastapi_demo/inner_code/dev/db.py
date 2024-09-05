@@ -1,6 +1,6 @@
 # generate_hash: 6463a04576f7410b38c79b864a716efc
 """
-This file was automatically generated in 2024-08-31 15:00:10.643260
+This file was automatically generated in 2024-09-05 10:54:53.702458
 """
 from inner_code.setting import get_settings
 

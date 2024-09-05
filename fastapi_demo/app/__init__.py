@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import List
 
 from fastapi import FastAPI, Depends
 from fastapi_pagination import add_pagination
@@ -7,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from fastapi_toolkit import computed_field
+from sqlalchemy.orm import Session
 
 from inner_code.db import get_db, get_db_sync
 from inner_code.routers import InnerRouter
@@ -25,9 +27,9 @@ auth_router = AuthRouter(auth)
 app.include_router(auth_router)
 app.include_router(InnerRouter(inner_config))
 
-import inner_code.crud.user_crud as user_crud
-import inner_code.crud.info_block_crud as info_block_crud
-import inner_code.crud.certified_record_crud as certified_record_crud
+import inner_code.repo.user_repo as user_repo
+import inner_code.repo.info_block_repo as info_block_repo
+import inner_code.repo.certified_record_repo as certified_record_repo
 from inner_code.models import *
 from inner_code.schemas import *
 
@@ -47,10 +49,10 @@ class ProfileView(SchemaUser):
     @computed_field(db_func=get_db_sync)
     def infos(self, db: Session) -> List[InfoGroup]:
         idict = defaultdict(list)
-        for i in db.scalars(info_block_crud.get_user_is_query(self)).all():
+        for i in db.scalars(info_block_repo.get_user_is_query(self)).all():
             idict[i.type].append(ProfileView.Block(
                 **SchemaInfoBlock.model_validate(i).model_dump(exclude={'certified_records', 'user'}),
-                cer_users=[db.scalars(user_crud.get_certified_records_id_is_query(r.id)).first().avatar for r in
+                cer_users=[db.scalars(user_repo.get_certified_records_id_is_query(r.id)).first().avatar for r in
                            i.certified_records]
             ))
         return [ProfileView.InfoGroup(title=k, items=v) for k, v in idict.items()]

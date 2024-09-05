@@ -18,7 +18,12 @@ class Endpoint:
                     continue
                 yield p + [a, i]
 
-        for c in next(dfs(Schema, [])):
+        try:
+            path = next(dfs(Schema, []))
+        except StopIteration:
+            raise ValueError(f"can't find repo for {s.__name__}")
+
+        for c in path:
             if c in self.repo_map:
                 return self.repo_map[c]
 
