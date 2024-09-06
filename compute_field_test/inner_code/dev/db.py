@@ -1,6 +1,6 @@
-# generate_hash: 6463a04576f7410b38c79b864a716efc
+# generate_hash: 0297be18aa441b3670b2897a7dd2ab55
 """
-This file was automatically generated in 2024-09-01 22:59:02.271593
+This file was automatically generated in 2024-09-06 16:25:32.762174
 """
 from inner_code.setting import get_settings
 
@@ -35,22 +35,21 @@ def init():
     command.init(alembic_cfg, "./.alembic")
 
     setting = get_settings()
-    user = setting.user
+    username = setting.username
     password = setting.password
     host = setting.host
     db_name = setting.database
 
     config = configparser.ConfigParser()
     config.read(alembic_ini_path)
-    config["alembic"]["sqlalchemy.url"] = f"mysql+pymysql://{user}:{password}@{host}/{db_name}"
+    config["alembic"]["sqlalchemy.url"] = f"mysql+pymysql://{username}:{password}@{host}/{db_name}"
     with open(alembic_ini_path, "w") as f:
         config.write(f)
 
     with open(".alembic/env.py", "r") as f:
         env_content = f.read()
         env_content = ("from sqlalchemy.orm import DeclarativeBase\n"
-                       f"from inner_code.models import *\n"
-                       f"from inner_code.auth.models import *\n") + env_content
+                       f"from inner_code.models import *\n") + env_content
         env_content = env_content.replace("target_metadata = None",
                                           "target_metadata = Base.metadata")
     with open(".alembic/env.py", "w") as f:

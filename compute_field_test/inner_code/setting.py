@@ -1,17 +1,17 @@
-# generate_hash: f394dcdc148d90df5ff6559307e6246d
+# generate_hash: 5afa6d2cc6a1959e851a96e5bb7fa21c
 """
-This file was automatically generated in 2024-09-01 22:59:02.265326
+This file was automatically generated in 2024-09-06 16:25:32.744050
 """
 from functools import lru_cache
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
 class Setting(BaseSettings):
-    host: str
-    port: int
-    user: str
-    password: str
-    database: str
+    host: str = Field(alias='MYSQL_ADDRESS')
+    username: str = Field(alias='MYSQL_USERNAME')
+    password: str = Field(alias='MYSQL_PASSWORD')
+    database: str = Field(alias='MYSQL_DATABASE')
 
     class Config:
         env_file = ".env"

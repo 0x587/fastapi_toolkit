@@ -1,6 +1,6 @@
-# generate_hash: 1e97b0d677716b857a4ca9e7f5ae706f
+# generate_hash: e47e2ee11e06e0b26ccbeecd8e0d43d7
 """
-This file was automatically generated in 2024-09-04 16:31:29.859088
+This file was automatically generated in 2024-09-06 16:25:32.775552
 """
 from enum import Enum
 from typing import List, Optional
@@ -11,7 +11,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
 from sqlalchemy import select, Select
 from sqlalchemy.orm import joinedload, selectinload
-from ..db import get_db
+from ..db import get_db_sync as get_db
 from ..models import *
 from ..schemas import *
 
@@ -19,16 +19,16 @@ NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item No
 
 
 # ------------------------Query Routes------------------------
-async def get_one(user_ident: int, db=Depends(get_db)) -> SchemaBaseUser:
-    res = await db.get(DBUser, user_ident)
+def get_one(user_ident: int, db=Depends(get_db)) -> SchemaBaseUser:
+    res = db.get(DBUser, user_ident)
     if res and res.deleted_at is None:
         return res
     raise NOT_FOUND
 
 
-async def batch_get(user_idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseUser]:
+def batch_get(user_idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseUser]:
     query = select(DBUser).filter(DBUser.deleted_at.is_(None)).filter(DBUser.id.in_(user_idents))
-    return await paginate(db, query)
+    return paginate(db, query)
 
 class QueryParams(BaseModel):
     class SortParams(BaseModel):
@@ -56,23 +56,23 @@ def get_all_query(params: QueryParams = Body()) -> Select:
     return query
 
 
-async def get_all(
+def get_all(
         query=Depends(get_all_query),
         db=Depends(get_db),
 ) -> Page[SchemaBaseUser]:
-    return await paginate(db, query)
+    return paginate(db, query)
 
 
-async def get_link_all(
+def get_link_all(
         query=Depends(get_all_query),
         db=Depends(get_db)
 ) -> Page[SchemaUser]:
-    return await paginate(db, query)
+    return paginate(db, query)
 # ---------------------User Query Routes----------------------
 
 
 # -----------------------Create Routes------------------------
-async def create_one(
+def create_one(
         user_key: str,
         db=Depends(get_db)
 ) -> SchemaBaseUser:
@@ -81,35 +81,35 @@ async def create_one(
     )
     user = DBUser(**user.model_dump())
     db.add(user)
-    await db.commit()
-    await db.refresh(user)
+    db.commit()
+    db.refresh(user)
     return SchemaBaseUser.model_validate(user)
 
 
 # -----------------------Update Routes------------------------
-async def update_one(
+def update_one(
         user_ident: int,
         user_key: Optional[str] = None,
         db=Depends(get_db)) -> SchemaBaseUser:
-    res = await db.get(DBUser, user_ident)
+    res = db.get(DBUser, user_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
     if user_key is not None:
         res.user_key = user_key
     res.updated_at = datetime.datetime.now()
-    await db.commit()
-    await db.refresh(res)
+    db.commit()
+    db.refresh(res)
     return SchemaBaseUser.model_validate(res)
 
 
 # -----------------------Delete Routes------------------------
-async def delete_one(user_ident: int, db=Depends(get_db)):
-    res = await db.get(DBUser, user_ident)
+def delete_one(user_ident: int, db=Depends(get_db)):
+    res = db.get(DBUser, user_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
 # TODO
     res.deleted_at = datetime.datetime.now()
-    await db.commit()
+    db.commit()
     return {'message': 'Deleted', 'id': user_ident}
 
 

@@ -1,6 +1,6 @@
-# generate_hash: 486345461547b20795633bd8886437bc
+# generate_hash: 984592197f0119d0bd24ad1af7ce800a
 """
-This file was automatically generated in 2024-09-04 15:56:04.567719
+This file was automatically generated in 2024-09-06 16:25:32.754870
 """
 import datetime
 from typing import List, Optional
@@ -48,6 +48,7 @@ class DBRange(Base):
 
 
 __all__ = [
+    'Base',
     'DBUser',
     'DBItem',
     'DBRange',

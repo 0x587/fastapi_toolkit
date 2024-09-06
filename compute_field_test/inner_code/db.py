@@ -1,6 +1,6 @@
-# generate_hash: 8fbe6f62b13910280fe77cb86bb6aeb5
+# generate_hash: 69ed5fd22e60802878d4f0ff103c97c4
 """
-This file was automatically generated in 2024-09-03 17:14:42.796169
+This file was automatically generated in 2024-09-06 16:25:32.742037
 """
 from typing import Any, AsyncIterator, Annotated, Generator
 import contextlib
@@ -13,15 +13,15 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from .setting import get_settings
 
 setting = get_settings()
-user = setting.user
+username = setting.username
 password = setting.password
-db_name = setting.database
 host = setting.host
+db_name = setting.database
 
-database_url = f"mysql+aiomysql://{user}:{password}@{host}/{db_name}"
+database_url = f"mysql+aiomysql://{username}:{password}@{host}/{db_name}"
 
 async_engine = create_async_engine(database_url)
-sync_engine = create_engine(f"mysql+pymysql://{user}:{password}@{host}/{db_name}")
+sync_engine = create_engine(f"mysql+pymysql://{username}:{password}@{host}/{db_name}")
 
 
 class DatabaseSessionManager:
