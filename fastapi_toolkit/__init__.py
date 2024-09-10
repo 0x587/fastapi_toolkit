@@ -23,7 +23,11 @@ T = TypeVar("T")
 def Depends(  # noqa: N802
         dependency: Annotated[
             Optional[
-                Union[Callable[..., Coroutine[Any, Any, T]], Callable[..., T]]
+                Union[
+                    Callable[..., Coroutine[Any, Any, T]],
+                    Callable[..., Generator[T, Any, Any]],
+                    Callable[..., T],
+                ]
             ],
             Doc(
                 """

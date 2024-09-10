@@ -1,5 +1,5 @@
 import datetime
-from typing import List
+from typing import List, Optional
 from pydantic import Field, BaseModel
 from fastapi_toolkit.define import Schema, Controller
 
@@ -9,7 +9,7 @@ class User(Schema):
     title: str
     name: str
     desc: str
-    avatar: str
+    avatar: Optional[str]
     bg_img: str
     hot_level: int
     star_level: int

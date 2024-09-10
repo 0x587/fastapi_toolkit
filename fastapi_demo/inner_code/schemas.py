@@ -1,6 +1,6 @@
-# generate_hash: 9258701b0787b35c4703fcb772a51793
+# generate_hash: 394976d1d34e112ba3e047d087d1b789
 """
-This file was automatically generated in 2024-09-05 10:54:53.701048
+This file was automatically generated in 2024-09-05 23:08:17.769934
 """
 import uuid
 import datetime
@@ -28,8 +28,6 @@ class SchemaBaseUser(Schema):
 
     desc: str = Field()
 
-    avatar: str = Field()
-
     bg_img: str = Field()
 
     hot_level: int = Field()
@@ -37,6 +35,8 @@ class SchemaBaseUser(Schema):
     star_level: int = Field()
 
     user_key: str = Field()
+
+    avatar: Optional[str] = Field()
 
 
 class SchemaUser(SchemaBaseUser):

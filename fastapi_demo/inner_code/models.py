@@ -1,6 +1,6 @@
-# generate_hash: 96873d7a129c8312a0e8dba34811d157
+# generate_hash: 83144d61eaff344f1ab9b099efaadc5b
 """
-This file was automatically generated in 2024-09-05 10:54:53.695536
+This file was automatically generated in 2024-09-05 23:08:17.767119
 """
 import datetime
 from typing import List, Optional
@@ -28,8 +28,6 @@ class DBUser(Base):
 
     desc: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
-    avatar: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
     bg_img: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
     hot_level: Mapped[int] = mapped_column(sqltypes.Integer, nullable=False)
@@ -37,6 +35,8 @@ class DBUser(Base):
     star_level: Mapped[int] = mapped_column(sqltypes.Integer, nullable=False)
 
     user_key: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
+
+    avatar: Mapped[Optional[str]] = mapped_column(sqltypes.Text, nullable=True)
 
     info_blocks: Mapped[List["DBInfoBlock"]] = relationship(
         back_populates="user",
@@ -112,6 +112,7 @@ class DBCertifiedRecord(Base):
 
 
 __all__ = [
+    'Base',
     'DBUser',
     'DBInfoBlock',
     'DBCertifiedRecord',

@@ -1,6 +1,6 @@
-# generate_hash: b5c202ffaa7b7c917631daafafd6fba1
+# generate_hash: 0297be18aa441b3670b2897a7dd2ab55
 """
-This file was automatically generated in 2024-09-05 20:53:20.013202
+This file was automatically generated in 2024-09-05 23:02:16.843214
 """
 from inner_code.setting import get_settings
 
@@ -42,7 +42,7 @@ def init():
 
     config = configparser.ConfigParser()
     config.read(alembic_ini_path)
-    config["alembic"]["sqlalchemy.url"] = f"mysql+pymysql://{user}:{password}@{host}/{db_name}"
+    config["alembic"]["sqlalchemy.url"] = f"mysql+pymysql://{username}:{password}@{host}/{db_name}"
     with open(alembic_ini_path, "w") as f:
         config.write(f)
 
