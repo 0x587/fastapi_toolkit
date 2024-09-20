@@ -15,7 +15,6 @@ from .custom_types import  (
 {% endif %}
 
 {% for model in models %}
-
 class {{ model.name.base_schema }}(Schema):
     """pk"""
     id: int = Field(default=None)
@@ -27,7 +26,8 @@ class {{ model.name.base_schema }}(Schema):
     """fields"""
     {% for field in model.fields %}
     {{ utils.render_schema_field(field) }}
-    {% endfor %}
+    {%- endfor %}
+
 
 class {{ model.name.schema }}({{ model.name.base_schema }}):
     """relationships"""
@@ -36,8 +36,8 @@ class {{ model.name.schema }}({{ model.name.base_schema }}):
     {{ l.schema_link_name }}: "{{ l.schema_target_type }}" = {{ l.default_value }}
     {% endfor %}
 
-{% endfor %}
 
+{% endfor %}
 {% for model in models %}
 {{ model.name.base_schema }}.model_rebuild()
 {{ model.name.schema }}.model_rebuild()

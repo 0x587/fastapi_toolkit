@@ -36,15 +36,15 @@ class {{ model.name.db }}(Base):
 
     {% for field in model.fields %}
     {{ utils.render_table_field(field) }}
-    {% endfor %}
+    {%- endfor %}
 
     {%- for link in model.links %}
+
     {% set l = link.render_data %}
     {% set fk = link.fk %}
     {% set table = link.table %}
     {% if fk %}
     {{ fk.name }}: Mapped[{{ fk.key_type }}] = mapped_column(ForeignKey("{{ fk.column }}"), nullable=True)
-
     {% endif %}
     {{ l.link_name }}: Mapped[{{ l.target_type }}] = relationship(
         back_populates="{{ l.back_populates }}",
@@ -63,8 +63,8 @@ class {{ model.name.db }}(Base):
 {#    {% if t != 'many' %}#}
 {#    {{ r.name.fk }}: Mapped[int] = mapped_column(ForeignKey("{{ r.name.table }}.id"), nullable={{ link.nullable }})#}
 {#    {% endif %}#}
-
     {% endfor %}
+
 
 {% endfor %}
 __all__ = [
