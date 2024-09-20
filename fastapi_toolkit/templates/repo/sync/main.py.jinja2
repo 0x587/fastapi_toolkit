@@ -20,7 +20,7 @@ NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item No
 
 
 # ------------------------Query Routes------------------------
-def get_one({{ s_name }}_ident: int, db=Depends(get_db)) -> {{ base_schema }}:
+def get_one({{ s_name }}_ident: int, db=Depends(get_db)) -> {{ name }}:
     res = db.get({{ name }}, {{ s_name }}_ident)
     if res and res.deleted_at is None:
         return res

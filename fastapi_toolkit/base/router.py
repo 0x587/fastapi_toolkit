@@ -1,21 +1,28 @@
+from typing import Type
 from abc import ABC, abstractmethod
 from fastapi import APIRouter
+from fastapi_pagination import Page
 
 
 class BaseRouter(APIRouter, ABC):
     snake_name: str
     snake_plural_name: str
     camel_name: str
+    base_schema: Type
+    schema: Type
 
-    def __init__(self, config):
+    def __init__(self, config, base_schema: Type, schema: Type):
         super().__init__()
         self.prefix = f"/{self.snake_name}"
         self.tags = [self.camel_name]
+        self.base_schema = base_schema
+        self.schema = schema
 
         if config.get_one:
             self.add_api_route(
                 path="/get_one",
                 endpoint=self._get_one(),
+                response_model=self.base_schema,
                 methods=["POST"],
                 dependencies=config.get_one.guards,
                 summary=f"Get one {self.snake_name}",
@@ -27,6 +34,7 @@ class BaseRouter(APIRouter, ABC):
             self.add_api_route(
                 path="/batch_get",
                 endpoint=self._batch_get(),
+                response_model=Page[self.base_schema],
                 methods=["POST"],
                 dependencies=config.get_one.guards,
                 summary=f"Batch get {self.snake_name}",
@@ -38,6 +46,7 @@ class BaseRouter(APIRouter, ABC):
             self.add_api_route(
                 path="/get_all",
                 endpoint=self._get_all(),
+                response_model=Page[self.base_schema],
                 methods=["POST"],
                 dependencies=config.get_all.guards,
                 summary=f"Get all {self.snake_name}",
@@ -49,6 +58,7 @@ class BaseRouter(APIRouter, ABC):
             self.add_api_route(
                 path="/get_link_all",
                 endpoint=self._get_link_all(),
+                response_model=Page[self.schema],
                 methods=["POST"],
                 dependencies=config.get_link_all.guards,
                 summary=f"Get all {self.snake_plural_name} with link",
@@ -60,6 +70,7 @@ class BaseRouter(APIRouter, ABC):
                 self.add_api_route(
                     path="/create_one",
                     endpoint=self._create_one(),
+                    response_model=self.base_schema,
                     methods=["POST"],
                     dependencies=config.create_one.guards,
                     summary=f"Create one {self.snake_name}",
@@ -71,6 +82,7 @@ class BaseRouter(APIRouter, ABC):
                 self.add_api_route(
                     path="/update_one",
                     endpoint=self._update_one(),
+                    response_model=self.base_schema,
                     methods=["POST"],
                     dependencies=config.update_one.guards,
                     summary=f"Update one {self.snake_name}",

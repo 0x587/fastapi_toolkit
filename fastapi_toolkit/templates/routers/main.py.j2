@@ -13,7 +13,7 @@ class {{ name }}Router(BaseRouter):
         self.snake_name = "{{ s_name }}"
         self.snake_plural_name = "{{ model.name.snake_plural }}"
         self.camel_name = "{{ name }}"
-        super().__init__(config)
+        super().__init__(config, {{ model.name.base_schema }}, {{ model.name.schema }})
         {% for link in model.links %}
         {% for link_op_name in link.link_op_names %}
         self.add_api_route(

@@ -4,14 +4,18 @@ from sqlalchemy.orm import Session
 from typing_extensions import Doc
 
 
-def computed_field(db_func: Callable[..., Generator[Session, Any, None]]):
+def computed_field(db_func: Optional[Callable[..., Generator[Session, Any, None]]] = None):
     def decorator(func, *args, **kw):
         from pydantic import computed_field
 
-        @computed_field(*args, **kw)
-        def wrapper(*args_, **kw_) -> func.__annotations__.get('return'):
-            return func(*args_, **kw_, db=next(db_func()))
-
+        if db_func is not None:
+            @computed_field(*args, **kw)
+            def wrapper(*args_, **kw_) -> func.__annotations__.get('return'):
+                return func(*args_, **kw_, db=next(db_func()))
+        else:
+            @computed_field(*args, **kw)
+            def wrapper(*args_, **kw_) -> func.__annotations__.get('return'):
+                return func(*args_, **kw_)
         return wrapper
 
     return decorator
