@@ -83,9 +83,16 @@ def get_link_all(
 
 
 # -----------------------Create Routes------------------------
+def create_one_model(model: {{ base_schema }}, db=Depends(get_db)) -> {{ name }}:
+    {{ s_name }} = {{ name }}(**model.model_dump())
+    db.add({{ s_name }})
+    db.commit()
+    db.refresh({{ s_name }})
+    return {{ base_schema }}.model_validate({{ s_name }})
+
 def create_one(
         {% for field in model.fields %}
-        {{field.name.snake}}: {{field.type.python_type}}{% if field.type.nullable %} = None{% endif %} ,
+        {{field.name.snake}}: {{field.type.python_type}}{% if field.type.nullable %} = None{% endif %},
         {% endfor %}
         db=Depends(get_db)
 ) -> {{ name }}:
@@ -95,10 +102,7 @@ def create_one(
         {% endfor %}
     )
     {{ s_name }} = {{ name }}(**{{ s_name }}.model_dump())
-    db.add({{ s_name }})
-    db.commit()
-    db.refresh({{ s_name }})
-    return {{ base_schema }}.model_validate({{ s_name }})
+    return create_one_model({{ s_name }}, db)
 
 
 # -----------------------Update Routes------------------------
