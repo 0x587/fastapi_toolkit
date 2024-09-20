@@ -88,7 +88,7 @@ def create_one(
         {{field.name.snake}}: {{field.type.python_type}}{% if field.type.nullable %} = None{% endif %} ,
         {% endfor %}
         db=Depends(get_db)
-) -> {{ base_schema }}:
+) -> {{ name }}:
     {{ s_name }} = {{ base_schema }}(
         {% for field in model.fields %}
         {{field.name.snake}}={{field.name.snake}},
@@ -107,7 +107,7 @@ def update_one(
         {% for field in model.fields %}
         {{field.name.snake}}: Optional[{{field.type.python_type}}] = None,
         {% endfor %}
-        db=Depends(get_db)) -> {{ base_schema }}:
+        db=Depends(get_db)) -> {{ name }}:
     res = db.get({{ name }}, {{ s_name }}_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND

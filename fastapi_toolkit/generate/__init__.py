@@ -315,15 +315,16 @@ class CodeGenerator:
                 query_code += f'\n    query = query.options({op}({o.name.db}.{l.link_name}))'
             link.link_op_codes.append(
                 f"""
-def {name}_query({arg}: {arg_type}) -> Select:
-    query = get_all_query(QueryParams())
+def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
+    if type(query) is not Select:
+        query = get_all_query(QueryParams())
     {query_code}
     return query
                 """
             )
             link.link_op_codes.append(
                 f"""
-{'async ' if self.async_repo else ''}def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_query)) -> List[{link.origin.name.schema}]:
+{'async ' if self.async_repo else ''}def {name}({arg}: {arg_type}, db=Depends(get_db), query=Depends(get_all_query)) -> List[{link.origin.name.db}]:
     if type(query) is not Select:
         query = get_all_query(QueryParams())
     {query_code}
