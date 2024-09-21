@@ -101,7 +101,6 @@ def create_one(
         {{field.name.snake}}={{field.name.snake}},
         {% endfor %}
     )
-    {{ s_name }} = {{ name }}(**{{ s_name }}.model_dump())
     return create_one_model({{ s_name }}, db)
 
 
