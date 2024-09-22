@@ -88,11 +88,15 @@ def create_one_model(model: {{ base_schema }}, db=Depends(get_db)) -> {{ name }}
     db.add({{ s_name }})
     db.commit()
     db.refresh({{ s_name }})
-    return {{ base_schema }}.model_validate({{ s_name }})
+    return {{ s_name }}
 
 def create_one(
         {% for field in model.fields %}
+        {% if field.type.default %}
+        {{field.name.snake}}: {{field.type.python_type}} = {{ field.type.default }},
+        {% else %}
         {{field.name.snake}}: {{field.type.python_type}}{% if field.type.nullable %} = None{% endif %},
+        {% endif %}
         {% endfor %}
         db=Depends(get_db)
 ) -> {{ name }}:

@@ -229,7 +229,7 @@ class CodeGenerator:
                     link.alias = field.alias.origin
                 links[model.name.origin].append(link)
             model.fields = list(filter(lambda x: x.type.link is None, model.fields))
-            model.fields.sort(key=lambda x: x.type.nullable)
+            model.fields.sort(key=lambda x: x.type.nullable or x.type.default != None)
 
         link_groups: List[Tuple[Link, Link]] = []
         visited_link = set()
@@ -344,11 +344,11 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
         m = ModelRenderData(
             name=self._name_info(schema.__name__),
             fields=[
-                Field(name=self._name_info(name), alias=self._name_info(field.alias), type=fh.parse(field.annotation))
+                Field(name=self._name_info(name), alias=self._name_info(field.alias), type=fh.parse(field))
                 for name, field in schema.model_fields.items()]
         )
         if m.name.origin == 'User':
-            m.fields.append(Field(name=self._name_info('user_key'), type=fh.parse(str)))
+            m.fields.append(Field(name=self._name_info('user_key'), type=fh.parse_type(str)))
         return m
 
     def _parse_api(self):
@@ -357,9 +357,10 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
             fh = FieldHelper()
             defines = []
 
-            def f(t: Type):
+            def f(v):
+                t = v.annotation
                 if fh.is_builtin(t):
-                    return fh.parse_builtin(t).python_type
+                    return fh.parse(v).python_type
                 if fh.is_model(t):
                     if fh.parse_model(t).python_type not in self.model_render_data:
                         c = f'class {fh.parse(t).python_type}(BaseModel):\n'
@@ -395,8 +396,7 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
             res: BaseModel
             res_fields = {}
             for k, v in res.model_fields.items():
-                t = v.annotation
-                res_fields[k] = f(t)
+                res_fields[k] = f(v)
             return MethodRenderData(
                 name=name,
                 args=inputs,

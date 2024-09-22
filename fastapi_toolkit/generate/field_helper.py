@@ -2,6 +2,7 @@ import datetime
 from enum import Enum
 from typing import Type, Union, Optional, Set
 from pydantic import BaseModel, Field as PField
+from pydantic.fields import FieldInfo, PydanticUndefined
 
 
 class LinkType(str, Enum):
@@ -20,6 +21,7 @@ class FieldType(BaseModel):
     nullable: bool = PField(default=False)
     link: Optional[Link] = PField(default=None)
     depends: Set[str] = PField(default_factory=set)
+    default: Optional[str] = PField(default=None)
 
 
 class FieldHelper:
@@ -108,7 +110,15 @@ class FieldHelper:
             f.link.type = "many"
             return f
 
-    def parse(self, t: Type):
+    def parse(self, f: FieldInfo):
+        t = f.annotation
+        res = self.parse_type(t)
+        if self.is_builtin(t):
+            if f.default is not PydanticUndefined:
+                res.default = f.default
+        return res
+
+    def parse_type(self, t: Type):
         f = self.parse_builtin(t)
         if f is not None:
             return f
