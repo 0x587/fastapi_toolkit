@@ -7,7 +7,7 @@ from collections import defaultdict
 import typer
 from typing import Callable, Any, Sequence, Dict, List, Optional, Tuple, Literal, Type
 from jinja2 import Environment, PackageLoader
-import networkx as nx
+# import networkx as nx
 
 from pydantic import BaseModel, Field as PField
 from fastapi_toolkit.define import Schema, Controller
@@ -156,7 +156,7 @@ class CodeGenerator:
         self.pydantic_schemas: Dict[str, Type[Schema]] = {}
         self.links: List[Tuple[Literal["one"] | Literal["many"], Type[Schema], Type[Schema]]] = []
         self.custom_types: List[Dict[str, Any]] = []
-        self.model_network = nx.Graph()
+        # self.model_network = nx.Graph()
         self.association_tables: List[AssociationTable] = []
         self.crds: List[ControllerRenderData] = []
         self.parse()
@@ -201,7 +201,7 @@ class CodeGenerator:
 
     def parse(self):
         self._parse_models()
-        self._parse_network()
+        # self._parse_network()
         self._parse_api()
         # self._parse_mock()
 
@@ -424,25 +424,25 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
                 crd.methods.append(make_render(n, args, res))
             self.crds.append(crd)
 
-    def _parse_network(self):
-        self.model_network.add_nodes_from(self.model_render_data.keys())
-        for model in self.model_render_data.values():
-            for link in model.links:
-                self.model_network.add_edge(link.origin.name.origin, link.target.name.origin)
-
-        pos = nx.spring_layout(self.model_network)
-        edge_labels = {
-            (link.origin.name.origin, link.target.name.origin): link.link_name
-            for model in self.model_render_data.values() for link in model.links
-        }
-        if self.show_network:
-            nx.draw(self.model_network.to_directed(), pos, with_labels=True)
-            nx.draw_networkx_edge_labels(
-                self.model_network.to_directed(), pos,
-                edge_labels=edge_labels, label_pos=0.75
-            )
-            import matplotlib.pyplot as plt
-            plt.show()
+    # def _parse_network(self):
+    #     self.model_network.add_nodes_from(self.model_render_data.keys())
+    #     for model in self.model_render_data.values():
+    #         for link in model.links:
+    #             self.model_network.add_edge(link.origin.name.origin, link.target.name.origin)
+    #
+    #     pos = nx.spring_layout(self.model_network)
+    #     edge_labels = {
+    #         (link.origin.name.origin, link.target.name.origin): link.link_name
+    #         for model in self.model_render_data.values() for link in model.links
+    #     }
+    #     if self.show_network:
+    #         nx.draw(self.model_network.to_directed(), pos, with_labels=True)
+    #         nx.draw_networkx_edge_labels(
+    #             self.model_network.to_directed(), pos,
+    #             edge_labels=edge_labels, label_pos=0.75
+    #         )
+    #         import matplotlib.pyplot as plt
+    #         plt.show()
 
     def _parse_mock(self, export=False):
         self.model_network.add_nodes_from(self.model_render_data.keys())
