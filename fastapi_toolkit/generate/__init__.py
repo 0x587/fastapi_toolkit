@@ -11,8 +11,8 @@ from jinja2 import Environment, PackageLoader
 
 from pydantic import BaseModel, Field as PField
 from fastapi_toolkit.define import Schema, Controller
-from .field_helper import FieldHelper, FieldType, LinkType
-
+# from .field_helper import FieldHelper, FieldType, LinkType
+from pydantic.fields import FieldInfo
 from .sql_mapping import mapping
 from .utils import to_snake, plural
 
@@ -32,79 +32,80 @@ class NameInfo(BaseModel):
     fk: str
 
 
-class FK(BaseModel):
-    name: str
-    key_type: str = "int"
-    column: str
-
-
-class AssociationTable(BaseModel):
-    name: str
-    left: 'ModelRenderData'
-    right: 'ModelRenderData'
-
-
-class LinkRenderData(BaseModel):
-    link_name: str
-    target_type: str
-    back_populates: str
-
-    schema_link_name: str
-    schema_target_type: str
-    default_value: str = ''
-
-
-class Link(BaseModel):
-    link_name: str
-    alias: Optional[str] = None
-    origin: "ModelRenderData"
-    target: "ModelRenderData"
-    fk: Optional[FK] = None
-    table: Optional[AssociationTable] = None
-    type: LinkType
-
-    render_data: Optional[LinkRenderData] = None
-    link_op_names: List[str] = PField(default_factory=list)
-    link_op_codes: List[str] = PField(default_factory=list)
-
-    def make_render(self, pair_link: "Link"):
-        self.render_data = LinkRenderData(link_name=self.link_name, target_type=f'"{self.target.name.db}"',
-                                          back_populates=pair_link.link_name,
-                                          schema_link_name=self.link_name,
-                                          schema_target_type=self.target.name.base_schema)
-        if self.type == LinkType.many:
-            self.render_data.target_type = f'List[{self.render_data.target_type}]'
-            self.render_data.schema_target_type = f'List[{self.render_data.schema_target_type}]'
-            self.render_data.default_value = 'Field(default_factory=list)'
-        else:
-            self.render_data.target_type = f'Optional[{self.render_data.target_type}]'
-            self.render_data.schema_target_type = f'Optional[{self.render_data.schema_target_type}]'
-            self.render_data.default_value = 'None'
-
-    def link_prefix(self):
-        if self.type == "one":
-            target_name = self.target.name.snake
-        else:
-            target_name = self.target.name.snake_plural
-        l_name = self.link_name
-        if self.alias is not None:
-            l_name = self.alias
-        if l_name[-len(target_name):] != target_name:
-            raise ValueError(f"link name {l_name} not match target {self.target.name.origin}")
-        return l_name[:-len(target_name)]
+# class FK(BaseModel):
+#     name: str
+#     key_type: str = "int"
+#     column: str
+#
+#
+# class AssociationTable(BaseModel):
+#     name: str
+#     left: 'ModelRenderData'
+#     right: 'ModelRenderData'
+# class LinkRenderData(BaseModel):
+#     link_name: str
+#     target_type: str
+#     back_populates: str
+#
+#     schema_link_name: str
+#     schema_target_type: str
+#     default_value: str = ''
+#
+#
+# class Link(BaseModel):
+#     link_name: str
+#     alias: Optional[str] = None
+#     origin: "ModelRenderData"
+#     target: "ModelRenderData"
+#     fk: Optional[FK] = None
+#     table: Optional[AssociationTable] = None
+#     type: LinkType
+#
+#     render_data: Optional[LinkRenderData] = None
+#     link_op_names: List[str] = PField(default_factory=list)
+#     link_op_codes: List[str] = PField(default_factory=list)
+#
+#     def make_render(self, pair_link: "Link"):
+#         self.render_data = LinkRenderData(link_name=self.link_name, target_type=f'"{self.target.name.db}"',
+#                                           back_populates=pair_link.link_name,
+#                                           schema_link_name=self.link_name,
+#                                           schema_target_type=self.target.name.base_schema)
+#         if self.type == LinkType.many:
+#             self.render_data.target_type = f'List[{self.render_data.target_type}]'
+#             self.render_data.schema_target_type = f'List[{self.render_data.schema_target_type}]'
+#             self.render_data.default_value = 'Field(default_factory=list)'
+#         else:
+#             self.render_data.target_type = f'Optional[{self.render_data.target_type}]'
+#             self.render_data.schema_target_type = f'Optional[{self.render_data.schema_target_type}]'
+#             self.render_data.default_value = 'None'
+#
+#     def link_prefix(self):
+#         if self.type == "one":
+#             target_name = self.target.name.snake
+#         else:
+#             target_name = self.target.name.snake_plural
+#         l_name = self.link_name
+#         if self.alias is not None:
+#             l_name = self.alias
+#         if l_name[-len(target_name):] != target_name:
+#             raise ValueError(f"link name {l_name} not match target {self.target.name.origin}")
+#         return l_name[:-len(target_name)]
 
 
 class Field(BaseModel):
     name: NameInfo
     alias: Optional[NameInfo] = None
-    type: FieldType
+    type: FieldInfo
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class ModelRenderData(BaseModel):
     name: NameInfo
     model: Type[Schema] = None
     fields: List[Field] = []
-    links: List[Link] = []
+    # links: List[Link] = []
 
 
 class MethodRenderData(BaseModel):
@@ -122,44 +123,44 @@ class ControllerRenderData(BaseModel):
 
 
 class CodeGenerator:
-    def __init__(self, root_path='inner_code'):
+    def __init__(self, root_path='app'):
         self.root_path = root_path
-        self.models_path = os.path.join(root_path, 'models.py')
-        self.schemas_path = os.path.join(root_path, 'schemas.py')
-        self.dev_path = os.path.join(root_path, 'dev')
+        # self.models_path = os.path.join(root_path, 'models.py')
+        # self.schemas_path = os.path.join(root_path, 'schemas.py')
+        # self.dev_path = os.path.join(root_path, 'dev')
         self.crud_path = os.path.join(root_path, 'repo')
-        self.routers_path = os.path.join(root_path, 'routers')
-        self.auth_path = os.path.join(root_path, 'auth')
-        self.api_path = os.path.join(root_path, 'api')
+        # self.routers_path = os.path.join(root_path, 'routers')
+        # self.auth_path = os.path.join(root_path, 'auth')
+        # self.api_path = os.path.join(root_path, 'api')
 
-        self.force_rewrite = False
-        self.show_network = False
-        self.async_repo = False
-
-        if not os.path.exists(self.root_path):
-            os.mkdir(self.root_path)
-        if not os.path.exists(self.dev_path):
-            os.mkdir(self.dev_path)
+        # self.force_rewrite = False
+        # self.show_network = False
+        # self.async_repo = False
+        #
+        # if not os.path.exists(self.root_path):
+        #     os.mkdir(self.root_path)
+        # if not os.path.exists(self.dev_path):
+        #     os.mkdir(self.dev_path)
         if not os.path.exists(self.crud_path):
             os.mkdir(self.crud_path)
-        if not os.path.exists(self.routers_path):
-            os.mkdir(self.routers_path)
-        if not os.path.exists(self.auth_path):
-            os.mkdir(self.auth_path)
-        if not os.path.exists(self.api_path):
-            os.mkdir(self.api_path)
+        # if not os.path.exists(self.routers_path):
+        #     os.mkdir(self.routers_path)
+        # if not os.path.exists(self.auth_path):
+        #     os.mkdir(self.auth_path)
+        # if not os.path.exists(self.api_path):
+        #     os.mkdir(self.api_path)
         self.env = Environment(
             loader=PackageLoader('fastapi_toolkit', 'templates'),
             trim_blocks=True, lstrip_blocks=True)
-
-        self.define_schemas: Dict[str, Type[Schema]] = {}
-        self.pydantic_schemas: Dict[str, Type[Schema]] = {}
-        self.links: List[Tuple[Literal["one"] | Literal["many"], Type[Schema], Type[Schema]]] = []
-        self.custom_types: List[Dict[str, Any]] = []
-        # self.model_network = nx.Graph()
-        self.association_tables: List[AssociationTable] = []
-        self.crds: List[ControllerRenderData] = []
-        self.parse()
+        #
+        # self.define_schemas: Dict[str, Type[Schema]] = {}
+        # self.pydantic_schemas: Dict[str, Type[Schema]] = {}
+        # self.links: List[Tuple[Literal["one"] | Literal["many"], Type[Schema], Type[Schema]]] = []
+        # self.custom_types: List[Dict[str, Any]] = []
+        # # self.model_network = nx.Graph()
+        # self.association_tables: List[AssociationTable] = []
+        # self.crds: List[ControllerRenderData] = []
+        # self.parse()
 
     @staticmethod
     def _check_file_valid(path):
@@ -177,21 +178,21 @@ class CodeGenerator:
     def _generate_file(self, path, func: GENERATE_FUNC):
         content = func()
         generate_hash = hashlib.md5(content.encode('utf8')).hexdigest()
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                line = f.readline()
-                if line.startswith('# generate_hash:'):
-                    head_hash = line.split(':')[1].strip()
-                else:
-                    head_hash = None
-                if head_hash == generate_hash and CodeGenerator._check_file_valid(path):
-                    print(f'file {path} is up to date, skip generate')
-                    return
-                elif not self.force_rewrite:
-                    overwrite = typer.confirm(
-                        f'file {path} has been changed or is out of date, do you want to overwrite it?')
-                    if not overwrite:
-                        return
+        # if os.path.exists(path):
+        #     with open(path, 'r') as f:
+        #         line = f.readline()
+        #         if line.startswith('# generate_hash:'):
+        #             head_hash = line.split(':')[1].strip()
+        #         else:
+        #             head_hash = None
+        #         if head_hash == generate_hash and CodeGenerator._check_file_valid(path):
+        #             print(f'file {path} is up to date, skip generate')
+        #             return
+        #         elif not self.force_rewrite:
+        #             overwrite = typer.confirm(
+        #                 f'file {path} has been changed or is out of date, do you want to overwrite it?')
+        #             if not overwrite:
+        #                 return
         with open(path, 'w') as f:
             f.write(f'# generate_hash: {generate_hash}\n')
             f.write(f'"""\n'
@@ -202,7 +203,7 @@ class CodeGenerator:
     def parse(self):
         self._parse_models()
         # self._parse_network()
-        self._parse_api()
+        # self._parse_api()
         # self._parse_mock()
 
     def _get_schemas(self, root=Schema):
@@ -216,7 +217,7 @@ class CodeGenerator:
             schema_name: self._make_render_data_field(schema)
             for schema_name, schema in self.define_schemas.items()
         }
-        self.build_links()
+        # self.build_links()
 
     def build_links(self):
         links: Dict[str, List[Link]] = defaultdict(list)
@@ -339,90 +340,93 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
             build_link_op(link, f'get_{link.link_name}_has', False, True)
 
     def _make_render_data_field(self, schema: Type[Schema]):
-        fh = FieldHelper()
+        # fh = FieldHelper()
 
         m = ModelRenderData(
             name=self._name_info(schema.__name__),
             fields=[
-                Field(name=self._name_info(name), alias=self._name_info(field.alias), type=fh.parse(field))
+                Field(name=self._name_info(name),
+                      alias=self._name_info(field.alias),
+                      type=field
+                      )
                 for name, field in schema.model_fields.items()]
         )
-        if m.name.origin == 'User':
-            m.fields.append(Field(name=self._name_info('user_key'), type=fh.parse_type(str)))
+        # if m.name.origin == 'User':
+        #     m.fields.append(Field(name=self._name_info('user_key'), type=fh.parse_type(str)))
         return m
 
-    def _parse_api(self):
-
-        def make_render(name, args, res) -> MethodRenderData:
-            fh = FieldHelper()
-            defines = []
-
-            def f(v):
-                t = v.annotation
-                if fh.is_builtin(t):
-                    return fh.parse(v).python_type
-                if fh.is_model(t):
-                    if fh.parse_model(t).python_type not in self.model_render_data:
-                        c = f'class {fh.parse(t).python_type}(BaseModel):\n'
-                        t: Type[BaseModel]
-                        for k, v in t.model_fields.items():
-                            c += f'        {k}: {f(v.annotation)}\n'
-                        defines.append(c)
-                        return fh.parse(t).python_type
-                    return self.model_render_data[fh.parse(t).python_type].name.base_schema
-                if fh.is_batch(t):
-                    py_t = fh.parse_batch(t).python_type
-                    arg = py_t[5:-1]
-                    if arg in self.model_render_data:
-                        py_t = f'List[{self.model_render_data[arg].name.base_schema}]'
-                    return py_t
-                return fh.parse(t).python_type
-
-            process = []
-            inputs = {}
-            # 解析需要输入什么
-            for k, v in args.items():
-                if fh.is_builtin(v):
-                    inputs[k] = f(v)
-                    continue
-                if fh.is_model(v):
-                    inputs[f'{k}_ident'] = 'int'
-                    crud_name = self.model_render_data[v.__name__].name.snake + '_crud'
-                    process.append(f'{k} = await {crud_name}.get_one({k}_ident, db)')
-                    continue
-                else:
-                    raise ValueError(f'Unsupported type {v}')
-            # 解析需要输出什么
-            res: BaseModel
-            res_fields = {}
-            for k, v in res.model_fields.items():
-                res_fields[k] = f(v)
-            return MethodRenderData(
-                name=name,
-                args=inputs,
-                defines=defines,
-                res_type=f(res),
-                process=process,
-                res_fields=res_fields,
-            )
-
-        def get_controller(root=Controller):
-            for model_ in root.__subclasses__():
-                yield model_
-                yield from get_controller(model_)
-
-        for c in get_controller():
-            crd = ControllerRenderData(name=self._name_info(c.__name__), methods=[])
-            for n, f in inspect.getmembers(c, predicate=inspect.isfunction):
-                args = {}
-                res = type(None)
-                for k, v in f.__annotations__.items():
-                    if k == 'return':
-                        res = v
-                        continue
-                    args[k] = v
-                crd.methods.append(make_render(n, args, res))
-            self.crds.append(crd)
+    # def _parse_api(self):
+    #
+    #     def make_render(name, args, res) -> MethodRenderData:
+    #         fh = FieldHelper()
+    #         defines = []
+    #
+    #         def f(v):
+    #             t = v.annotation
+    #             if fh.is_builtin(t):
+    #                 return fh.parse(v).python_type
+    #             if fh.is_model(t):
+    #                 if fh.parse_model(t).python_type not in self.model_render_data:
+    #                     c = f'class {fh.parse(t).python_type}(BaseModel):\n'
+    #                     t: Type[BaseModel]
+    #                     for k, v in t.model_fields.items():
+    #                         c += f'        {k}: {f(v.annotation)}\n'
+    #                     defines.append(c)
+    #                     return fh.parse(t).python_type
+    #                 return self.model_render_data[fh.parse(t).python_type].name.base_schema
+    #             if fh.is_batch(t):
+    #                 py_t = fh.parse_batch(t).python_type
+    #                 arg = py_t[5:-1]
+    #                 if arg in self.model_render_data:
+    #                     py_t = f'List[{self.model_render_data[arg].name.base_schema}]'
+    #                 return py_t
+    #             return fh.parse(t).python_type
+    #
+    #         process = []
+    #         inputs = {}
+    #         # 解析需要输入什么
+    #         for k, v in args.items():
+    #             if fh.is_builtin(v):
+    #                 inputs[k] = f(v)
+    #                 continue
+    #             if fh.is_model(v):
+    #                 inputs[f'{k}_ident'] = 'int'
+    #                 crud_name = self.model_render_data[v.__name__].name.snake + '_crud'
+    #                 process.append(f'{k} = await {crud_name}.get_one({k}_ident, db)')
+    #                 continue
+    #             else:
+    #                 raise ValueError(f'Unsupported type {v}')
+    #         # 解析需要输出什么
+    #         res: BaseModel
+    #         res_fields = {}
+    #         for k, v in res.model_fields.items():
+    #             res_fields[k] = f(v)
+    #         return MethodRenderData(
+    #             name=name,
+    #             args=inputs,
+    #             defines=defines,
+    #             res_type=f(res),
+    #             process=process,
+    #             res_fields=res_fields,
+    #         )
+    #
+    #     def get_controller(root=Controller):
+    #         for model_ in root.__subclasses__():
+    #             yield model_
+    #             yield from get_controller(model_)
+    #
+    #     for c in get_controller():
+    #         crd = ControllerRenderData(name=self._name_info(c.__name__), methods=[])
+    #         for n, f in inspect.getmembers(c, predicate=inspect.isfunction):
+    #             args = {}
+    #             res = type(None)
+    #             for k, v in f.__annotations__.items():
+    #                 if k == 'return':
+    #                     res = v
+    #                     continue
+    #                 args[k] = v
+    #             crd.methods.append(make_render(n, args, res))
+    #         self.crds.append(crd)
 
     # def _parse_network(self):
     #     self.model_network.add_nodes_from(self.model_render_data.keys())
@@ -512,6 +516,18 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
                 'dev.db.py.jinja2',
                 root_path=str(self.root_path).replace('/', '.').replace('\\', '.')))
         self._generate_file(os.path.join(self.dev_path, '__init__.py'), lambda: '')
+
+    def generate_repo(self):
+        models = self.model_render_data.values()
+        for model in models:
+            self._generate_file(
+                os.path.join(self.crud_path, f'{model.name.snake}_repo.py'),
+                self._from_template(f'repo/main.py.jinja2',
+                                    model=model))
+        self._generate_file(
+            os.path.join(self.crud_path, '__init__.py'),
+            self._from_template(f'repo/__init__.py.jinja2',
+                                models=models))
 
     def _generate_routers(self):
         template_path = 'async/' if self.async_repo else 'sync/'
