@@ -44,12 +44,19 @@ def init():
 
     with open(".alembic/env.py", "r") as f:
         env_content = f.read()
-        env_content = ("from sqlalchemy.orm import DeclarativeBase\n"
+        env_content = ("from sqlmodel import SQLModel\n"
                        f"from {{ root_path }}.models import *\n") + env_content
         env_content = env_content.replace("target_metadata = None",
-                                          "target_metadata = Base.metadata")
+                                          "target_metadata = SQLModel.metadata")
     with open(".alembic/env.py", "w") as f:
         f.write(env_content)
+
+    with open(".alembic/script.py.mako", "r") as f:
+        mako = f.read()
+        mako = mako.replace("import sqlalchemy as sa",
+                            "import sqlalchemy as sa\nimport sqlmodel")
+    with open(".alembic/script.py.mako", "w") as f:
+        f.write(mako)
 
 
 def migrate(msg: str = None):

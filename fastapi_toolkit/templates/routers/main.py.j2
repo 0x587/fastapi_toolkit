@@ -1,4 +1,4 @@
-{% set name = model.name.camel %}
+{% set name = model.name.origin %}
 {% set s_name = model.name.snake %}
 {% set router = s_name + "_router" %}
 
@@ -13,7 +13,7 @@ class {{ name }}Router(BaseRouter):
         self.snake_name = "{{ s_name }}"
         self.snake_plural_name = "{{ model.name.snake_plural }}"
         self.camel_name = "{{ name }}"
-        super().__init__(config, {{ model.name.base_schema }}, {{ model.name.schema }})
+        super().__init__(config, {{ name }})
         {% for link in model.links %}
         {% for link_op_name in link.link_op_names %}
         self.add_api_route(
@@ -32,9 +32,6 @@ class {{ name }}Router(BaseRouter):
 
     def _get_all(self):
         return get_all
-
-    def _get_link_all(self):
-        return get_link_all
 
     def _create_one(self):
         return create_one

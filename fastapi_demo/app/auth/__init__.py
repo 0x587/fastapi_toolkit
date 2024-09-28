@@ -1,3 +1,7 @@
+# generate_hash: 88d43637d35cd1e762004ec8e3b6c060
+"""
+This file was automatically generated in 2024-09-29 00:28:32.164869
+"""
 import datetime
 from typing import Optional
 from sqlalchemy import select
@@ -31,4 +35,3 @@ class AuthFactory:
 __all__ = [
     "AuthFactory",
 ]
-

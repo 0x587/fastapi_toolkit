@@ -1,20 +1,20 @@
-# generate_hash: d17246077a9078b6e3512c0c35f312aa
+# generate_hash: b9d2e5df64ad3be609c98d617901fb5a
 """
-This file was automatically generated in 2024-09-05 10:56:05.160211
+This file was automatically generated in 2024-09-29 00:28:32.162815
 """
 
 from fastapi_toolkit.base.router import BaseRouter
 
 from ..config import ModelConfig
-from ..repo.user_repo import *
+from ..repo.certified_record_repo import *
 
 
-class UserRouter(BaseRouter):
+class CertifiedRecordRouter(BaseRouter):
     def __init__(self, config: ModelConfig):
-        self.snake_name = "user"
-        self.snake_plural_name = "users"
-        self.camel_name = "User"
-        super().__init__(config)
+        self.snake_name = "certified_record"
+        self.snake_plural_name = "certified_records"
+        self.camel_name = "CertifiedRecord"
+        super().__init__(config, CertifiedRecord)
 
     def _get_one(self):
         return get_one
@@ -24,9 +24,6 @@ class UserRouter(BaseRouter):
 
     def _get_all(self):
         return get_all
-
-    def _get_link_all(self):
-        return get_link_all
 
     def _create_one(self):
         return create_one

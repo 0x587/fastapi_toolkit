@@ -1,3 +1,7 @@
+# generate_hash: 407d8f76c5844555c457c113e8bf9307
+"""
+This file was automatically generated in 2024-09-29 00:28:32.165245
+"""
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi_toolkit.base.auth.key import Auth
 
@@ -19,4 +23,3 @@ class AuthRouter(APIRouter):
             return current_user
 
         return get_me
-

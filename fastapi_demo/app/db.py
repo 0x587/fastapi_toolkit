@@ -1,3 +1,7 @@
+# generate_hash: ad21f8bf095d4ccc401afa33267d66a8
+"""
+This file was automatically generated in 2024-09-29 00:28:32.166793
+"""
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -21,4 +25,3 @@ def get_db_sync():
         yield db
     finally:
         db.close()
-

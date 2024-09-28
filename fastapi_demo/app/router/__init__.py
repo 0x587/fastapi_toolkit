@@ -1,6 +1,6 @@
 # generate_hash: 7627b51b01142401b6cde4d3218930a6
 """
-This file was automatically generated in 2024-09-05 10:54:53.724860
+This file was automatically generated in 2024-09-29 00:28:32.164030
 """
 from fastapi import APIRouter
 

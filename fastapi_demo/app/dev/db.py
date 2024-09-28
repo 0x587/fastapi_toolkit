@@ -1,8 +1,8 @@
-# generate_hash: 0297be18aa441b3670b2897a7dd2ab55
+# generate_hash: 801c27cfae12a4660881ec20b0ab9f51
 """
-This file was automatically generated in 2024-09-05 23:02:16.843214
+This file was automatically generated in 2024-09-29 00:28:32.167796
 """
-from inner_code.setting import get_settings
+from app.setting import get_settings
 
 """
 Database migration tool
@@ -48,12 +48,19 @@ def init():
 
     with open(".alembic/env.py", "r") as f:
         env_content = f.read()
-        env_content = ("from sqlalchemy.orm import DeclarativeBase\n"
-                       f"from inner_code.models import *\n") + env_content
+        env_content = ("from sqlmodel import SQLModel\n"
+                       f"from app.models import *\n") + env_content
         env_content = env_content.replace("target_metadata = None",
-                                          "target_metadata = Base.metadata")
+                                          "target_metadata = SQLModel.metadata")
     with open(".alembic/env.py", "w") as f:
         f.write(env_content)
+
+    with open(".alembic/script.py.mako", "r") as f:
+        mako = f.read()
+        mako = mako.replace("import sqlalchemy as sa",
+                            "import sqlalchemy as sa\nimport sqlmodel")
+    with open(".alembic/script.py.mako", "w") as f:
+        f.write(mako)
 
 
 def migrate(msg: str = None):
