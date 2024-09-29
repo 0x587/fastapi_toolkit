@@ -275,7 +275,7 @@ class CodeGenerator:
         fields = []
         for name, field in schema.model_fields.items():
             # TODO
-            if name[:2] == 'fk':
+            if name[:2] == 'fk' or name in ['id', 'created_at', 'updated_at', 'deleted_at']:
                 continue
             fields.append(
                 Field(name=self._name_info(name),

@@ -1,6 +1,6 @@
 # generate_hash: 801c27cfae12a4660881ec20b0ab9f51
 """
-This file was automatically generated in 2024-09-29 00:28:32.167796
+This file was automatically generated in 2024-09-29 11:10:40.298569
 """
 from app.setting import get_settings
 

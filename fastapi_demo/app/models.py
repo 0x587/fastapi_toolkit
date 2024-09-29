@@ -4,10 +4,7 @@ from sqlmodel import SQLModel, Field, Relationship
 from fastapi_toolkit.define.model import Schema
 
 
-
 class User(Schema, table=True):
-    id: int = Field(primary_key=True)
-
     sex: bool = Field(default=True)
     title: str
     name: str
@@ -22,8 +19,6 @@ class User(Schema, table=True):
 
 
 class InfoBlock(Schema, table=True):
-    id: int = Field(primary_key=True)
-
     type: str
     title: str
     sub_title: str
@@ -40,8 +35,6 @@ class InfoBlock(Schema, table=True):
 
 
 class CertifiedRecord(Schema, table=True):
-    id: int = Field(primary_key=True)
-
     fk_user_id: Optional[int] = Field(default=None, foreign_key="user.id")
     user: User | None = Relationship(back_populates='certified_records')
 

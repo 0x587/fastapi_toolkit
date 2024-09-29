@@ -9,7 +9,8 @@ from fastapi import Depends, Body, Response, HTTPException, status
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
-from sqlalchemy import select, Select
+from sqlalchemy import Select
+from sqlmodel import select
 from sqlalchemy.orm import joinedload, selectinload
 from ..db import get_db_sync as get_db
 from ..models import *
@@ -25,9 +26,9 @@ def get_one({{ s_name }}_ident: int, db=Depends(get_db)) -> {{ name }}:
     raise NOT_FOUND
 
 
-def batch_get({{ s_name }}_idents: List[int], db=Depends(get_db)) -> Page[{{ name }}]:
+def batch_get({{ s_name }}_idents: List[int], db=Depends(get_db)) -> List[{{ name }}]:
     query = select({{ name }}).filter({{ name }}.deleted_at.is_(None)).filter({{ name }}.id.in_({{ s_name }}_idents))
-    return paginate(db, query)
+    return db.scalars(query).all()
 
 class QueryParams(BaseModel):
     class SortParams(BaseModel):
@@ -41,27 +42,27 @@ class QueryParams(BaseModel):
 
     {% for field in model.fields %}
     {% if field.type.nullable %}
-    {{field.name.snake}}: {{field.type.python_type}} = None,
+    {{field.name.snake}}: {{field.type.python_type}} = None
     {% if field.type.python_type == 'str' or field.type.python_type == 'Optional[str]' %}
-    {{field.name.snake}}_like: {{field.type.python_type}} = None,
+    {{field.name.snake}}_like: {{field.type.python_type}} = None
     {% endif %}
     {% else %}
-    {{field.name.snake}}: Optional[{{field.type.python_type}}] = None,
+    {{field.name.snake}}: Optional[{{field.type.python_type}}] = None
     {% if field.type.python_type == 'str' or field.type.python_type == 'Optional[str]' %}
-    {{field.name.snake}}_like: Optional[{{field.type.python_type}}] = None,
+    {{field.name.snake}}_like: Optional[{{field.type.python_type}}] = None
     {% endif %}
     {% endif %}
     {% endfor %}
     sort_by: List[SortParams] = Field(default_factory=list)
 
 def get_all_query(params: QueryParams = Body()) -> Select:
-    query = select({{ name }}).filter({{ name }}.deleted_at.is_(None))
+    query = select({{ name }}).where({{ name }}.deleted_at.is_(None))
     {% for field in model.fields %}
     if params.{{field.name.snake}} is not None:
-        query = query.filter({{ name }}.{{field.name.snake}}.__eq__(params.{{field.name.snake}}))
+        query = query.where({{ name }}.{{field.name.snake}} == params.{{field.name.snake}})
     {% if field.type.python_type == 'str' %}
     if params.{{field.name.snake}}_like is not None:
-        query = query.filter({{ name }}.{{field.name.snake}}.like(params.{{field.name.snake}}_like))
+        query = query.where({{ name }}.{{field.name.snake}}.like(params.{{field.name.snake}}_like))
     {% endif %}
     {% endfor %}
     for sort_item in params.sort_by:

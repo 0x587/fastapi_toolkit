@@ -1,6 +1,6 @@
-# generate_hash: 4054ee6cc21413dbe185fa7f3b67f81e
+# generate_hash: 8ab0e496bf95375f950919cc2feaf379
 """
-This file was automatically generated in 2024-09-29 00:28:32.145413
+This file was automatically generated in 2024-09-29 11:10:40.279929
 """
 from enum import Enum
 from typing import List, Optional
@@ -9,7 +9,8 @@ from fastapi import Depends, Body, Response, HTTPException, status
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
-from sqlalchemy import select, Select
+from sqlalchemy import Select
+from sqlmodel import select
 from sqlalchemy.orm import joinedload, selectinload
 from ..db import get_db_sync as get_db
 from ..models import *
@@ -25,14 +26,13 @@ def get_one(info_block_ident: int, db=Depends(get_db)) -> InfoBlock:
     raise NOT_FOUND
 
 
-def batch_get(info_block_idents: List[int], db=Depends(get_db)) -> Page[InfoBlock]:
+def batch_get(info_block_idents: List[int], db=Depends(get_db)) -> List[InfoBlock]:
     query = select(InfoBlock).filter(InfoBlock.deleted_at.is_(None)).filter(InfoBlock.id.in_(info_block_idents))
-    return paginate(db, query)
+    return db.scalars(query).all()
 
 class QueryParams(BaseModel):
     class SortParams(BaseModel):
         class StorFieldEnum(str, Enum):
-            id = "id"
             type = "type"
             title = "title"
             sub_title = "sub_title"
@@ -45,50 +45,47 @@ class QueryParams(BaseModel):
         field: StorFieldEnum
         is_desc: bool = False
 
-    id: Optional[int] = None,
-    type: Optional[str] = None,
-    type_like: Optional[str] = None,
-    title: Optional[str] = None,
-    title_like: Optional[str] = None,
-    sub_title: Optional[str] = None,
-    sub_title_like: Optional[str] = None,
-    tags: Optional[str] = None,
-    tags_like: Optional[str] = None,
-    show: Optional[bool] = None,
-    desc: Optional[str] = None,
-    desc_like: Optional[str] = None,
-    time_start: Optional[datetime.date] = None,
-    time_end: Optional[datetime.date] = None,
+    type: Optional[str] = None
+    type_like: Optional[str] = None
+    title: Optional[str] = None
+    title_like: Optional[str] = None
+    sub_title: Optional[str] = None
+    sub_title_like: Optional[str] = None
+    tags: Optional[str] = None
+    tags_like: Optional[str] = None
+    show: Optional[bool] = None
+    desc: Optional[str] = None
+    desc_like: Optional[str] = None
+    time_start: Optional[datetime.date] = None
+    time_end: Optional[datetime.date] = None
     sort_by: List[SortParams] = Field(default_factory=list)
 
 def get_all_query(params: QueryParams = Body()) -> Select:
-    query = select(InfoBlock).filter(InfoBlock.deleted_at.is_(None))
-    if params.id is not None:
-        query = query.filter(InfoBlock.id.__eq__(params.id))
+    query = select(InfoBlock).where(InfoBlock.deleted_at.is_(None))
     if params.type is not None:
-        query = query.filter(InfoBlock.type.__eq__(params.type))
+        query = query.where(InfoBlock.type == params.type)
     if params.type_like is not None:
-        query = query.filter(InfoBlock.type.like(params.type_like))
+        query = query.where(InfoBlock.type.like(params.type_like))
     if params.title is not None:
-        query = query.filter(InfoBlock.title.__eq__(params.title))
+        query = query.where(InfoBlock.title == params.title)
     if params.title_like is not None:
-        query = query.filter(InfoBlock.title.like(params.title_like))
+        query = query.where(InfoBlock.title.like(params.title_like))
     if params.sub_title is not None:
-        query = query.filter(InfoBlock.sub_title.__eq__(params.sub_title))
+        query = query.where(InfoBlock.sub_title == params.sub_title)
     if params.sub_title_like is not None:
-        query = query.filter(InfoBlock.sub_title.like(params.sub_title_like))
+        query = query.where(InfoBlock.sub_title.like(params.sub_title_like))
     if params.tags is not None:
-        query = query.filter(InfoBlock.tags.__eq__(params.tags))
+        query = query.where(InfoBlock.tags == params.tags)
     if params.tags_like is not None:
-        query = query.filter(InfoBlock.tags.like(params.tags_like))
+        query = query.where(InfoBlock.tags.like(params.tags_like))
     if params.show is not None:
-        query = query.filter(InfoBlock.show.__eq__(params.show))
+        query = query.where(InfoBlock.show == params.show)
     if params.desc is not None:
-        query = query.filter(InfoBlock.desc.__eq__(params.desc))
+        query = query.where(InfoBlock.desc == params.desc)
     if params.time_start is not None:
-        query = query.filter(InfoBlock.time_start.__eq__(params.time_start))
+        query = query.where(InfoBlock.time_start == params.time_start)
     if params.time_end is not None:
-        query = query.filter(InfoBlock.time_end.__eq__(params.time_end))
+        query = query.where(InfoBlock.time_end == params.time_end)
     for sort_item in params.sort_by:
         if sort_item.is_desc:
             query = query.order_by(getattr(InfoBlock, sort_item.field).desc())
@@ -115,7 +112,6 @@ def create_one_model(model: InfoBlock, db=Depends(get_db)) -> InfoBlock:
     return info_block
 
 def create_one(
-        id: int,
         type: str,
         title: str,
         sub_title: str,
@@ -127,7 +123,6 @@ def create_one(
         db=Depends(get_db)
 ) -> InfoBlock:
     info_block = InfoBlock(
-        id=id,
         type=type,
         title=title,
         sub_title=sub_title,
@@ -143,7 +138,6 @@ def create_one(
 # -----------------------Update Routes------------------------
 def update_one(
         info_block_ident: int,
-        id: Optional[int] = None,
         type: Optional[str] = None,
         title: Optional[str] = None,
         sub_title: Optional[str] = None,
@@ -156,8 +150,6 @@ def update_one(
     res = db.get(InfoBlock, info_block_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
-    if id is not None:
-        res.id = id
     if type is not None:
         res.type = type
     if title is not None:

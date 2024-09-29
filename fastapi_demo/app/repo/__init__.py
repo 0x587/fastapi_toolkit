@@ -1,14 +1,7 @@
-# generate_hash: 20a4bbd0614f76471e00682db92ff0c6
+# generate_hash: b123a798e3ffc0f13a2da733089fca65
 """
-This file was automatically generated in 2024-09-29 00:28:32.153381
+This file was automatically generated in 2024-09-29 11:10:40.283215
 """
-import inner_code.repo.user_repo as user_repo
-import inner_code.repo.info_block_repo as info_block_repo
-import inner_code.repo.certified_record_repo as certified_record_repo
-from ..schemas import , , 
-
-repo_map = {
-    : user_repo,
-    : info_block_repo,
-    : certified_record_repo,
-}
+import app.repo.user_repo as user_repo
+import app.repo.info_block_repo as info_block_repo
+import app.repo.certified_record_repo as certified_record_repo

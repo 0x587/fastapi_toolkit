@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Type, List
 from abc import ABC, abstractmethod
 from fastapi import APIRouter
 from fastapi_pagination import Page
@@ -32,7 +32,7 @@ class BaseRouter(APIRouter, ABC):
             self.add_api_route(
                 path="/batch_get",
                 endpoint=self._batch_get(),
-                response_model=Page[self.schema],
+                response_model=List[self.schema],
                 methods=["POST"],
                 dependencies=config.get_one.guards,
                 summary=f"Batch get {self.snake_name}",

@@ -1,4 +1,4 @@
-import app.models
+import models
 from sqlmodel import Field, SQLModel, create_engine
 from fastapi_toolkit.generate import CodeGenerator
 
@@ -17,3 +17,4 @@ g.generate_router()
 g._generate_auth('key')
 g.generate_db()
 g.generate_dev()
+g._generate_config()
