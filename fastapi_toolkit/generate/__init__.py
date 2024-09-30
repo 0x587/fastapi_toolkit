@@ -525,9 +525,18 @@ class CodeGenerator:
     #             cruds=map(lambda x: x.name.snake + '_crud', self.model_render_data.values())))
     def check_git(self):
         import git
+        import datetime
         repo = git.Repo('./')
-        if repo.is_dirty():
-            raise ValueError('git is dirty')
+        new_head = repo.create_head(f'toolkit_{datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")}', repo.head)
+        new_head.checkout()
+
+    def done_git(self):
+        import git
+        repo = git.Repo('./')
+        files = repo.untracked_files
+        files += list(map(lambda x: x.a_path, repo.index.diff(None)))
+        repo.index.add(files)
+        repo.index.commit('toolkit gen')
 
     def generate(self):
         self.check_git()
@@ -538,6 +547,7 @@ class CodeGenerator:
         self.generate_db()
         self.generate_dev()
         self._generate_config()
+        self.done_git()
 
     # def generate_api(self, name):
     #     self._generate_apis(name)
