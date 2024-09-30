@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi_toolkit.base.auth.key import Auth
 
-from ..schemas import SchemaBaseUser
+from ..models import User
 
 
 class AuthRouter(APIRouter):
@@ -15,7 +15,7 @@ class AuthRouter(APIRouter):
             methods=['GET'])
 
     def _get_me(self):
-        async def get_me(current_user=Depends(self.auth.require_user())) -> SchemaBaseUser:
+        async def get_me(current_user=Depends(self.auth.require_user())) -> User:
             return current_user
 
         return get_me

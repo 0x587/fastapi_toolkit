@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastapi_toolkit_shawn587"
-version = "0.2.3.4"
+version = "0.3.0.1"
 authors = ["0x587 <shawnsiu@outlook.com>"]
 description = "This toolkit can generate database CRUD operations based on defined metadata in one click, basic fastapi routing and mock data scripts."
 readme = "README.md"
@@ -29,8 +29,6 @@ alembic = "^1.12.1"
 uvicorn = "^0.24.0.post1"
 sqlmodel = "^0.0.22"
 pymysql = "^1.1.1"
-
-[tool.poetry.group.dev.dependencies]
 httpx = "^0.27.2"
 pytest = "^8.3.3"
 polyfactory = "^2.17.0"
