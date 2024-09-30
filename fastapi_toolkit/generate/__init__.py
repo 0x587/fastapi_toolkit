@@ -523,18 +523,20 @@ class CodeGenerator:
     #         self._generate_file(path, self._from_template(
     #             'api/main.py.j2', crd=crd,
     #             cruds=map(lambda x: x.name.snake + '_crud', self.model_render_data.values())))
+    def check_git(self):
+        import git
+        repo = git.Repo('./')
+        if repo.is_dirty():
+            raise ValueError('git is dirty')
 
-    def generate(self, table: bool = True, router: bool = True, mock: bool = True, auth: str = ""):
-        # self._generate_custom_types()
-        if table:
-            self._generate_tables(auth_type=auth)
-        if router:
-            self._generate_routers()
-        # if mock:
-        #     self._generate_mock()
-        if auth != "":
-            self._generate_auth(mode=auth)
-        # self._generate_apis()
+    def generate(self):
+        self.check_git()
+        self.parse()
+        self.generate_repo()
+        self.generate_router()
+        self._generate_auth('key')
+        self.generate_db()
+        self.generate_dev()
         self._generate_config()
 
     # def generate_api(self, name):
