@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Callable
 from pydantic import BaseModel, Field
 from fastapi import Depends, Body, Response, HTTPException, status
 from fastapi_pagination import Page
@@ -13,18 +13,63 @@ from ..models import *
 
 NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item Not found")
 
+class InfoBlockTrigger:
+    on_access_funcs: List[Callable[[InfoBlock], None]] = []
+    on_create_funcs: List[Callable[[InfoBlock], None]] = []
+    on_update_funcs: List[Callable[[InfoBlock], None]] = []
+    on_delete_funcs: List[Callable[[InfoBlock], None]] = []
+
+    @staticmethod
+    def register_on_access(f: Callable[[InfoBlock], None]):
+        InfoBlockTrigger.on_access_funcs.append(f)
+
+    @staticmethod
+    def register_on_create(f: Callable[[InfoBlock], None]):
+        InfoBlockTrigger.on_create_funcs.append(f)
+
+    @staticmethod
+    def register_on_update(f: Callable[[InfoBlock], None]):
+        InfoBlockTrigger.on_update_funcs.append(f)
+
+    @staticmethod
+    def register_on_delete(f: Callable[[InfoBlock], None]):
+        InfoBlockTrigger.on_delete_funcs.append(f)
+
+    @staticmethod
+    def on_access(item: InfoBlock):
+        for f in InfoBlockTrigger.on_access_funcs:
+            f(item)
+
+    @staticmethod
+    def on_create(item: InfoBlock):
+        for f in InfoBlockTrigger.on_create_funcs:
+            f(item)
+
+    @staticmethod
+    def on_update(item: InfoBlock):
+        for f in InfoBlockTrigger.on_update_funcs:
+            f(item)
+
+    @staticmethod
+    def on_delete(item: InfoBlock):
+        for f in InfoBlockTrigger.on_delete_funcs:
+            f(item)
 
 # ------------------------Query Routes------------------------
 def get_one(info_block_ident: int, db=Depends(get_db)) -> InfoBlock:
     res = db.get(InfoBlock, info_block_ident)
     if res and res.deleted_at is None:
+        InfoBlockTrigger.on_access(res)
         return res
     raise NOT_FOUND
 
 
 def batch_get(info_block_idents: List[int], db=Depends(get_db)) -> List[InfoBlock]:
     query = select(InfoBlock).filter(InfoBlock.deleted_at.is_(None)).filter(InfoBlock.id.in_(info_block_idents))
-    return db.scalars(query).all()
+    res = db.scalars(query).all()
+    for r in res:
+        InfoBlockTrigger.on_access(r)
+    return res
 
 class QueryParams(BaseModel):
     class SortParams(BaseModel):
@@ -94,7 +139,10 @@ def get_all(
         query=Depends(get_all_query),
         db=Depends(get_db),
 ) -> Page[InfoBlock]:
-    return paginate(db, query)
+    res = paginate(db, query)
+    for r in res.items:
+        InfoBlockTrigger.on_access(r)
+    return res
 
 # ---------------------User Query Routes----------------------
 
@@ -105,6 +153,7 @@ def create_one_model(model: InfoBlock, db=Depends(get_db)) -> InfoBlock:
     db.add(info_block)
     db.commit()
     db.refresh(info_block)
+    InfoBlockTrigger.on_create(info_block)
     return info_block
 
 def create_one(
@@ -165,6 +214,7 @@ def update_one(
     res.updated_at = datetime.datetime.now()
     db.commit()
     db.refresh(res)
+    InfoBlockTrigger.on_update(res)
     return InfoBlock.model_validate(res)
 
 
@@ -173,9 +223,9 @@ def delete_one(info_block_ident: int, db=Depends(get_db)):
     res = db.get(InfoBlock, info_block_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
-# TODO
     res.deleted_at = datetime.datetime.now()
     db.commit()
+    InfoBlockTrigger.on_delete(res)
     return {'message': 'Deleted', 'id': info_block_ident}
 
 

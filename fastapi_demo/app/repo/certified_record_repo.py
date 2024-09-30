@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Callable
 from pydantic import BaseModel, Field
 from fastapi import Depends, Body, Response, HTTPException, status
 from fastapi_pagination import Page
@@ -13,18 +13,63 @@ from ..models import *
 
 NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item Not found")
 
+class CertifiedRecordTrigger:
+    on_access_funcs: List[Callable[[CertifiedRecord], None]] = []
+    on_create_funcs: List[Callable[[CertifiedRecord], None]] = []
+    on_update_funcs: List[Callable[[CertifiedRecord], None]] = []
+    on_delete_funcs: List[Callable[[CertifiedRecord], None]] = []
+
+    @staticmethod
+    def register_on_access(f: Callable[[CertifiedRecord], None]):
+        CertifiedRecordTrigger.on_access_funcs.append(f)
+
+    @staticmethod
+    def register_on_create(f: Callable[[CertifiedRecord], None]):
+        CertifiedRecordTrigger.on_create_funcs.append(f)
+
+    @staticmethod
+    def register_on_update(f: Callable[[CertifiedRecord], None]):
+        CertifiedRecordTrigger.on_update_funcs.append(f)
+
+    @staticmethod
+    def register_on_delete(f: Callable[[CertifiedRecord], None]):
+        CertifiedRecordTrigger.on_delete_funcs.append(f)
+
+    @staticmethod
+    def on_access(item: CertifiedRecord):
+        for f in CertifiedRecordTrigger.on_access_funcs:
+            f(item)
+
+    @staticmethod
+    def on_create(item: CertifiedRecord):
+        for f in CertifiedRecordTrigger.on_create_funcs:
+            f(item)
+
+    @staticmethod
+    def on_update(item: CertifiedRecord):
+        for f in CertifiedRecordTrigger.on_update_funcs:
+            f(item)
+
+    @staticmethod
+    def on_delete(item: CertifiedRecord):
+        for f in CertifiedRecordTrigger.on_delete_funcs:
+            f(item)
 
 # ------------------------Query Routes------------------------
 def get_one(certified_record_ident: int, db=Depends(get_db)) -> CertifiedRecord:
     res = db.get(CertifiedRecord, certified_record_ident)
     if res and res.deleted_at is None:
+        CertifiedRecordTrigger.on_access(res)
         return res
     raise NOT_FOUND
 
 
 def batch_get(certified_record_idents: List[int], db=Depends(get_db)) -> List[CertifiedRecord]:
     query = select(CertifiedRecord).filter(CertifiedRecord.deleted_at.is_(None)).filter(CertifiedRecord.id.in_(certified_record_idents))
-    return db.scalars(query).all()
+    res = db.scalars(query).all()
+    for r in res:
+        CertifiedRecordTrigger.on_access(r)
+    return res
 
 class QueryParams(BaseModel):
     class SortParams(BaseModel):
@@ -74,7 +119,10 @@ def get_all(
         query=Depends(get_all_query),
         db=Depends(get_db),
 ) -> Page[CertifiedRecord]:
-    return paginate(db, query)
+    res = paginate(db, query)
+    for r in res.items:
+        CertifiedRecordTrigger.on_access(r)
+    return res
 
 # ---------------------User Query Routes----------------------
 
@@ -85,6 +133,7 @@ def create_one_model(model: CertifiedRecord, db=Depends(get_db)) -> CertifiedRec
     db.add(certified_record)
     db.commit()
     db.refresh(certified_record)
+    CertifiedRecordTrigger.on_create(certified_record)
     return certified_record
 
 def create_one(
@@ -125,6 +174,7 @@ def update_one(
     res.updated_at = datetime.datetime.now()
     db.commit()
     db.refresh(res)
+    CertifiedRecordTrigger.on_update(res)
     return CertifiedRecord.model_validate(res)
 
 
@@ -133,9 +183,9 @@ def delete_one(certified_record_ident: int, db=Depends(get_db)):
     res = db.get(CertifiedRecord, certified_record_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
-# TODO
     res.deleted_at = datetime.datetime.now()
     db.commit()
+    CertifiedRecordTrigger.on_delete(res)
     return {'message': 'Deleted', 'id': certified_record_ident}
 
 

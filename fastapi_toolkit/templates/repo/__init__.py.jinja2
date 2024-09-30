@@ -1,4 +1,5 @@
 {% for model in models %}
 import app.repo.{{ model.name.snake }}_repo as {{ model.name.snake }}_repo
+from app.repo.{{ model.name.snake }}_repo import {{ model.name.origin }}Trigger
 {% endfor %}
 {#from ..schemas import {{ models | map(attribute="name.base_schema") | join(', ')}}#}

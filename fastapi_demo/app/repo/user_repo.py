@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Callable
 from pydantic import BaseModel, Field
 from fastapi import Depends, Body, Response, HTTPException, status
 from fastapi_pagination import Page
@@ -13,18 +13,63 @@ from ..models import *
 
 NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item Not found")
 
+class UserTrigger:
+    on_access_funcs: List[Callable[[User], None]] = []
+    on_create_funcs: List[Callable[[User], None]] = []
+    on_update_funcs: List[Callable[[User], None]] = []
+    on_delete_funcs: List[Callable[[User], None]] = []
+
+    @staticmethod
+    def register_on_access(f: Callable[[User], None]):
+        UserTrigger.on_access_funcs.append(f)
+
+    @staticmethod
+    def register_on_create(f: Callable[[User], None]):
+        UserTrigger.on_create_funcs.append(f)
+
+    @staticmethod
+    def register_on_update(f: Callable[[User], None]):
+        UserTrigger.on_update_funcs.append(f)
+
+    @staticmethod
+    def register_on_delete(f: Callable[[User], None]):
+        UserTrigger.on_delete_funcs.append(f)
+
+    @staticmethod
+    def on_access(item: User):
+        for f in UserTrigger.on_access_funcs:
+            f(item)
+
+    @staticmethod
+    def on_create(item: User):
+        for f in UserTrigger.on_create_funcs:
+            f(item)
+
+    @staticmethod
+    def on_update(item: User):
+        for f in UserTrigger.on_update_funcs:
+            f(item)
+
+    @staticmethod
+    def on_delete(item: User):
+        for f in UserTrigger.on_delete_funcs:
+            f(item)
 
 # ------------------------Query Routes------------------------
 def get_one(user_ident: int, db=Depends(get_db)) -> User:
     res = db.get(User, user_ident)
     if res and res.deleted_at is None:
+        UserTrigger.on_access(res)
         return res
     raise NOT_FOUND
 
 
 def batch_get(user_idents: List[int], db=Depends(get_db)) -> List[User]:
     query = select(User).filter(User.deleted_at.is_(None)).filter(User.id.in_(user_idents))
-    return db.scalars(query).all()
+    res = db.scalars(query).all()
+    for r in res:
+        UserTrigger.on_access(r)
+    return res
 
 class QueryParams(BaseModel):
     class SortParams(BaseModel):
@@ -94,7 +139,10 @@ def get_all(
         query=Depends(get_all_query),
         db=Depends(get_db),
 ) -> Page[User]:
-    return paginate(db, query)
+    res = paginate(db, query)
+    for r in res.items:
+        UserTrigger.on_access(r)
+    return res
 
 # ---------------------User Query Routes----------------------
 
@@ -105,6 +153,7 @@ def create_one_model(model: User, db=Depends(get_db)) -> User:
     db.add(user)
     db.commit()
     db.refresh(user)
+    UserTrigger.on_create(user)
     return user
 
 def create_one(
@@ -165,6 +214,7 @@ def update_one(
     res.updated_at = datetime.datetime.now()
     db.commit()
     db.refresh(res)
+    UserTrigger.on_update(res)
     return User.model_validate(res)
 
 
@@ -173,9 +223,9 @@ def delete_one(user_ident: int, db=Depends(get_db)):
     res = db.get(User, user_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
-# TODO
     res.deleted_at = datetime.datetime.now()
     db.commit()
+    UserTrigger.on_delete(res)
     return {'message': 'Deleted', 'id': user_ident}
 
 

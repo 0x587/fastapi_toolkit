@@ -28,17 +28,17 @@ class InfoBlock(Schema, table=True):
     time_start: Optional[datetime.date]
     time_end: Optional[datetime.date]
 
-    fk_user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    fk_user_id: Optional[int] = Field(default=None, foreign_key="user.id", exclude=True)
     user: User | None = Relationship(back_populates='info_blocks')
 
     certified_records: List['CertifiedRecord'] = Relationship(back_populates='info_block')
 
 
 class CertifiedRecord(Schema, table=True):
-    fk_user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    fk_user_id: Optional[int] = Field(default=None, foreign_key="user.id", exclude=True)
     user: User | None = Relationship(back_populates='certified_records')
 
-    fk_info_block_id: Optional[int] = Field(default=None, foreign_key="infoblock.id")
+    fk_info_block_id: Optional[int] = Field(default=None, foreign_key="infoblock.id", exclude=True)
     info_block: InfoBlock = Relationship(back_populates='certified_records')
 
     done: bool

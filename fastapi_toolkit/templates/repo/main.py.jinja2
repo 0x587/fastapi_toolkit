@@ -3,9 +3,9 @@
 {#{% set router = s_name + "_router" %}#}
 {#{% set just_one_pk = metadata.model.pk|length == 1 %}#}
 {#{% set pk_type = (metadata.model.pk.values()|list)[0].python_type_str %}#}from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Callable
 from pydantic import BaseModel, Field
-from fastapi import Depends, Body, Response, HTTPException, status
+from fastapi import Depends, Body, HTTPException, status
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 import datetime
@@ -18,17 +18,63 @@ from ..models import *
 NOT_FOUND = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Item Not found")
 
 
+class {{ name }}Trigger:
+    on_access_funcs: List[Callable[[{{ name }}], None]] = []
+    on_create_funcs: List[Callable[[{{ name }}], None]] = []
+    on_update_funcs: List[Callable[[{{ name }}], None]] = []
+    on_delete_funcs: List[Callable[[{{ name }}], None]] = []
+
+    @staticmethod
+    def register_on_access(f: Callable[[{{ name }}], None]):
+        {{ name }}Trigger.on_access_funcs.append(f)
+
+    @staticmethod
+    def register_on_create(f: Callable[[{{ name }}], None]):
+        {{ name }}Trigger.on_create_funcs.append(f)
+
+    @staticmethod
+    def register_on_update(f: Callable[[{{ name }}], None]):
+        {{ name }}Trigger.on_update_funcs.append(f)
+
+    @staticmethod
+    def register_on_delete(f: Callable[[{{ name }}], None]):
+        {{ name }}Trigger.on_delete_funcs.append(f)
+
+    @staticmethod
+    def on_access(item: {{ name }}):
+        for f in {{ name }}Trigger.on_access_funcs:
+            f(item)
+
+    @staticmethod
+    def on_create(item: {{ name }}):
+        for f in {{ name }}Trigger.on_create_funcs:
+            f(item)
+
+    @staticmethod
+    def on_update(item: {{ name }}):
+        for f in {{ name }}Trigger.on_update_funcs:
+            f(item)
+
+    @staticmethod
+    def on_delete(item: {{ name }}):
+        for f in {{ name }}Trigger.on_delete_funcs:
+            f(item)
+
 # ------------------------Query Routes------------------------
 def get_one({{ s_name }}_ident: int, db=Depends(get_db)) -> {{ name }}:
     res = db.get({{ name }}, {{ s_name }}_ident)
     if res and res.deleted_at is None:
+        {{ name }}Trigger.on_access(res)
         return res
     raise NOT_FOUND
 
 
 def batch_get({{ s_name }}_idents: List[int], db=Depends(get_db)) -> List[{{ name }}]:
     query = select({{ name }}).filter({{ name }}.deleted_at.is_(None)).filter({{ name }}.id.in_({{ s_name }}_idents))
-    return db.scalars(query).all()
+    res = db.scalars(query).all()
+    for r in res:
+        {{ name }}Trigger.on_access(r)
+    return res
 
 class QueryParams(BaseModel):
     class SortParams(BaseModel):
@@ -77,7 +123,10 @@ def get_all(
         query=Depends(get_all_query),
         db=Depends(get_db),
 ) -> Page[{{ name }}]:
-    return paginate(db, query)
+    res = paginate(db, query)
+    for r in res.items:
+        {{ name }}Trigger.on_access(r)
+    return res
 
 # ---------------------User Query Routes----------------------
 
@@ -88,7 +137,9 @@ def create_one_model(model: {{ name }}, db=Depends(get_db)) -> {{ name }}:
     db.add({{ s_name }})
     db.commit()
     db.refresh({{ s_name }})
+    {{ name }}Trigger.on_create({{ s_name }})
     return {{ s_name }}
+
 
 def create_one(
         {% for field in model.fields %}
@@ -129,6 +180,7 @@ def update_one(
     res.updated_at = datetime.datetime.now()
     db.commit()
     db.refresh(res)
+    {{ name }}Trigger.on_update(res)
     return {{ name }}.model_validate(res)
 
 
@@ -137,20 +189,9 @@ def delete_one({{ s_name }}_ident: int, db=Depends(get_db)):
     res = db.get({{ name }}, {{ s_name }}_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
-# TODO
-{#    {% if model.links %}#}
-{#    {% for link in model.links %}#}
-{#    {% if link.t1 == 'one' %}#}
-{#    res_type.{{ link.m2.name.snake }} = None#}
-{#    {% else %}#}
-{#    for i in await res_type.awaitable_attrs.{{ link.m2.name.snake_plural }}:#}
-{#        await db.delete(i)#}
-{#    {% endif %}#}
-{#    {% endfor %}#}
-{#    await db.commit()#}
-{#    {% endif %}#}
     res.deleted_at = datetime.datetime.now()
     db.commit()
+    {{ name }}Trigger.on_delete(res)
     return {'message': 'Deleted', 'id': {{ s_name }}_ident}
 
 

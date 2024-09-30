@@ -18,3 +18,5 @@ g._generate_auth('key')
 g.generate_db()
 g.generate_dev()
 g._generate_config()
+
+from polyfactory.factories.sqlalchemy_factory import SQLAlchemyFactory
