@@ -108,7 +108,7 @@ class CodeGenerator:
 
     def _generate_file(self, path, func: GENERATE_FUNC):
         content = func()
-        generate_hash = hashlib.md5(content.encode('utf8')).hexdigest()
+        # generate_hash = hashlib.md5(content.encode('utf8')).hexdigest()
         # if os.path.exists(path):
         #     with open(path, 'r') as f:
         #         line = f.readline()
@@ -124,11 +124,14 @@ class CodeGenerator:
         #                 f'file {path} has been changed or is out of date, do you want to overwrite it?')
         #             if not overwrite:
         #                 return
+        d, f = os.path.split(path)
+        if not os.path.exists(d):
+            os.mkdir(d)
         with open(path, 'w') as f:
-            f.write(f'# generate_hash: {generate_hash}\n')
-            f.write(f'"""\n'
-                    f'This file was automatically generated in {datetime.datetime.now()}\n'
-                    f'"""\n')
+            # f.write(f'# generate_hash: {generate_hash}\n')
+            # f.write(f'"""\n'
+            #         f'This file was automatically generated in {datetime.datetime.now()}\n'
+            #         f'"""\n')
             f.write(content)
 
     def parse(self):
@@ -448,6 +451,10 @@ class CodeGenerator:
                 os.path.join(self.crud_path, f'{model.name.snake}_repo.py'),
                 self._from_template(f'repo/main.py.jinja2',
                                     model=model))
+            self._generate_file(
+                os.path.join(self.crud_path, f'test/{model.name.snake}_repo_test.py'),
+                self._from_template(f'repo/test.py.jinja2',
+                                    model=model))
         self._generate_file(
             os.path.join(self.crud_path, '__init__.py'),
             self._from_template(f'repo/__init__.py.jinja2',
@@ -481,13 +488,13 @@ class CodeGenerator:
             models=models,
         ))
 
-    def _generate_mock(self):
-        self._generate_file(
-            os.path.join(self.root_path, 'mock.py'), self._from_template(
-                'mock.py.j2',
-                deps=self.mock_dependency,
-                mock_root=self.mock_root,
-                models=self.model_render_data.values()))
+    # def _generate_mock(self):
+    #     self._generate_file(
+    #         os.path.join(self.root_path, 'mock.py'), self._from_template(
+    #             'mock.py.j2',
+    #             deps=self.mock_dependency,
+    #             mock_root=self.mock_root,
+    #             models=self.model_render_data.values()))
 
     def _generate_auth(self, mode: str):
         user_model = self.model_render_data['User']
@@ -502,23 +509,23 @@ class CodeGenerator:
         self._generate_file(os.path.join(self.root_path, 'config.py'), self._from_template(
             'config.py.j2', models=self.model_render_data.values()))
 
-    def _generate_custom_types(self):
-        self._generate_file(os.path.join(self.root_path, 'custom_types.py'), self._from_template(
-            'custom_types.py.j2', custom_types=self.custom_types))
+    # def _generate_custom_types(self):
+    #     self._generate_file(os.path.join(self.root_path, 'custom_types.py'), self._from_template(
+    #         'custom_types.py.j2', custom_types=self.custom_types))
 
-    def _generate_apis(self, name):
-        for crd in self.crds:
-            if name != '' and crd.name.origin.lower() != name.lower():
-                continue
-            path = os.path.join(self.api_path, f'{crd.name.snake}.py')
-            while os.path.exists(path):
-                path = path + '.new'
-            self._generate_file(path, self._from_template(
-                'api/main.py.j2', crd=crd,
-                cruds=map(lambda x: x.name.snake + '_crud', self.model_render_data.values())))
+    # def _generate_apis(self, name):
+    #     for crd in self.crds:
+    #         if name != '' and crd.name.origin.lower() != name.lower():
+    #             continue
+    #         path = os.path.join(self.api_path, f'{crd.name.snake}.py')
+    #         while os.path.exists(path):
+    #             path = path + '.new'
+    #         self._generate_file(path, self._from_template(
+    #             'api/main.py.j2', crd=crd,
+    #             cruds=map(lambda x: x.name.snake + '_crud', self.model_render_data.values())))
 
     def generate(self, table: bool = True, router: bool = True, mock: bool = True, auth: str = ""):
-        self._generate_custom_types()
+        # self._generate_custom_types()
         if table:
             self._generate_tables(auth_type=auth)
         if router:
@@ -530,5 +537,5 @@ class CodeGenerator:
         # self._generate_apis()
         self._generate_config()
 
-    def generate_api(self, name):
-        self._generate_apis(name)
+    # def generate_api(self, name):
+    #     self._generate_apis(name)

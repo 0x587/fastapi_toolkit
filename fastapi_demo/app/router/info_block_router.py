@@ -1,7 +1,3 @@
-# generate_hash: 95ad30a4f57ca0401f98a4d6963be6c5
-"""
-This file was automatically generated in 2024-09-29 11:10:40.287835
-"""
 
 from fastapi_toolkit.base.router import BaseRouter
 

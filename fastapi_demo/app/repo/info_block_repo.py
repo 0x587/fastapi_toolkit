@@ -1,7 +1,3 @@
-# generate_hash: 8ab0e496bf95375f950919cc2feaf379
-"""
-This file was automatically generated in 2024-09-29 11:10:40.279929
-"""
 from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, Field
