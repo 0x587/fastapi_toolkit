@@ -131,6 +131,7 @@ class CodeGenerator:
         self.routers_path = os.path.join(root_path, 'routers')
         self.auth_path = os.path.join(root_path, 'auth')
         self.api_path = os.path.join(root_path, 'api')
+        self.stub_path = os.path.join(root_path, 'stub')
 
         self.force_rewrite = False
         self.show_network = False
@@ -148,6 +149,8 @@ class CodeGenerator:
             os.mkdir(self.auth_path)
         if not os.path.exists(self.api_path):
             os.mkdir(self.api_path)
+        if not os.path.exists(self.stub_path):
+            os.mkdir(self.stub_path)
         self.env = Environment(
             loader=PackageLoader('fastapi_toolkit', 'templates'),
             trim_blocks=True, lstrip_blocks=True)
@@ -521,11 +524,17 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
                                 self._from_template(f'repo/{template_path}main.py.jinja2', model=model))
             self._generate_file(os.path.join(self.routers_path, f'{model.name.snake}_router.py'),
                                 self._from_template('routers/main.py.j2', model=model))
+            self._generate_file(os.path.join(self.stub_path, f'{model.name.snake}_stub.py'),
+                                self._from_template('stub/main.py.jinja2', model=model))
         self._generate_file(os.path.join(self.crud_path, '__init__.py'),
                             self._from_template(f'repo/{template_path}__init__.py.jinja2',
                                                 models=models))
         self._generate_file(os.path.join(self.routers_path, '__init__.py'), self._from_template(
             'routers/init.py.j2',
+            models=models,
+        ))
+        self._generate_file(os.path.join(self.stub_path, '__init__.py'), self._from_template(
+            'stub/__init__.py.jinja2',
             models=models,
         ))
 

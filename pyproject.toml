@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastapi_toolkit_shawn587"
-version = "0.2.3.4"
+version = "0.2.3.6"
 authors = ["0x587 <shawnsiu@outlook.com>"]
 description = "This toolkit can generate database CRUD operations based on defined metadata in one click, basic fastapi routing and mock data scripts."
 readme = "README.md"

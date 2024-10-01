@@ -33,13 +33,13 @@ class AuthRouter(APIRouter):
         return get_user
 
     def _register(self):
-        async def register(user: SchemaBaseUser):
-            return await self.auth.backend.add_user(user)
+        def register(user: SchemaBaseUser):
+            return self.auth.backend.add_user(user)
 
         return register
 
     def _get_me(self):
-        async def get_me(current_user=Depends(self.auth.require_user())) -> SchemaBaseUser:
+        def get_me(current_user=Depends(self.auth.require_user())) -> SchemaBaseUser:
             return current_user
 
         return get_me

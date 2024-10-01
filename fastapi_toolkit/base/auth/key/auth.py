@@ -34,15 +34,15 @@ class UserFullProtocol(UserProtocol):
 class AuthDBBackend(ABC):
 
     @abstractmethod
-    async def get_user(self, user_key: str) -> Optional[UserFullProtocol]:
+    def get_user(self, user_key: str) -> Optional[UserFullProtocol]:
         raise NotImplementedError
 
     @abstractmethod
-    async def add_user(self, create: UserCreateProtocol) -> UserFullProtocol:
+    def add_user(self, create: UserCreateProtocol) -> UserFullProtocol:
         raise NotImplementedError
 
     @abstractmethod
-    async def access(self, user_key: str) -> None:
+    def access(self, user_key: str) -> None:
         raise NotImplementedError
 
 
@@ -70,8 +70,8 @@ class Auth:
         self.SchemaUser = schema_user
         self.SchemaUserFull = schema_user_full
 
-    async def authenticate_user(self, username: str, password: str):
-        user = await self.backend.get_user(username)
+    def authenticate_user(self, username: str, password: str):
+        user = self.backend.get_user(username)
         if not user:
             return False
         return user
@@ -80,13 +80,13 @@ class Auth:
         SchemaUserFull = self.SchemaUserFull
         SchemaUser = self.SchemaUser
 
-        async def _get_current_user(token: str = Depends(self.auth_scheme)) -> SchemaUserFull:
-            user = await self.backend.get_user(token)
+        def _get_current_user(token: str = Depends(self.auth_scheme)) -> SchemaUserFull:
+            user = self.backend.get_user(token)
             if user is None:
                 raise credentials_exception
             return SchemaUserFull.model_validate(user)
 
-        async def func(user=Depends(_get_current_user)) -> SchemaUser:
+        def func(user=Depends(_get_current_user)) -> SchemaUser:
             if is_activate and not user.is_active:
                 raise credentials_exception
 
