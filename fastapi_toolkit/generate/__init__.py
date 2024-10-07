@@ -343,12 +343,12 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
 
     def _make_render_data_field(self, schema: Type[Schema]):
         fh = FieldHelper()
-
+        fields = []
+        for name, field in schema.model_fields.items():
+            fields.append(Field(name=self._name_info(name), alias=self._name_info(field.alias), type=fh.parse(field)))
         m = ModelRenderData(
             name=self._name_info(schema.__name__),
-            fields=[
-                Field(name=self._name_info(name), alias=self._name_info(field.alias), type=fh.parse(field))
-                for name, field in schema.model_fields.items()]
+            fields=fields
         )
         if m.name.origin == 'User':
             m.fields.append(Field(name=self._name_info('user_key'), type=fh.parse_type(str)))

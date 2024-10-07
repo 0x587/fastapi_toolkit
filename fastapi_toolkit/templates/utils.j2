@@ -6,7 +6,7 @@
 {{ field.name.snake }}: {{ field.type.python_type }} = Field(
     {% if field.type.nullable %}
         default=None
-    {% elif field.type.default %}
+    {% elif field.type.default != None %}
         default={{ field.type.default }}
     {% endif %}
     )

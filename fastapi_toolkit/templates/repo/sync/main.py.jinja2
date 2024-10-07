@@ -92,7 +92,7 @@ def create_one_model(model: {{ base_schema }}, db=Depends(get_db)) -> {{ name }}
 
 def create_one(
         {% for field in model.fields %}
-        {% if field.type.default %}
+        {% if field.type.default != None %}
         {{field.name.snake}}: {{field.type.python_type}} = {{ field.type.default }},
         {% else %}
         {{field.name.snake}}: {{field.type.python_type}}{% if field.type.nullable %} = None{% endif %},
