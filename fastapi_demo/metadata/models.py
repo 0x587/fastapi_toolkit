@@ -1,9 +1,9 @@
 import datetime
 from typing import List, Optional
-from fastapi_toolkit.define import Schema, Field
+from fastapi_toolkit.define import Schema, BaseUser, Field
 
 
-class User(Schema):
+class User(BaseUser):
     sex: bool
     title: str
     name: str = Field(index=True)

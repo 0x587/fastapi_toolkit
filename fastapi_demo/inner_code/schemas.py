@@ -1,6 +1,6 @@
-# generate_hash: 1b8282416da50dce3bc1b320f8dd05cf
+# generate_hash: 8f745606501307f87fcee33255a5339f
 """
-This file was automatically generated in 2024-10-10 15:06:33.646480
+This file was automatically generated in 2024-10-10 15:49:18.757815
 """
 import uuid
 import datetime
@@ -19,6 +19,8 @@ class SchemaBaseUser(Schema):
     updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
     """fields"""
+    user_key: str = Field(
+    )
     sex: bool = Field(
     )
     title: str = Field(
@@ -32,8 +34,6 @@ class SchemaBaseUser(Schema):
     hot_level: int = Field(
     )
     star_level: int = Field(
-    )
-    user_key: str = Field(
     )
     avatar: Optional[str] = Field(
         default=None

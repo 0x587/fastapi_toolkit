@@ -5,11 +5,6 @@ from pydantic_core import PydanticUndefined
 from pydantic import BaseModel, Field as PydanticField
 
 
-class Schema(BaseModel):
-    class Config:
-        from_attributes = True
-
-
 def Field(
         default: Any = PydanticUndefined,
         default_factory: typing.Callable[[], Any] | None = None,
@@ -24,3 +19,12 @@ def Field(
             'index': index
         }
     )
+
+
+class Schema(BaseModel):
+    class Config:
+        from_attributes = True
+
+
+class BaseUser(Schema):
+    user_key: str = Field(index=True)

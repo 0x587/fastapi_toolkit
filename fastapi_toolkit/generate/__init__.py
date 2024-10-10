@@ -7,7 +7,7 @@ from collections import defaultdict
 from typing import Callable, Any, Dict, List, Optional, Tuple, Literal, Type
 from jinja2 import Environment, PackageLoader
 from pydantic import BaseModel, Field as PField
-from fastapi_toolkit.define import Schema
+from fastapi_toolkit.define import Schema, BaseUser
 
 from .field_helper import FieldHelper, FieldType, LinkType
 from .sql_mapping import mapping
@@ -137,8 +137,6 @@ class CodeGenerator:
             trim_blocks=True, lstrip_blocks=True)
 
         self.define_schemas: Dict[str, Type[Schema]] = {}
-        self.pydantic_schemas: Dict[str, Type[Schema]] = {}
-        self.links: List[Tuple[Literal["one"] | Literal["many"], Type[Schema], Type[Schema]]] = []
         self.custom_types: List[Dict[str, Any]] = []
         self.association_tables: List[AssociationTable] = []
         self.parse()
@@ -186,7 +184,8 @@ class CodeGenerator:
 
     def _get_schemas(self, root=Schema):
         for model_ in root.__subclasses__():
-            yield model_
+            if model_ is not BaseUser:
+                yield model_
             yield from self._get_schemas(model_)
 
     def _parse_models(self):
@@ -333,10 +332,6 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
             fields=fields,
             indexes=indexes,
         )
-        if m.name.origin == 'User':
-            f = Field(name=self._name_info('user_key'), type=fh.parse_type(str), index=True)
-            m.fields.append(f)
-            m.indexes.append(f)
         return m
 
     @staticmethod

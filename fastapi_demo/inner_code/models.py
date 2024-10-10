@@ -1,6 +1,6 @@
-# generate_hash: a95ffe5e6f82b0fbefad11a583a0ca37
+# generate_hash: 1f6fcf50f1d882d9fb3f4a9659abec3f
 """
-This file was automatically generated in 2024-10-10 15:31:22.024373
+This file was automatically generated in 2024-10-10 15:49:18.751774
 """
 import datetime
 from typing import List, Optional
@@ -20,6 +20,7 @@ class DBUser(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
     updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
 
+    user_key: Mapped[str] = mapped_column(sqltypes.Text, nullable=False, index=True)
     sex: Mapped[bool] = mapped_column(sqltypes.Boolean, nullable=False, index=False)
     title: Mapped[str] = mapped_column(sqltypes.Text, nullable=False, index=False)
     name: Mapped[str] = mapped_column(sqltypes.Text, nullable=False, index=True)
@@ -27,7 +28,6 @@ class DBUser(Base):
     bg_img: Mapped[str] = mapped_column(sqltypes.Text, nullable=False, index=False)
     hot_level: Mapped[int] = mapped_column(sqltypes.Integer, nullable=False, index=False)
     star_level: Mapped[int] = mapped_column(sqltypes.Integer, nullable=False, index=False)
-    user_key: Mapped[str] = mapped_column(sqltypes.Text, nullable=False, index=True)
     avatar: Mapped[Optional[str]] = mapped_column(sqltypes.Text, nullable=True, index=False)
 
     info_blocks: Mapped[List["DBInfoBlock"]] = relationship(

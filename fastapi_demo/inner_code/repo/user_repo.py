@@ -1,6 +1,6 @@
-# generate_hash: f82624fdda333ab3ec50af56fceb8c84
+# generate_hash: 16f3dcb7e078b42e35e6be576b167783
 """
-This file was automatically generated in 2024-10-10 15:39:27.206110
+This file was automatically generated in 2024-10-10 15:49:18.775789
 """
 from enum import Enum
 from typing import List, Optional
@@ -26,13 +26,13 @@ def get_one(user_ident: int, db=Depends(get_db)) -> DBUser:
     raise NOT_FOUND
 
 
-def get_by_name(name: str, db=Depends(get_db)) -> List[DBUser]:
-    query = select(DBUser).filter(DBUser.deleted_at.is_(None)).filter(DBUser.name.__eq__(name))
+def get_by_user_key(user_key: str, db=Depends(get_db)) -> List[DBUser]:
+    query = select(DBUser).filter(DBUser.deleted_at.is_(None)).filter(DBUser.user_key.__eq__(user_key))
     return db.scalars(query)
 
 
-def get_by_user_key(user_key: str, db=Depends(get_db)) -> List[DBUser]:
-    query = select(DBUser).filter(DBUser.deleted_at.is_(None)).filter(DBUser.user_key.__eq__(user_key))
+def get_by_name(name: str, db=Depends(get_db)) -> List[DBUser]:
+    query = select(DBUser).filter(DBUser.deleted_at.is_(None)).filter(DBUser.name.__eq__(name))
     return db.scalars(query)
 
 
@@ -43,6 +43,7 @@ def batch_get(user_idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseUser
 class QueryParams(BaseModel):
     class SortParams(BaseModel):
         class StorFieldEnum(str, Enum):
+            user_key = "user_key"
             sex = "sex"
             title = "title"
             name = "name"
@@ -50,12 +51,13 @@ class QueryParams(BaseModel):
             bg_img = "bg_img"
             hot_level = "hot_level"
             star_level = "star_level"
-            user_key = "user_key"
             avatar = "avatar"
 
         field: StorFieldEnum
         is_desc: bool = False
 
+    user_key: Optional[str] = None
+    user_key_like: Optional[str] = None
     sex: Optional[bool] = None
     title: Optional[str] = None
     title_like: Optional[str] = None
@@ -67,13 +69,15 @@ class QueryParams(BaseModel):
     bg_img_like: Optional[str] = None
     hot_level: Optional[int] = None
     star_level: Optional[int] = None
-    user_key: Optional[str] = None
-    user_key_like: Optional[str] = None
     avatar: Optional[Optional[str]] = None
     sort_by: List[SortParams] = Field(default_factory=list)
 
 def get_all_query(params: QueryParams = Body()) -> Select:
     query = select(DBUser).filter(DBUser.deleted_at.is_(None))
+    if params.user_key is not None:
+        query = query.filter(DBUser.user_key.__eq__(params.user_key))
+    if params.user_key_like is not None:
+        query = query.filter(DBUser.user_key.like(params.user_key_like))
     if params.sex is not None:
         query = query.filter(DBUser.sex.__eq__(params.sex))
     if params.title is not None:
@@ -96,10 +100,6 @@ def get_all_query(params: QueryParams = Body()) -> Select:
         query = query.filter(DBUser.hot_level.__eq__(params.hot_level))
     if params.star_level is not None:
         query = query.filter(DBUser.star_level.__eq__(params.star_level))
-    if params.user_key is not None:
-        query = query.filter(DBUser.user_key.__eq__(params.user_key))
-    if params.user_key_like is not None:
-        query = query.filter(DBUser.user_key.like(params.user_key_like))
     if params.avatar is not None:
         query = query.filter(DBUser.avatar.__eq__(params.avatar))
     for sort_item in params.sort_by:
@@ -134,6 +134,7 @@ def create_one_model(model: SchemaBaseUser, db=Depends(get_db)) -> DBUser:
     return user
 
 def create_one(
+        user_key: str,
         sex: bool,
         title: str,
         name: str,
@@ -141,11 +142,11 @@ def create_one(
         bg_img: str,
         hot_level: int,
         star_level: int,
-        user_key: str,
         avatar: Optional[str] = None,
         db=Depends(get_db)
 ) -> DBUser:
     user = SchemaBaseUser(
+        user_key=user_key,
         sex=sex,
         title=title,
         name=name,
@@ -153,7 +154,6 @@ def create_one(
         bg_img=bg_img,
         hot_level=hot_level,
         star_level=star_level,
-        user_key=user_key,
         avatar=avatar,
     )
     return create_one_model(user, db)
@@ -162,6 +162,7 @@ def create_one(
 # -----------------------Update Routes------------------------
 def update_one(
         user_ident: int,
+        user_key: Optional[str] = None,
         sex: Optional[bool] = None,
         title: Optional[str] = None,
         name: Optional[str] = None,
@@ -169,12 +170,13 @@ def update_one(
         bg_img: Optional[str] = None,
         hot_level: Optional[int] = None,
         star_level: Optional[int] = None,
-        user_key: Optional[str] = None,
         avatar: Optional[Optional[str]] = None,
         db=Depends(get_db)) -> DBUser:
     res = db.get(DBUser, user_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
+    if user_key is not None:
+        res.user_key = user_key
     if sex is not None:
         res.sex = sex
     if title is not None:
@@ -189,8 +191,6 @@ def update_one(
         res.hot_level = hot_level
     if star_level is not None:
         res.star_level = star_level
-    if user_key is not None:
-        res.user_key = user_key
     if avatar is not None:
         res.avatar = avatar
     res.updated_at = datetime.datetime.now()
