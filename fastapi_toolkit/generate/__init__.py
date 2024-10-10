@@ -1,18 +1,15 @@
 import datetime
-import inspect
 import os
 import hashlib
+import typer
 from collections import defaultdict
 
-import typer
-from typing import Callable, Any, Sequence, Dict, List, Optional, Tuple, Literal, Type
+from typing import Callable, Any, Dict, List, Optional, Tuple, Literal, Type
 from jinja2 import Environment, PackageLoader
-# import networkx as nx
-
 from pydantic import BaseModel, Field as PField
-from fastapi_toolkit.define import Schema, Controller
-from .field_helper import FieldHelper, FieldType, LinkType
+from fastapi_toolkit.define import Schema
 
+from .field_helper import FieldHelper, FieldType, LinkType
 from .sql_mapping import mapping
 from .utils import to_snake, plural
 
@@ -109,20 +106,6 @@ class ModelRenderData(BaseModel):
     indexes: List[Field] = []
 
 
-class MethodRenderData(BaseModel):
-    name: str
-    defines: List[str]
-    args: Dict[str, str]
-    res_type: str
-    process: List[str]
-    res_fields: Dict[str, str]
-
-
-class ControllerRenderData(BaseModel):
-    name: NameInfo
-    methods: List[MethodRenderData]
-
-
 class CodeGenerator:
     def __init__(self, root_path='inner_code'):
         self.root_path = root_path
@@ -132,11 +115,9 @@ class CodeGenerator:
         self.crud_path = os.path.join(root_path, 'repo')
         self.routers_path = os.path.join(root_path, 'routers')
         self.auth_path = os.path.join(root_path, 'auth')
-        self.api_path = os.path.join(root_path, 'api')
         self.stub_path = os.path.join(root_path, 'stub')
 
         self.force_rewrite = False
-        self.show_network = False
         self.async_repo = False
 
         if not os.path.exists(self.root_path):
@@ -149,8 +130,6 @@ class CodeGenerator:
             os.mkdir(self.routers_path)
         if not os.path.exists(self.auth_path):
             os.mkdir(self.auth_path)
-        if not os.path.exists(self.api_path):
-            os.mkdir(self.api_path)
         if not os.path.exists(self.stub_path):
             os.mkdir(self.stub_path)
         self.env = Environment(
@@ -161,9 +140,7 @@ class CodeGenerator:
         self.pydantic_schemas: Dict[str, Type[Schema]] = {}
         self.links: List[Tuple[Literal["one"] | Literal["many"], Type[Schema], Type[Schema]]] = []
         self.custom_types: List[Dict[str, Any]] = []
-        # self.model_network = nx.Graph()
         self.association_tables: List[AssociationTable] = []
-        self.crds: List[ControllerRenderData] = []
         self.parse()
 
     @staticmethod
@@ -206,9 +183,6 @@ class CodeGenerator:
 
     def parse(self):
         self._parse_models()
-        # self._parse_network()
-        self._parse_api()
-        # self._parse_mock()
 
     def _get_schemas(self, root=Schema):
         for model_ in root.__subclasses__():
@@ -234,7 +208,7 @@ class CodeGenerator:
                     link.alias = field.alias.origin
                 links[model.name.origin].append(link)
             model.fields = list(filter(lambda x: x.type.link is None, model.fields))
-            model.fields.sort(key=lambda x: x.type.nullable or x.type.default != None)
+            model.fields.sort(key=lambda x: x.type.nullable or x.type.default is not None)
 
         link_groups: List[Tuple[Link, Link]] = []
         visited_link = set()
@@ -365,117 +339,6 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
             m.indexes.append(f)
         return m
 
-    def _parse_api(self):
-
-        def make_render(name, args, res) -> MethodRenderData:
-            fh = FieldHelper()
-            defines = []
-
-            def f(v):
-                t = v.annotation
-                if fh.is_builtin(t):
-                    return fh.parse(v).python_type
-                if fh.is_model(t):
-                    if fh.parse_model(t).python_type not in self.model_render_data:
-                        c = f'class {fh.parse(t).python_type}(BaseModel):\n'
-                        t: Type[BaseModel]
-                        for k, v in t.model_fields.items():
-                            c += f'        {k}: {f(v.annotation)}\n'
-                        defines.append(c)
-                        return fh.parse(t).python_type
-                    return self.model_render_data[fh.parse(t).python_type].name.base_schema
-                if fh.is_batch(t):
-                    py_t = fh.parse_batch(t).python_type
-                    arg = py_t[5:-1]
-                    if arg in self.model_render_data:
-                        py_t = f'List[{self.model_render_data[arg].name.base_schema}]'
-                    return py_t
-                return fh.parse(t).python_type
-
-            process = []
-            inputs = {}
-            # 解析需要输入什么
-            for k, v in args.items():
-                if fh.is_builtin(v):
-                    inputs[k] = f(v)
-                    continue
-                if fh.is_model(v):
-                    inputs[f'{k}_ident'] = 'int'
-                    crud_name = self.model_render_data[v.__name__].name.snake + '_crud'
-                    process.append(f'{k} = await {crud_name}.get_one({k}_ident, db)')
-                    continue
-                else:
-                    raise ValueError(f'Unsupported type {v}')
-            # 解析需要输出什么
-            res: BaseModel
-            res_fields = {}
-            for k, v in res.model_fields.items():
-                res_fields[k] = f(v)
-            return MethodRenderData(
-                name=name,
-                args=inputs,
-                defines=defines,
-                res_type=f(res),
-                process=process,
-                res_fields=res_fields,
-            )
-
-        def get_controller(root=Controller):
-            for model_ in root.__subclasses__():
-                yield model_
-                yield from get_controller(model_)
-
-        for c in get_controller():
-            crd = ControllerRenderData(name=self._name_info(c.__name__), methods=[])
-            for n, f in inspect.getmembers(c, predicate=inspect.isfunction):
-                args = {}
-                res = type(None)
-                for k, v in f.__annotations__.items():
-                    if k == 'return':
-                        res = v
-                        continue
-                    args[k] = v
-                crd.methods.append(make_render(n, args, res))
-            self.crds.append(crd)
-
-    # def _parse_network(self):
-    #     self.model_network.add_nodes_from(self.model_render_data.keys())
-    #     for model in self.model_render_data.values():
-    #         for link in model.links:
-    #             self.model_network.add_edge(link.origin.name.origin, link.target.name.origin)
-    #
-    #     pos = nx.spring_layout(self.model_network)
-    #     edge_labels = {
-    #         (link.origin.name.origin, link.target.name.origin): link.link_name
-    #         for model in self.model_render_data.values() for link in model.links
-    #     }
-    #     if self.show_network:
-    #         nx.draw(self.model_network.to_directed(), pos, with_labels=True)
-    #         nx.draw_networkx_edge_labels(
-    #             self.model_network.to_directed(), pos,
-    #             edge_labels=edge_labels, label_pos=0.75
-    #         )
-    #         import matplotlib.pyplot as plt
-    #         plt.show()
-
-    def _parse_mock(self, export=False):
-        self.model_network.add_nodes_from(self.model_render_data.keys())
-        self.mock_dependency = {}
-        self.mock_root = []
-        for component_nodes in nx.connected_components(self.model_network):
-            subgraph = self.model_network.subgraph(component_nodes)
-            mst = nx.minimum_spanning_tree(subgraph)
-            max_degree_node = max(subgraph.degree, key=lambda x: x[1])[0]
-            rooted_tree = nx.dfs_tree(mst, source=max_degree_node)
-            if export:
-                import matplotlib.pyplot as plt
-                pos = nx.planar_layout(self.model_network)
-                nx.draw(rooted_tree.to_directed(), pos, with_labels=True)
-                plt.show()
-            self.mock_root.append(max_degree_node)
-            for node in rooted_tree.nodes():
-                self.mock_dependency[node] = list(rooted_tree.successors(node))
-
     @staticmethod
     def _name_info(name: str) -> Optional[NameInfo]:
         if type(name) is not str:
@@ -549,14 +412,6 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
             models=models,
         ))
 
-    def _generate_mock(self):
-        self._generate_file(
-            os.path.join(self.root_path, 'mock.py'), self._from_template(
-                'mock.py.j2',
-                deps=self.mock_dependency,
-                mock_root=self.mock_root,
-                models=self.model_render_data.values()))
-
     def _generate_auth(self, mode: str):
         user_model = self.model_render_data['User']
         self._generate_file(os.path.join(self.auth_path, '__init__.py'),
@@ -574,29 +429,12 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
         self._generate_file(os.path.join(self.root_path, 'custom_types.py'), self._from_template(
             'custom_types.py.j2', custom_types=self.custom_types))
 
-    def _generate_apis(self, name):
-        for crd in self.crds:
-            if name != '' and crd.name.origin.lower() != name.lower():
-                continue
-            path = os.path.join(self.api_path, f'{crd.name.snake}.py')
-            while os.path.exists(path):
-                path = path + '.new'
-            self._generate_file(path, self._from_template(
-                'api/main.py.j2', crd=crd,
-                cruds=map(lambda x: x.name.snake + '_crud', self.model_render_data.values())))
-
     def generate(self, table: bool = True, router: bool = True, mock: bool = True, auth: str = ""):
         self._generate_custom_types()
         if table:
             self._generate_tables(auth_type=auth)
         if router:
             self._generate_routers()
-        # if mock:
-        #     self._generate_mock()
         if auth != "":
             self._generate_auth(mode=auth)
-        # self._generate_apis()
         self._generate_config()
-
-    def generate_api(self, name):
-        self._generate_apis(name)
