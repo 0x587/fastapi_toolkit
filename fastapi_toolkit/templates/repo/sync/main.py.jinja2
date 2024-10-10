@@ -26,6 +26,13 @@ def get_one({{ s_name }}_ident: int, db=Depends(get_db)) -> {{ name }}:
         return res
     raise NOT_FOUND
 
+{% for index in model.indexes %}
+
+def get_by_{{ index.name.snake }}({{ index.name.snake }}: {{ index.type.python_type }}, db=Depends(get_db)) -> List[{{ name }}]:
+    query = select({{ name }}).filter({{ name }}.deleted_at.is_(None)).filter({{ name }}.{{ index.name.snake }}.__eq__({{ index.name.snake }}))
+    return db.scalars(query)
+
+{% endfor %}
 
 def batch_get({{ s_name }}_idents: List[int], db=Depends(get_db)) -> Page[{{ base_schema }}]:
     query = select({{ name }}).filter({{ name }}.deleted_at.is_(None)).filter({{ name }}.id.in_({{ s_name }}_idents))

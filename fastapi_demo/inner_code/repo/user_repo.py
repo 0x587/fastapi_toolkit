@@ -1,6 +1,6 @@
-# generate_hash: 358332e7f9a30533a39152e041d59f5e
+# generate_hash: f82624fdda333ab3ec50af56fceb8c84
 """
-This file was automatically generated in 2024-10-10 15:06:33.664169
+This file was automatically generated in 2024-10-10 15:39:27.206110
 """
 from enum import Enum
 from typing import List, Optional
@@ -24,6 +24,16 @@ def get_one(user_ident: int, db=Depends(get_db)) -> DBUser:
     if res and res.deleted_at is None:
         return res
     raise NOT_FOUND
+
+
+def get_by_name(name: str, db=Depends(get_db)) -> List[DBUser]:
+    query = select(DBUser).filter(DBUser.deleted_at.is_(None)).filter(DBUser.name.__eq__(name))
+    return db.scalars(query)
+
+
+def get_by_user_key(user_key: str, db=Depends(get_db)) -> List[DBUser]:
+    query = select(DBUser).filter(DBUser.deleted_at.is_(None)).filter(DBUser.user_key.__eq__(user_key))
+    return db.scalars(query)
 
 
 def batch_get(user_idents: List[int], db=Depends(get_db)) -> Page[SchemaBaseUser]:

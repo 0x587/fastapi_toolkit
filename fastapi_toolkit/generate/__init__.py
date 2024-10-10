@@ -98,6 +98,7 @@ class Field(BaseModel):
     name: NameInfo
     alias: Optional[NameInfo] = None
     type: FieldType
+    index: bool
 
 
 class ModelRenderData(BaseModel):
@@ -105,6 +106,7 @@ class ModelRenderData(BaseModel):
     model: Type[Schema] = None
     fields: List[Field] = []
     links: List[Link] = []
+    indexes: List[Field] = []
 
 
 class MethodRenderData(BaseModel):
@@ -344,14 +346,23 @@ def {name}_query({arg}: {arg_type}, query=Depends(get_all_query)) -> Select:
     def _make_render_data_field(self, schema: Type[Schema]):
         fh = FieldHelper()
         fields = []
+        indexes = []
         for name, field in schema.model_fields.items():
-            fields.append(Field(name=self._name_info(name), alias=self._name_info(field.alias), type=fh.parse(field)))
+            index = field.json_schema_extra is not None and 'index' in field.json_schema_extra and \
+                    field.json_schema_extra['index'] is True
+            f = Field(name=self._name_info(name), alias=self._name_info(field.alias), type=fh.parse(field), index=index)
+            fields.append(f)
+            if index:
+                indexes.append(f)
         m = ModelRenderData(
             name=self._name_info(schema.__name__),
-            fields=fields
+            fields=fields,
+            indexes=indexes,
         )
         if m.name.origin == 'User':
-            m.fields.append(Field(name=self._name_info('user_key'), type=fh.parse_type(str)))
+            f = Field(name=self._name_info('user_key'), type=fh.parse_type(str), index=True)
+            m.fields.append(f)
+            m.indexes.append(f)
         return m
 
     def _parse_api(self):

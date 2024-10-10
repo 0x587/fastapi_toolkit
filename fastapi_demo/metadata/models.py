@@ -6,7 +6,7 @@ from fastapi_toolkit.define import Schema, Field
 class User(Schema):
     sex: bool
     title: str
-    name: str
+    name: str = Field(index=True)
     desc: str
     avatar: Optional[str]
     bg_img: str
