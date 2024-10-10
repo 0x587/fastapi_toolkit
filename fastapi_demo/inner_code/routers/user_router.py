@@ -1,6 +1,6 @@
-# generate_hash: d17246077a9078b6e3512c0c35f312aa
+# generate_hash: 9934b2f954ad6aa863627d54d4c99152
 """
-This file was automatically generated in 2024-09-05 10:56:05.160211
+This file was automatically generated in 2024-10-10 15:04:55.288891
 """
 
 from fastapi_toolkit.base.router import BaseRouter
@@ -14,7 +14,7 @@ class UserRouter(BaseRouter):
         self.snake_name = "user"
         self.snake_plural_name = "users"
         self.camel_name = "User"
-        super().__init__(config)
+        super().__init__(config, SchemaBaseUser, SchemaUser)
 
     def _get_one(self):
         return get_one

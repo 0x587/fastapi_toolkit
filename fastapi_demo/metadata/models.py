@@ -1,7 +1,6 @@
 import datetime
 from typing import List, Optional
-from pydantic import Field, BaseModel
-from fastapi_toolkit.define import Schema, Controller
+from fastapi_toolkit.define import Schema, Field
 
 
 class User(Schema):
@@ -24,7 +23,7 @@ class InfoBlock(Schema):
     sub_title: str
     desc: str
     tags: str
-    show: bool
+    show: bool = Field(default=False)
     time_start: datetime.date
     time_end: datetime.date
 

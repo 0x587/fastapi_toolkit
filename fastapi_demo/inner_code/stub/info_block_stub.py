@@ -1,6 +1,6 @@
-# generate_hash: e7359a0f05e9f1d5af205a966bc1895a
+# generate_hash: b3067fdae86dc8a5a4d10f63e279c877
 """
-This file was automatically generated in 2024-10-10 15:06:33.684523
+This file was automatically generated in 2024-10-10 15:06:33.685304
 """
 from enum import Enum
 from typing import List, Optional
@@ -127,7 +127,7 @@ def create_one(
         tags: str,
         time_start: datetime.date,
         time_end: datetime.date,
-        show: bool = False,
+        show: bool,
         db=Depends(get_db)
 ) -> DBInfoBlock:
     info_block = SchemaBaseInfoBlock(

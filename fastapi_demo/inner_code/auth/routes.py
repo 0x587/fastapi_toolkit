@@ -1,6 +1,6 @@
-# generate_hash: 9dab0999900c1e1043fc01cac0892534
+# generate_hash: 4692d637e72fc98a151860b6a27ae363
 """
-This file was automatically generated in 2024-09-05 10:54:53.726885
+This file was automatically generated in 2024-10-10 15:04:55.318177
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi_toolkit.base.auth.key import Auth
@@ -37,13 +37,13 @@ class AuthRouter(APIRouter):
         return get_user
 
     def _register(self):
-        async def register(user: SchemaBaseUser):
-            return await self.auth.backend.add_user(user)
+        def register(user: SchemaBaseUser):
+            return self.auth.backend.add_user(user)
 
         return register
 
     def _get_me(self):
-        async def get_me(current_user=Depends(self.auth.require_user())) -> SchemaBaseUser:
+        def get_me(current_user=Depends(self.auth.require_user())) -> SchemaBaseUser:
             return current_user
 
         return get_me

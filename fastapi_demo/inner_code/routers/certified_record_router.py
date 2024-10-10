@@ -1,6 +1,6 @@
-# generate_hash: 73b53e3eefe394a353ad21bd1373162f
+# generate_hash: 3fdef314dd82bc3c4c0fb979c3bb8fc0
 """
-This file was automatically generated in 2024-09-05 10:56:05.161594
+This file was automatically generated in 2024-10-10 15:04:55.307388
 """
 
 from fastapi_toolkit.base.router import BaseRouter
@@ -14,7 +14,7 @@ class CertifiedRecordRouter(BaseRouter):
         self.snake_name = "certified_record"
         self.snake_plural_name = "certified_records"
         self.camel_name = "CertifiedRecord"
-        super().__init__(config)
+        super().__init__(config, SchemaBaseCertifiedRecord, SchemaCertifiedRecord)
 
     def _get_one(self):
         return get_one

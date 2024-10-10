@@ -1,6 +1,6 @@
-# generate_hash: 1d2058c2879b4f494940ceb5356c692c
+# generate_hash: 73a845301d8b23fa6e7061cdce90493e
 """
-This file was automatically generated in 2024-09-05 10:54:53.725977
+This file was automatically generated in 2024-10-10 15:04:55.316784
 """
 import datetime
 from typing import Optional
@@ -8,32 +8,32 @@ from sqlalchemy import select
 
 from fastapi_toolkit.base.auth.key import AuthDBBackend as AuthDBBackendBase, Auth
 
-from ..db import sessionmanager
+from ..db import get_db_sync
 from ..models import DBUser
 from ..schemas import SchemaBaseUser
 
 
 class AuthDBBackend(AuthDBBackendBase):
-    async def get_user(self, user_key: str) -> Optional[DBUser]:
-        async with sessionmanager.session() as db:
-            user = await db.execute(select(DBUser).where(DBUser.user_key.__eq__(user_key)).limit(1))
-            return user.scalars().one_or_none()
+    def get_user(self, user_key: str) -> Optional[DBUser]:
+        db = next(get_db_sync())
+        user = db.execute(select(DBUser).where(DBUser.user_key.__eq__(user_key)).limit(1))
+        return user.scalars().one_or_none()
 
-    async def add_user(self, create: SchemaBaseUser) -> DBUser:
-        async with sessionmanager.session() as db:
-            user = DBUser(
-                **create.model_dump(exclude={'id', 'created_at', 'updated_at', 'deleted_at'}),
-            )
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
-            return user
+    def add_user(self, create: SchemaBaseUser) -> DBUser:
+        db = next(get_db_sync())
+        user = DBUser(
+            **create.model_dump(exclude={'id', 'created_at', 'updated_at', 'deleted_at'}),
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user
 
-    async def access(self, user_key: str) -> None:
-        async with sessionmanager.session() as db:
-            user = await self.get_user(user_key)
-            user.accessed_at = datetime.datetime.now(datetime.UTC)
-            await db.commit()
+    def access(self, user_key: str) -> None:
+        db = next(get_db_sync())
+        user = self.get_user(user_key)
+        user.accessed_at = datetime.datetime.now(datetime.UTC)
+        db.commit()
 
 
 class AuthFactory:

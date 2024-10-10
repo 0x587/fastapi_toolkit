@@ -1,6 +1,6 @@
-# generate_hash: 394976d1d34e112ba3e047d087d1b789
+# generate_hash: 1b8282416da50dce3bc1b320f8dd05cf
 """
-This file was automatically generated in 2024-09-05 23:08:17.769934
+This file was automatically generated in 2024-10-10 15:06:33.646480
 """
 import uuid
 import datetime
@@ -8,7 +8,6 @@ from typing import List, Optional
 
 from fastapi_toolkit.define import Schema
 from pydantic import Field
-
 
 
 class SchemaBaseUser(Schema):
@@ -20,23 +19,25 @@ class SchemaBaseUser(Schema):
     updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
     """fields"""
-    sex: bool = Field()
-
-    title: str = Field()
-
-    name: str = Field()
-
-    desc: str = Field()
-
-    bg_img: str = Field()
-
-    hot_level: int = Field()
-
-    star_level: int = Field()
-
-    user_key: str = Field()
-
-    avatar: Optional[str] = Field()
+    sex: bool = Field(
+    )
+    title: str = Field(
+    )
+    name: str = Field(
+    )
+    desc: str = Field(
+    )
+    bg_img: str = Field(
+    )
+    hot_level: int = Field(
+    )
+    star_level: int = Field(
+    )
+    user_key: str = Field(
+    )
+    avatar: Optional[str] = Field(
+        default=None
+    )
 
 
 class SchemaUser(SchemaBaseUser):
@@ -54,21 +55,23 @@ class SchemaBaseInfoBlock(Schema):
     updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
     """fields"""
-    type: str = Field()
-
-    title: str = Field()
-
-    sub_title: str = Field()
-
-    desc: str = Field()
-
-    tags: str = Field()
-
-    show: bool = Field()
-
-    time_start: datetime.date = Field()
-
-    time_end: datetime.date = Field()
+    type: str = Field(
+    )
+    title: str = Field(
+    )
+    sub_title: str = Field(
+    )
+    desc: str = Field(
+    )
+    tags: str = Field(
+    )
+    time_start: datetime.date = Field(
+    )
+    time_end: datetime.date = Field(
+    )
+    show: bool = Field(
+        default=False
+    )
 
 
 class SchemaInfoBlock(SchemaBaseInfoBlock):
@@ -86,13 +89,14 @@ class SchemaBaseCertifiedRecord(Schema):
     updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
     """fields"""
-    done: bool = Field()
-
-    target_real_name: str = Field()
-
-    self_real_name: str = Field()
-
-    relation: str = Field()
+    done: bool = Field(
+    )
+    target_real_name: str = Field(
+    )
+    self_real_name: str = Field(
+    )
+    relation: str = Field(
+    )
 
 
 class SchemaCertifiedRecord(SchemaBaseCertifiedRecord):

@@ -1,6 +1,6 @@
-# generate_hash: 83144d61eaff344f1ab9b099efaadc5b
+# generate_hash: 60f4188f1a7521ccf532a65a2523cd22
 """
-This file was automatically generated in 2024-09-05 23:08:17.767119
+This file was automatically generated in 2024-10-10 15:06:33.638922
 """
 import datetime
 from typing import List, Optional
@@ -21,21 +21,13 @@ class DBUser(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
 
     sex: Mapped[bool] = mapped_column(sqltypes.Boolean, nullable=False)
-
     title: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
     name: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
     desc: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
     bg_img: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
     hot_level: Mapped[int] = mapped_column(sqltypes.Integer, nullable=False)
-
     star_level: Mapped[int] = mapped_column(sqltypes.Integer, nullable=False)
-
     user_key: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
     avatar: Mapped[Optional[str]] = mapped_column(sqltypes.Text, nullable=True)
 
     info_blocks: Mapped[List["DBInfoBlock"]] = relationship(
@@ -56,23 +48,15 @@ class DBInfoBlock(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
 
     type: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
     title: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
     sub_title: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
     desc: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
     tags: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
+    time_start: Mapped[datetime.date] = mapped_column(sqltypes.Date, nullable=False)
+    time_end: Mapped[datetime.date] = mapped_column(sqltypes.Date, nullable=False)
     show: Mapped[bool] = mapped_column(sqltypes.Boolean, nullable=False)
 
-    time_start: Mapped[datetime.date] = mapped_column(sqltypes.Date, nullable=False)
-
-    time_end: Mapped[datetime.date] = mapped_column(sqltypes.Date, nullable=False)
-
     _fk_user_user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=True)
-
     user: Mapped[Optional["DBUser"]] = relationship(
         back_populates="info_blocks",
     )
@@ -91,21 +75,16 @@ class DBCertifiedRecord(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(sqltypes.DateTime)
 
     done: Mapped[bool] = mapped_column(sqltypes.Boolean, nullable=False)
-
     target_real_name: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
     self_real_name: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
-
     relation: Mapped[str] = mapped_column(sqltypes.Text, nullable=False)
 
     _fk_user_user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=True)
-
     user: Mapped[Optional["DBUser"]] = relationship(
         back_populates="certified_records",
     )
 
     _fk_info_block_info_block_id: Mapped[int] = mapped_column(ForeignKey("info_block.id"), nullable=True)
-
     info_block: Mapped[Optional["DBInfoBlock"]] = relationship(
         back_populates="certified_records",
     )

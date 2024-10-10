@@ -1,6 +1,6 @@
-# generate_hash: 3d93ddb0539c5b979807f6e5f897fad8
+# generate_hash: a0b21f7c2f6b272f6613cb1d357a4218
 """
-This file was automatically generated in 2024-09-05 10:56:05.160955
+This file was automatically generated in 2024-10-10 15:04:55.305254
 """
 
 from fastapi_toolkit.base.router import BaseRouter
@@ -14,7 +14,7 @@ class InfoBlockRouter(BaseRouter):
         self.snake_name = "info_block"
         self.snake_plural_name = "info_blocks"
         self.camel_name = "InfoBlock"
-        super().__init__(config)
+        super().__init__(config, SchemaBaseInfoBlock, SchemaInfoBlock)
 
     def _get_one(self):
         return get_one
