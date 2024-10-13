@@ -1,6 +1,6 @@
-# generate_hash: dbde7827420df089fc7805a92fa90138
+# generate_hash: 32e49af82abd3c99039b007a5954493a
 """
-This file was automatically generated in 2024-10-11 21:22:57.480246
+This file was automatically generated in 2024-10-13 17:00:25.474261
 """
 from enum import Enum
 from typing import List, Optional
@@ -128,9 +128,10 @@ def create_one(
         time_start: datetime.date,
         time_end: datetime.date,
         show: bool = False,
+        _fk_user_user_id: Optional[int] = None,
         db=Depends(get_db)
 ) -> DBInfoBlock:
-    info_block = SchemaBaseInfoBlock(
+    info_block = DBInfoBlock(
         type=type,
         title=title,
         sub_title=sub_title,
@@ -139,20 +140,24 @@ def create_one(
         time_start=time_start,
         time_end=time_end,
         show=show,
+        _fk_user_user_id=_fk_user_user_id,
     )
-    return create_one_model(info_block, db)
+    db.add(info_block)
+    db.commit()
+    db.refresh(info_block)
+    return info_block
 
 
 # -----------------------Update Routes------------------------
 class ForceUpdate(BaseModel):
-    type: Optional[bool] = Field(default=False),
-    title: Optional[bool] = Field(default=False),
-    sub_title: Optional[bool] = Field(default=False),
-    desc: Optional[bool] = Field(default=False),
-    tags: Optional[bool] = Field(default=False),
-    time_start: Optional[bool] = Field(default=False),
-    time_end: Optional[bool] = Field(default=False),
-    show: Optional[bool] = Field(default=False),
+    type: Optional[bool] = Field(default=False)
+    title: Optional[bool] = Field(default=False)
+    sub_title: Optional[bool] = Field(default=False)
+    desc: Optional[bool] = Field(default=False)
+    tags: Optional[bool] = Field(default=False)
+    time_start: Optional[bool] = Field(default=False)
+    time_end: Optional[bool] = Field(default=False)
+    show: Optional[bool] = Field(default=False)
 
 def update_one(
         info_block_ident: int,

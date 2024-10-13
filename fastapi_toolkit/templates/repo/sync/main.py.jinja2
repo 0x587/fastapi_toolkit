@@ -105,14 +105,27 @@ def create_one(
         {{field.name.snake}}: {{field.type.python_type}}{% if field.type.nullable %} = None{% endif %},
         {% endif %}
         {% endfor %}
+        {% for link in model.links %}
+        {% if link.fk %}
+        {{ link.fk.name }}: Optional[int] = None,
+        {% endif %}
+        {% endfor %}
         db=Depends(get_db)
 ) -> {{ name }}:
-    {{ s_name }} = {{ base_schema }}(
+    {{ s_name }} = {{ name }}(
         {% for field in model.fields %}
         {{field.name.snake}}={{field.name.snake}},
         {% endfor %}
+        {% for link in model.links %}
+        {% if link.fk %}
+        {{ link.fk.name }}={{ link.fk.name }},
+        {% endif %}
+        {% endfor %}
     )
-    return create_one_model({{ s_name }}, db)
+    db.add({{ s_name }})
+    db.commit()
+    db.refresh({{ s_name }})
+    return {{ s_name }}
 
 
 # -----------------------Update Routes------------------------

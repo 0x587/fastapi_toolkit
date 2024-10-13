@@ -1,6 +1,6 @@
-# generate_hash: 0aaaca7faf95b593b02ecc306bde28f2
+# generate_hash: e1952103f4a7075aa585fb784d8b3f40
 """
-This file was automatically generated in 2024-10-11 21:22:57.472413
+This file was automatically generated in 2024-10-13 17:00:25.466580
 """
 from enum import Enum
 from typing import List, Optional
@@ -145,7 +145,7 @@ def create_one(
         avatar: Optional[str] = None,
         db=Depends(get_db)
 ) -> DBUser:
-    user = SchemaBaseUser(
+    user = DBUser(
         user_key=user_key,
         sex=sex,
         title=title,
@@ -156,20 +156,23 @@ def create_one(
         star_level=star_level,
         avatar=avatar,
     )
-    return create_one_model(user, db)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 # -----------------------Update Routes------------------------
 class ForceUpdate(BaseModel):
-    user_key: Optional[bool] = Field(default=False),
-    sex: Optional[bool] = Field(default=False),
-    title: Optional[bool] = Field(default=False),
-    name: Optional[bool] = Field(default=False),
-    desc: Optional[bool] = Field(default=False),
-    bg_img: Optional[bool] = Field(default=False),
-    hot_level: Optional[bool] = Field(default=False),
-    star_level: Optional[bool] = Field(default=False),
-    avatar: Optional[bool] = Field(default=False),
+    user_key: Optional[bool] = Field(default=False)
+    sex: Optional[bool] = Field(default=False)
+    title: Optional[bool] = Field(default=False)
+    name: Optional[bool] = Field(default=False)
+    desc: Optional[bool] = Field(default=False)
+    bg_img: Optional[bool] = Field(default=False)
+    hot_level: Optional[bool] = Field(default=False)
+    star_level: Optional[bool] = Field(default=False)
+    avatar: Optional[bool] = Field(default=False)
 
 def update_one(
         user_ident: int,

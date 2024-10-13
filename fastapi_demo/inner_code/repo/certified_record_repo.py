@@ -1,6 +1,6 @@
-# generate_hash: f49345d50d739de7bf6d6b2790537ed9
+# generate_hash: c6bfdf438d1ad3c7ac69dc7e1419bcb2
 """
-This file was automatically generated in 2024-10-11 21:22:57.480884
+This file was automatically generated in 2024-10-13 17:00:25.474928
 """
 from enum import Enum
 from typing import List, Optional
@@ -102,23 +102,30 @@ def create_one(
         target_real_name: str,
         self_real_name: str,
         relation: str,
+        _fk_user_user_id: Optional[int] = None,
+        _fk_info_block_info_block_id: Optional[int] = None,
         db=Depends(get_db)
 ) -> DBCertifiedRecord:
-    certified_record = SchemaBaseCertifiedRecord(
+    certified_record = DBCertifiedRecord(
         done=done,
         target_real_name=target_real_name,
         self_real_name=self_real_name,
         relation=relation,
+        _fk_user_user_id=_fk_user_user_id,
+        _fk_info_block_info_block_id=_fk_info_block_info_block_id,
     )
-    return create_one_model(certified_record, db)
+    db.add(certified_record)
+    db.commit()
+    db.refresh(certified_record)
+    return certified_record
 
 
 # -----------------------Update Routes------------------------
 class ForceUpdate(BaseModel):
-    done: Optional[bool] = Field(default=False),
-    target_real_name: Optional[bool] = Field(default=False),
-    self_real_name: Optional[bool] = Field(default=False),
-    relation: Optional[bool] = Field(default=False),
+    done: Optional[bool] = Field(default=False)
+    target_real_name: Optional[bool] = Field(default=False)
+    self_real_name: Optional[bool] = Field(default=False)
+    relation: Optional[bool] = Field(default=False)
 
 def update_one(
         certified_record_ident: int,
