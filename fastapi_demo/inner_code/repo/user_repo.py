@@ -1,6 +1,6 @@
-# generate_hash: e1952103f4a7075aa585fb784d8b3f40
+# generate_hash: ca583e71383501def3a76e2a83277607
 """
-This file was automatically generated in 2024-10-13 17:00:25.466580
+This file was automatically generated in 2024-10-13 17:33:37.143990
 """
 from enum import Enum
 from typing import List, Optional
@@ -155,6 +155,8 @@ def create_one(
         hot_level=hot_level,
         star_level=star_level,
         avatar=avatar,
+        created_at=datetime.datetime.utcnow(),
+        updated_at=datetime.datetime.utcnow(),
     )
     db.add(user)
     db.commit()

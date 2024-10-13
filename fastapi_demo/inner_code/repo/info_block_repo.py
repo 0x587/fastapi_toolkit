@@ -1,6 +1,6 @@
-# generate_hash: 32e49af82abd3c99039b007a5954493a
+# generate_hash: 0f0b70411b65d2c51d6a77045f493f30
 """
-This file was automatically generated in 2024-10-13 17:00:25.474261
+This file was automatically generated in 2024-10-13 17:33:37.152638
 """
 from enum import Enum
 from typing import List, Optional
@@ -141,6 +141,8 @@ def create_one(
         time_end=time_end,
         show=show,
         _fk_user_user_id=_fk_user_user_id,
+        created_at=datetime.datetime.utcnow(),
+        updated_at=datetime.datetime.utcnow(),
     )
     db.add(info_block)
     db.commit()

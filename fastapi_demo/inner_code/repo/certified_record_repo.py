@@ -1,6 +1,6 @@
-# generate_hash: c6bfdf438d1ad3c7ac69dc7e1419bcb2
+# generate_hash: 659b6713fca95da3d17c11a2d433bd70
 """
-This file was automatically generated in 2024-10-13 17:00:25.474928
+This file was automatically generated in 2024-10-13 17:33:37.153299
 """
 from enum import Enum
 from typing import List, Optional
@@ -113,6 +113,8 @@ def create_one(
         relation=relation,
         _fk_user_user_id=_fk_user_user_id,
         _fk_info_block_info_block_id=_fk_info_block_info_block_id,
+        created_at=datetime.datetime.utcnow(),
+        updated_at=datetime.datetime.utcnow(),
     )
     db.add(certified_record)
     db.commit()
