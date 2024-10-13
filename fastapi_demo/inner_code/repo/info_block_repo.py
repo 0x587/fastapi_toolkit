@@ -1,6 +1,6 @@
-# generate_hash: e7359a0f05e9f1d5af205a966bc1895a
+# generate_hash: dbde7827420df089fc7805a92fa90138
 """
-This file was automatically generated in 2024-10-10 15:36:45.568255
+This file was automatically generated in 2024-10-11 21:22:57.480246
 """
 from enum import Enum
 from typing import List, Optional
@@ -144,6 +144,16 @@ def create_one(
 
 
 # -----------------------Update Routes------------------------
+class ForceUpdate(BaseModel):
+    type: Optional[bool] = Field(default=False),
+    title: Optional[bool] = Field(default=False),
+    sub_title: Optional[bool] = Field(default=False),
+    desc: Optional[bool] = Field(default=False),
+    tags: Optional[bool] = Field(default=False),
+    time_start: Optional[bool] = Field(default=False),
+    time_end: Optional[bool] = Field(default=False),
+    show: Optional[bool] = Field(default=False),
+
 def update_one(
         info_block_ident: int,
         type: Optional[str] = None,
@@ -154,25 +164,26 @@ def update_one(
         time_start: Optional[datetime.date] = None,
         time_end: Optional[datetime.date] = None,
         show: Optional[bool] = None,
+        force_update: Optional[ForceUpdate] = ForceUpdate(),
         db=Depends(get_db)) -> DBInfoBlock:
     res = db.get(DBInfoBlock, info_block_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
-    if type is not None:
+    if type is not None or force_update.type:
         res.type = type
-    if title is not None:
+    if title is not None or force_update.title:
         res.title = title
-    if sub_title is not None:
+    if sub_title is not None or force_update.sub_title:
         res.sub_title = sub_title
-    if desc is not None:
+    if desc is not None or force_update.desc:
         res.desc = desc
-    if tags is not None:
+    if tags is not None or force_update.tags:
         res.tags = tags
-    if time_start is not None:
+    if time_start is not None or force_update.time_start:
         res.time_start = time_start
-    if time_end is not None:
+    if time_end is not None or force_update.time_end:
         res.time_end = time_end
-    if show is not None:
+    if show is not None or force_update.show:
         res.show = show
     res.updated_at = datetime.datetime.now()
     db.commit()

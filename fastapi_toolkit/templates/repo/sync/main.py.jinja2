@@ -116,17 +116,23 @@ def create_one(
 
 
 # -----------------------Update Routes------------------------
+class ForceUpdate(BaseModel):
+    {% for field in model.fields %}
+    {{field.name.snake}}: Optional[bool] = Field(default=False)
+    {% endfor %}
+
 def update_one(
         {{ s_name }}_ident: int,
         {% for field in model.fields %}
         {{field.name.snake}}: Optional[{{field.type.python_type}}] = None,
         {% endfor %}
+        force_update: Optional[ForceUpdate] = ForceUpdate(),
         db=Depends(get_db)) -> {{ name }}:
     res = db.get({{ name }}, {{ s_name }}_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
     {% for field in model.fields %}
-    if {{field.name.snake}} is not None:
+    if {{field.name.snake}} is not None or force_update.{{field.name.snake}}:
         res.{{field.name.snake}} = {{field.name.snake}}
     {% endfor %}
     res.updated_at = datetime.datetime.now()

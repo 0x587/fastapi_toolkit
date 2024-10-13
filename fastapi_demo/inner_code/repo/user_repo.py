@@ -1,6 +1,6 @@
-# generate_hash: 16f3dcb7e078b42e35e6be576b167783
+# generate_hash: 0aaaca7faf95b593b02ecc306bde28f2
 """
-This file was automatically generated in 2024-10-10 15:49:18.775789
+This file was automatically generated in 2024-10-11 21:22:57.472413
 """
 from enum import Enum
 from typing import List, Optional
@@ -160,6 +160,17 @@ def create_one(
 
 
 # -----------------------Update Routes------------------------
+class ForceUpdate(BaseModel):
+    user_key: Optional[bool] = Field(default=False),
+    sex: Optional[bool] = Field(default=False),
+    title: Optional[bool] = Field(default=False),
+    name: Optional[bool] = Field(default=False),
+    desc: Optional[bool] = Field(default=False),
+    bg_img: Optional[bool] = Field(default=False),
+    hot_level: Optional[bool] = Field(default=False),
+    star_level: Optional[bool] = Field(default=False),
+    avatar: Optional[bool] = Field(default=False),
+
 def update_one(
         user_ident: int,
         user_key: Optional[str] = None,
@@ -171,27 +182,28 @@ def update_one(
         hot_level: Optional[int] = None,
         star_level: Optional[int] = None,
         avatar: Optional[Optional[str]] = None,
+        force_update: Optional[ForceUpdate] = ForceUpdate(),
         db=Depends(get_db)) -> DBUser:
     res = db.get(DBUser, user_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
-    if user_key is not None:
+    if user_key is not None or force_update.user_key:
         res.user_key = user_key
-    if sex is not None:
+    if sex is not None or force_update.sex:
         res.sex = sex
-    if title is not None:
+    if title is not None or force_update.title:
         res.title = title
-    if name is not None:
+    if name is not None or force_update.name:
         res.name = name
-    if desc is not None:
+    if desc is not None or force_update.desc:
         res.desc = desc
-    if bg_img is not None:
+    if bg_img is not None or force_update.bg_img:
         res.bg_img = bg_img
-    if hot_level is not None:
+    if hot_level is not None or force_update.hot_level:
         res.hot_level = hot_level
-    if star_level is not None:
+    if star_level is not None or force_update.star_level:
         res.star_level = star_level
-    if avatar is not None:
+    if avatar is not None or force_update.avatar:
         res.avatar = avatar
     res.updated_at = datetime.datetime.now()
     db.commit()

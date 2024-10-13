@@ -1,6 +1,6 @@
-# generate_hash: 891de1acb51b104502882c678b4614d6
+# generate_hash: f49345d50d739de7bf6d6b2790537ed9
 """
-This file was automatically generated in 2024-10-10 15:36:45.569241
+This file was automatically generated in 2024-10-11 21:22:57.480884
 """
 from enum import Enum
 from typing import List, Optional
@@ -114,23 +114,30 @@ def create_one(
 
 
 # -----------------------Update Routes------------------------
+class ForceUpdate(BaseModel):
+    done: Optional[bool] = Field(default=False),
+    target_real_name: Optional[bool] = Field(default=False),
+    self_real_name: Optional[bool] = Field(default=False),
+    relation: Optional[bool] = Field(default=False),
+
 def update_one(
         certified_record_ident: int,
         done: Optional[bool] = None,
         target_real_name: Optional[str] = None,
         self_real_name: Optional[str] = None,
         relation: Optional[str] = None,
+        force_update: Optional[ForceUpdate] = ForceUpdate(),
         db=Depends(get_db)) -> DBCertifiedRecord:
     res = db.get(DBCertifiedRecord, certified_record_ident)
     if not res or res.deleted_at is not None:
         raise NOT_FOUND
-    if done is not None:
+    if done is not None or force_update.done:
         res.done = done
-    if target_real_name is not None:
+    if target_real_name is not None or force_update.target_real_name:
         res.target_real_name = target_real_name
-    if self_real_name is not None:
+    if self_real_name is not None or force_update.self_real_name:
         res.self_real_name = self_real_name
-    if relation is not None:
+    if relation is not None or force_update.relation:
         res.relation = relation
     res.updated_at = datetime.datetime.now()
     db.commit()
