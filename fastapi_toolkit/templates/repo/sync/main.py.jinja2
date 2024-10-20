@@ -121,8 +121,8 @@ def create_one(
         {{ link.fk.name }}={{ link.fk.name }},
         {% endif %}
         {% endfor %}
-        created_at=datetime.datetime.utcnow(),
-        updated_at=datetime.datetime.utcnow(),
+        created_at=datetime.datetime.now(),
+        updated_at=datetime.datetime.now(),
     )
     db.add({{ s_name }})
     db.commit()
