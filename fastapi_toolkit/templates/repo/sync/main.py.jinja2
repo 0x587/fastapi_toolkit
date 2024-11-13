@@ -173,7 +173,7 @@ def delete_one({{ s_name }}_ident: int, db=Depends(get_db)):
 {#    {% endfor %}#}
 {#    await db.commit()#}
 {#    {% endif %}#}
-    res.deleted_at = datetime.datetime.now()
+    db.delete(res)
     db.commit()
     return {'message': 'Deleted', 'id': {{ s_name }}_ident}
 
